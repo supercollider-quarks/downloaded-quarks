@@ -1,0 +1,7 @@
+(
+	\name: "Bending",
+	\summary: "Library for code bending",
+	\author: "Julian Rohrhuber, Alberto de Campo",
+	\version: 0.1,
+	\since: "2011"
+)

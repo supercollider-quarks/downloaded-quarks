@@ -1,0 +1,32 @@
+CLASS::CodonPattern
+summary::A pattern that translates a genome string to a stream of aminoacid triplets (codons).
+categories::Streams-Patterns-Events, Sonification
+related::ProteinBioSynthesis, AminoacidPattern
+
+
+
+CLASSMETHODS::
+
+method::new
+Return a new pattern from a genome that returns a stream of aminoacid triplets (codons).
+
+argument::genome
+The genome data, a string containing the characters representing the four nucleic acids: code::$a, $g, $t, $c::.
+
+code::
+(
+b = CodonPattern("atatatac", inf);
+t = b.asStream.nextN(18);
+)
+::
+
+
+code::
+// load from a file
+(
+x = CodonPattern.new.loadData("data/escherichia-coli".resolveRelative);
+x.genome.postln; // the nucleic acids
+x.asStream.all.postcs; // the aminoacids
+)
+
+::

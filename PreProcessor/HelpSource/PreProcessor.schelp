@@ -1,0 +1,127 @@
+CLASS::PreProcessor
+summary::Embed languages in SuperCollider
+categories::Language, Little Languages
+
+DESCRIPTION::
+Using start and end delimiters, PreProcessor internally converts parts of code into a function that you can call, passing in an event with parameters, to which you may add the results. It returns the event.
+
+See also: link::Classes/Interpreter#-preProcessor::.
+
+
+CLASSMETHODS::
+
+method::current
+The preprocessor active in the current context.
+
+INSTANCEMETHODS::
+
+method::translate
+
+argument::code
+
+argument::event
+
+code::
+(
+this.preProcessor = PreProcessor.new;
+
+// prepare an event
+e = (
+	lang: \minimouse,
+	languages:
+	(
+		minimouse: {|code, event|
+			var output;
+			output = Pbind(\degree, Pseq(code.ascii).trace % 24, \dur, event[\dur] ? 0.1);
+			event.put(\result, output)
+		},
+		maximouse: {|code, event|
+			var output;
+			output = Pbind(\freq, Pseq(code.ascii).trace + 200, \dur, event[\dur] ? 0.1);
+			event.put(\result, output)
+		}
+	)
+
+);
+);
+
+// ok, assuming such a little interpreter exists for a given language,
+// one can now use it in code.
+
+
+<%ttwtezzazszz szzs azzs %>.value(e).result.play;
+
+// switch language:
+e[\lang] = \maximouse;
+e[\dur] = 0.03;
+<%ttwtezzazszz szzs azzs %>.value(e).result.play;
+
+// reset it:
+this.preProcessor = nil;
+::
+
+method::value
+
+This method is used in link::Classes/Interpreter:: and is called before any code is interpreted.
+
+argument::string
+
+
+method::startDelimiter
+The signal to start to interpret the string following it as a certain language. By default, this is code::"<%"::.
+
+
+NOTE::If you set the delimiters to a string that is valid part of sclang code, you may not be able to evaluate code anymore, and thus get stuck in an error state. In such a case, you need to recompile the library.::
+
+method::endDelimiter
+The signal to end to interpret the string following it as a certain language. By default, this is code::"%>"::.
+
+method::verbose
+If set to true, the preprocessor prints information to the post window.
+
+section::Examples
+
+code::
+// python preprocessor, given that you have python installed
+// thanks to  tasos tsesmetzis
+(
+this.preProcessor = PreProcessor.new.startDelimiter_("{-").endDelimiter_("-}");
+
+// a simple python call
+e = (
+	lang: \python,
+	languages:
+	(
+		python: // code is the incoming string, event is the event for parameters and output
+		{|code, event|
+			var input, pipe, output;
+			code = e[\prefix] ++ "print" ++ "(" ++ code ++ ")";
+			input = "python -c '%'".format(code);
+			pipe = Pipe(input, "r");
+			output = pipe.readUpTo;
+			pipe.close;
+			event.put(\result, output)
+		}
+	),
+	prefix: "import math;"
+);
+);
+
+// ok, assuming such a little interpreter exists for a given language,
+// one can now use it in code.
+
+// returns 507580213877224798800856812176625227226004528988036003099405939480985600000000000000
+(
+e = {- math.factorial(61) -}.value(e);
+e.result;
+)
+
+
+// sonify the digits of the result
+e.calc_result = e.result.as(Array).collect { |x| x.asString.interpret };
+Pbind(\note, Pseq(e.calc_result), \dur, 0.1).play;
+
+// reset
+this.preProcessor = nil;
+
+::

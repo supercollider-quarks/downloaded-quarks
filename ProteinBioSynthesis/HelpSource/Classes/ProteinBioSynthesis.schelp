@@ -1,0 +1,119 @@
+CLASS::ProteinBioSynthesis
+summary::Pattern class for the sonification of DNA information in terms of the aminoacids it encodes in a living cell.
+categories::Streams-Patterns-Events, Sonification
+
+DESCRIPTION::
+The superclass for a number of pattern classes that are related with mapping DNA data to aminoacid names and numbers.
+
+In a living cell, the DNA is transcribed into an complementary messenger-RNA (mRNA). The activity of translating the mRNA to proteins is carried out by the ribosomes, arranging chains of aminoacids by translating base triplets (codons). This process, called protein biosynthesis, is the same in all living beings down to bacteria and even partly in viruses.
+
+The related pattern classes model the simplest part of this translation and transcription process. The combinations of the DNA specific nucleic acids, guanine (G), adenine (A), thymine (T), or cytosine (C) thus serve as a code for a larger set of corresponding amino acids.
+
+The class ProteinBioSynthesis also allows to open a textfile containing genetic information and extract it. In real life, the startcodons and stopcodons distinguish the part of the code representing a protein and the one that remains unused (link::Classes/Ptranscribe::).
+
+
+For examples, see the subclasses, in particular link::Classes/AminoacidPattern::.
+
+
+
+CLASSMETHODS::
+
+method::new
+Return a new pattern from a genome
+
+argument::genome
+The genome data, a string containing the characters representing the four nucleic acids: guanine (G), adenine (A), thymine (T), or cytosine (C).
+
+method::transcriptionDict
+The mapping of the 64 tripletIDs to the 21 aminoacids, represented as integer numbers (see below).
+The genetic code is called 'degenerated', because it is partly redundant.
+By default, this is the standard translation table for most higher forms of life, the interpretation varies in different organisms.
+
+method::tripletDict
+Internally used to map from triplets (all combinations of the bases) to tripletIDs.
+
+method::bases
+
+A string of four characters representing the bases.
+
+method::aminoacids
+
+An IdentityDictionary mapping aminoacid ids to aminoacid names:
+
+table::
+## -1 ||	stop,		// stopcodon
+## 0 ||		methionin	// startcodon
+## 1 ||		phenylalanin
+## 2 || 		leucin
+## 3 || 		serin
+## 4 || 		tyrosin
+## 5 || 		cystein
+## 6 || 		tryptophan
+## 7 || 		prolin
+## 8 || 		histidin
+## 9 ||		glutamin
+## 10 ||		arginin
+## 11 ||		isoleucin
+## 12 ||		threonin
+## 13 ||		asparagin
+## 14 ||		lysin
+## 15 ||		valin
+## 16 ||		alanin
+## 17 ||		asparaginacid
+## 18 ||		glutaminacid
+## 19 ||		glycin
+::
+
+method::startcodon
+The triplet that marks the beginning of a valid sequence. This is only used by link::Classes/Ptranscribe::
+
+method::stopcodon
+The triplet that marks the end of a valid sequence. This is only used by link::Classes/Ptranscribe::
+
+INSTANCEMETHODS::
+
+method::translate
+Translate nucleic acid triplets to aminoacid id. This is what in protein bio synthesis is called "translation".
+
+argument::triplet
+A string of three characters from the nucleic acids.
+
+code::
+ProteinBioSynthesis().translate("atttggatac");
+::
+
+method::translateBack
+Translate from aminoacid id to  nucleic acid triplets.
+
+argument::aminoacidIndex
+An integer index.
+
+method::genome
+The nucleic acids represented as a link::Classes/String::.
+
+method::verbose
+If set to true, print information to the post window.
+
+method::transcribe
+Transcription is the process that produces the so called codons, the aminoacids from nucleic acid triplets.
+
+code::
+ProteinBioSynthesis().transcribe("atttggatac");
+::
+
+method::loadData
+Load a genome data file (see example file)
+
+argument::path
+The file path.
+
+argument::finishFunc
+A function to be called when the reading has finished.
+
+code::
+x = AminoacidPattern.new.loadData("data/escherichia-coli".resolveRelative);
+x.genome.postln; // the nucleic acids
+x.asStream.all; // the aminoacids by id
+x.asStream.all.collect { |x| ProteinBioSynthesis.aminoacids.at(x) }; // the aminoacids by name
+
+::

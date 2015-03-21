@@ -1,0 +1,97 @@
+TITLE:: Pmindread
+summary:: A SuperCollider Pattern implementation of Claude Shannon's "Mind-Reading (?) Machine from 1953"
+categories::Pattern
+RELATED::Classes/MindReadingMachine, Classes/Pfsm
+
+A pattern that uses a dynamically growing set of link::Classes/MindReadingMachine::s to map an input stream of values (interpreted as the player's moves) to an output stream of machine guesses. This makes it easy to reinterpret a zero sum game musically as a non zero sum call and response pattern.
+
+
+CLASSMETHODS::
+
+METHOD::new
+
+Return a new instance.
+
+
+ARGUMENT::pattern
+Input pattern, representing the player's moves. In the default case this should be values of zero and non-zero, ususally one.
+
+ARGUMENT::machineIndex
+If the pattern should be sent to several mind reading (?) machines, a stream of integer indices can be passed in to redirect the inputs. The machiens are created onthe fly.
+
+ARGUMENT::behaviorSize
+The size of the behavioral pattern which the machine looks for. A typical pattern is "The player loses, plays differently, and  loses", which is size 3: code::[\loses, \differently, \loses]::. Sizes must be code::2n + 3::. The maximum table size is code::2^size::, so default is 8.
+
+ARGUMENT::strategyClass
+By default a ShannonMindReadingStrategy, which can be subclassed to support other games. It implements two messages: differentValue (which returns the "opposite" value), and the comparison sameOrDifferent (which takes two guesses).
+
+INSTANCEMETHODS::
+
+METHOD::behaviorSize
+Return the behaviorSize (see under link::#*new::)
+
+METHOD::machineIndex
+Return the machineIndex (see under link::#*new::)
+
+METHOD::strategyClass
+Return the strategyClass (see under link::#*new::)
+
+METHOD::pattern
+Get or set the input pattern (see under link::#*new::)
+
+METHOD::verbose
+If set to true, the machines will post information.
+
+EXAMPLES::
+
+CODE::
+
+// replace default synthdef
+(
+SynthDef(\default, { arg out=0, freq=440, amp=0.1, pan=0, gate=1;
+	var z;
+	z = RLPF.ar(
+		Mix.new(Pulse.ar(freq + [0, Rand(-0.4,0.0), Rand(0.0,0.4)] / 4, 0.3, 0.3)),
+		XLine.kr(Rand(4000, 500), Rand(2500, 200), 1),
+		0.02
+	) * Linen.kr(gate, 0.01, 0.7, 0.03, 2);
+	OffsetOut.ar(out, Pan2.ar(z, pan, amp));
+}, [\ir]).add;
+)
+
+Pdefn(\mind, Pseq([1, 0, 1, 1, 0, 1], inf));
+
+(
+Pdef(\x,
+	Pbind(
+		\amp, Pmindread(Pdefn(\mind)) * 0.1,
+		\note, -1,
+		\dur, 0.2
+	)
+).play
+)
+(
+Pdef(\y,
+	Pbind(
+		\amp, Pmindread(Pdefn(\mind)) * 0.1,
+		\note, 7,
+		\dur, 0.2
+	)
+).play
+)
+
+// live code a few inputs.
+Pdefn(\mind, Pseq([1, 0], inf))
+Pdefn(\mind, Pseq([0, 1, 1, 0], inf))
+Pdefn(\mind, Pseq([0, 1, 0, 1, 0, 1, 0, 1, Prand([1, 0], 1)], inf))
+Pdefn(\mind, Pseq([1, 0, 1, 1, 1, 1, 0], inf))
+Pdefn(\mind, Pmindread(Pseq([1, 0, 1, 1, 0], inf)))
+
+Pdef(\x).stop;
+Pdef(\y).stop;
+
+// recover original default synthdef
+Event.makeDefaultSynthDef;
+
+::
+	

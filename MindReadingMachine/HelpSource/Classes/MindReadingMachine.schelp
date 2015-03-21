@@ -1,0 +1,202 @@
+TITLE:: MindReadingMachine
+summary:: A SuperCollider implementation of Claude Shannon's "Mind-Reading (?) Machine from 1953"
+categories::Streams-Patterns-Events
+RELATED::Classes/Pmindread, Classes/Pfsm
+
+
+DESCRIPTION::
+
+This machine that plays the "odds and evens" game with some external agent is inspired by game theory and American Romantic literature has had a wide reception in psychoanalysis and media theory by way of Jacques Lacan.FOOTNOTE::Cf. The Seminar of Jacques Lacan, Book II: The Ego in Freud's Theory and in the Technique of Psychoanalysis (ed. J-A Miller), N.Y.: Norton, 1988. 1954-1955::
+
+
+STRONG::Excerpt from the original memorandum::
+
+Here follows an excerpt quoted from: Claude E. Shannon: EMPHASIS::A Mind-Reading (?) Machine::, Bell Laboratories Memorandum; March 18, 1953.
+
+
+"This machine is a somewhat simplified model of a machine designed by D. W. Hagelbarger. It plays what is essentially the old game of matching pennies or "odds and evens." This game has been discussed from the game theoretic angle by von Neumann and Morgenstern, and from the psychological point of view by Edgar Allen Poe in the "The Purloined Letter." Oddly enough, the machine is aimed more nearly at Poe's method of play than von Neumann's.
+
+To play against the machine, the player should guess out loud either "right" or "left." The center button of the machine is then pressed and the machine will light up either the right or left light. If the machine matches the player, the machine wins, otherwise the player wins. The player should then move the key switch in the direction corresponding to the choice he made. The machine will then register a win for the machine or the player, as the case may be, by shooting a ball into the proper glass tube. The overall score against all players since the machine was started is shown on the two counters visible through the front panel.
+
+
+The Strategy of Operation
+
+Basically, the machine looks for certain types of patterns in the behavior of its human opponent. If it can find these patterns it remembers them and assumes that the player will follow the patterns the next time the same situation arises. The machine also contains a random element. Until patterns have been found, or if an assumed pattern is not repeated at least twice by the player, the machine chooses its move at random.
+The types of patterns remembered involve the outcome of two successive plays (that is, whether or not the player won on those plays) and whether he changed his choice between them and after them. There are eight possible situations and, for each of these, two things the player can do. The eight situations are:
+
+list::
+## The player wins, plays the same, and wins. He may then play the same or differently.
+## The player wins, plays the same, and loses. He may then play the same or differently.
+## The player wins, plays differently, and wins. He may then play the same or differently.
+## The player wins, plays differently, and loses. He may then play the same or differently.
+## The player loses, plays the same, and wins. He may then play the same or differently.
+## The player loses, plays the same, and loses. He may then play the same or differently.
+## The player loses, plays differently, and wins. He may then play the same or differently.
+## The player loses, plays differently, and loses. He may then play the same or differently."
+::
+
+STRONG::The SuperCollider Implementation::
+
+In SuperCollider, a mind reading (?) machine is a link::Classes/Stream::. It takes the player's value as an argument (zero or one) and returns the machine's corresponding guess. If the two are the same, the machine guessed correctly and has thus won, otherwise it has lost.
+
+The current implementation generalizes the Shannon/Hagelbarger schema and supports longer patterns, as well as alternative games with different tokens (the latter requires the implementation of a strategyClass).
+
+Its musical application allows to reinterpret a zero sum game as a non zero sum call and response pattern.
+
+
+IMAGE::mind-reading-machine-paderborn-01.png#Shannon's machine at the computer museum in Paderborn::
+
+IMAGE::inside-mind-reading-machine.png#A superficial view inside the machine.::
+
+
+CLASSMETHODS::
+
+METHOD::new
+
+Return a new instance.
+
+ARGUMENT::patternSize
+The size of the behavioral pattern which the machine looks for. A typical pattern is "The player loses, plays differently, and  loses", which is size 3: code::[\loses, \differently, \loses]::. Sizes must be code::2n + 3::. The maximum table size is code::2^size::, so default is 8.
+
+ARGUMENT::strategyClass
+By default a ShannonMindReadingStrategy, which can be subclassed to support other games. It implements two messages: differentValue (which returns the "opposite" value), and the comparison sameOrDifferent (which takes two guesses).
+
+INSTANCEMETHODS::
+
+private::getCurrentStrategy, updateMemory, stackIsFull
+
+SUBSECTION::Stream Interface
+
+METHOD::next
+In exchange for an external input the machine returns a guess of that input. You have to trust that it generated this in advance and doesn't just look at the input directly. Alternatively, you can look at the prediction (but that would be cheating) or at the source code.
+
+ARGUMENT::call
+The call value for which the machine gives a response. This is either code::0:: or code::1::
+
+
+CODE::
+m = MindReadingMachine.new;
+m.verbose = true;
+m.next(1); // play one
+m.next(0); // then play zero
+::
+
+
+METHOD::reset
+Reset the internal memory.
+
+SUBSECTION::Introspection
+
+METHOD::prediction
+The machine always generates a prediction of the next input value, which is kept in this instance variable. You can have a look at it, but that is cheating.
+
+CODE::
+m = MindReadingMachine.new;
+m.verbose = true;
+m.prediction; // peek into machine prediction ...
+m.next(1); // play one
+m.prediction; // peek into machine prediction ...
+m.next(0); // then play zero
+::
+
+METHOD::prose
+Prints the strategies the machine has accumulated in Shannons's prose form.
+CODE::
+m = MindReadingMachine.new;
+100.do { m.next([0, 1].choose) };
+m.prose;
+::
+
+METHOD::patternSize
+The size of the behavioral pattern which the machine looks for. See: link::#*new::.
+
+METHOD::strategyClass
+The type of strategy to look for. See: link::#*new::.
+
+
+METHOD::prev
+The previous move of the player.
+
+METHOD::stack
+The past few steps of the player (maximally link::#-patternSize::).
+
+METHOD::table
+The stored and ordered types of behavior.
+
+METHOD::verbose
+If set to true, extra information is printed to the post window.
+
+
+SUBSECTION::Examples
+CODE::
+
+(
+a = MindReadingMachine.new.verbose_(false);
+b = MindReadingMachine.new.verbose_(false);
+c = 0;
+d = 0;
+)
+
+(
+fork {
+	loop {
+		y = a.next(x ? [0, 1].choose);
+		if(x == y) { c = c + 1 };
+		x = b.next(y);
+		x.postln;
+		if(x == y) { d = d + 1 };
+		y.postln;
+		0.2.wait;
+		x = y;
+	}
+}
+)
+
+// sonified
+(
+fork {
+	loop {
+		y = a.next(x ? [0, 1].choose);
+		if(x == y) { c = c + 1 };
+		x = b.next(y);
+		x.postln;
+		if(x == 1) { (note: 6, sustain: 0.1).play };
+		if(x == y) { d = d + 1 };
+		y.postln;
+		if(y == 1) { (note: 17, sustain: 0.1).play };
+		0.2.wait;
+		x = y;
+	}
+}
+)
+
+(
+fork {
+	loop {
+		y = a.next(x ? [0, 1].choose);
+		if(x == y) { c = c + 1; (note: 0, out: 0, sustain: 0.1, ctranspose:c-d).play };
+		x = b.next(y);
+		x.postln;
+		0.2.wait;
+		if(x == y) { d = d + 1; (note: 0, out: 1, sustain: 0.1, ctranspose:d-c).play  };
+		y.postln;
+		0.2.wait;
+		x = y;
+	}
+}
+)
+
+y = 0;
+
+
+
+a.verbose = true;
+b.verbose = true;
+
+a.verbose = false;
+b.verbose = false;
+
+
+
+a.prose;
+::

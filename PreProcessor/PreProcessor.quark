@@ -1,0 +1,8 @@
+(
+	\name: 			"PreProcessor",
+	\summary:		"a class to implement little languages with different syntax",
+	\author: 		"Julian Rohrhuber",
+	\country: 		"Germany",
+	\since: 		"2007",
+	\status:		"stable"
+)

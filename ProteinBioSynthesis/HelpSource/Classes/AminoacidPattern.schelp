@@ -1,0 +1,173 @@
+CLASS::AminoacidPattern
+summary::A pattern that translates a genome string to a stream of aminoacid indices.
+
+categories::Streams-Patterns-Events, Sonification
+related::ProteinBioSynthesis, CodonPattern, AminoacidPattern
+
+table::
+## -1 ||	stop,		// stopcodon
+## 0 ||		methionin	// startcodon
+## 1 ||		phenylalanin
+## 2 || 		leucin
+## 3 || 		serin
+## 4 || 		tyrosin
+## 5 || 		cystein
+## 6 || 		tryptophan
+## 7 || 		prolin
+## 8 || 		histidin
+## 9 ||		glutamin
+## 10 ||		arginin
+## 11 ||		isoleucin
+## 12 ||		threonin
+## 13 ||		asparagin
+## 14 ||		lysin
+## 15 ||		valin
+## 16 ||		alanin
+## 17 ||		asparaginacid
+## 18 ||		glutaminacid
+## 19 ||		glycin
+::
+
+CLASSMETHODS::
+
+method::new
+Return a new pattern from a genome that returns a stream of aminoacid ids.
+
+argument::genome
+The genome data, a string containing the characters representing the four nucleic acids: guanine (G), adenine (A), thymine (T), or cytosine (C).
+
+code::
+(
+b = CodonPattern("atatatacccga", 1);
+t = b.asStream.all;
+)
+::
+
+code::
+(
+b = AminoacidPattern("atatatacccga", 1);
+t = b.asStream.all;
+)
+::
+
+
+code::
+// load from a file
+(
+x = AminoacidPattern.new.loadData("data/escherichia-coli".resolveRelative);
+x.genome.postln; // the nucleic acids
+x.asStream.all.postcs; // the aminoacids
+)
+
+// sonify the aminoacids by mapping them to degrees in a TET-72 scale:
+
+(
+SynthDef(\amino, { | out, freq = 440, sustain = 1.0, pan, p, amp = 0.1 |
+	var u;
+	u = EnvGen.ar(Env.perc(0.001, sustain), doneAction:2) *
+	SinOsc.ar(freq,
+		SinOsc.ar(freq * p, 0, BrownNoise.kr(pi/8), 0.5pi)
+	);
+	Out.ar(out, Pan2.ar(u, pan, amp));
+
+}).add;
+)
+
+(
+Pbind(
+	\instrument, \amino,
+	\degree, x,
+	\stepsPerOctave, 72,
+	\dur, 0.1,
+	\legato, 0.8
+).play;
+)
+
+::
+
+section::Mutation
+Because the chains of aminoacids that constitute proteins are encoded by nucleic acids (three for one aminoacid), the modification of a single element causes characteristic shifts. This is the simplest, most trivial level of what is called "mutation".
+
+code::
+// mutations one
+(
+var string, list, pat;
+string = "ggaacgggtactattatttattataaccagggc";
+
+// mutation by replacing a single nuclein acid by another:
+// list = Array.fill(4, { string = string.collect({ arg char; if(0.1.coin, { $T }, {char })  })  });
+
+// mutation by adding a single nuclein acid:
+list = {
+	var new = String.new;
+	string.size.do({ |i|
+		new = new.add(string.at(i));
+		if(0.1.coin, { new.add($t) }); // mutate by shifting to t
+	});
+	string = new;
+}.dup(4);
+
+list = list.collect({ |item| AminoacidPattern(item, 4, 0) });
+
+pat = Pseq(list, inf);
+
+Pbind(
+	\instrument, \amino,
+	\degree, pat,
+	\stepsPerOctave, 72,
+	\dur, 0.1,
+	\legato, 1.0
+).play;
+
+)
+// or this one:
+
+(
+Pbind(
+	\instrument, \amino,
+	\degree, x - 4 ,
+	\stepsPerOctave, 24,
+	\dur, 0.13*3,
+	\p, x / 20,
+	\legato, Prand([1, 0.5, 2], inf) * 1.4,
+	\pan, x / 10 - 1,
+	\amp, Pbrown(0.01, 0.15, 0.05, inf)
+).play;
+)
+
+::
+
+
+code::
+// a piece from 2001
+
+//_____genes you have to enyoy slowly
+(
+SynthDef("amino", { arg out, freq=440, sustain=1.0, pan, p, amp=0.1;
+	var u;
+	u = Line.kr(1, 0, sustain, doneAction:2) *
+			SinOsc.ar(freq,
+				SinOsc.ar(freq * p, 0, BrownNoise.kr(pi/8))
+			);
+	Out.ar(out, Pan2.ar(u, pan, amp));
+
+}).store;
+)
+
+x = AminoacidPattern.new.loadData("data/escherichia-coli".resolveRelative);
+
+
+(
+Pbind(
+	\instrument, \amino,
+	\degree, x - 4 ,
+	\stepsPerOctave, 24,
+	\dur, 0.13*3,
+	\p, x / 20,
+	\legato, Prand([1, 0.5, 2], inf) * 1.4,
+	\pan, x / 10 - 1,
+	\amp, Pbrown(0.01, 0.15, 0.05, inf)
+).play;
+)
+::
+
