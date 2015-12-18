@@ -20,7 +20,7 @@ Download the latest release from here:
 
 https://github.com/supercollider-quarks/downloaded-quarks/releases
 
-Unpack it and move it to:
+Unpack it and move it to your `Platform.userAppSupportDir`:
 
     # OS X
     ~/Library/Application Support/SuperCollider/downloaded-quarks
