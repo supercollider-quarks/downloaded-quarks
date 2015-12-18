@@ -25,7 +25,13 @@ Unpack it and move it to:
     # OS X
     ~/Library/Application Support/SuperCollider/downloaded-quarks
 
-Restart SuperCollider if its running. The Quarks interface will now see these Quarks and allow you to browse and install them.
+    # Linux
+    ~/.local/share/SuperCollider/downloaded-quarks
+
+    # Windows
+    C:\Users\<USERNAME>\AppData\Local\SuperCollider\downloaded-quarks
+    
+Restart SuperCollider if its running. The Quarks interface will now see these Quarks as already downloaded and allow you to browse and install them.
 
 
 ## Using Quarks
