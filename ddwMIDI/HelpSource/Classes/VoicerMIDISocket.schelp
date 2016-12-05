@@ -1,0 +1,223 @@
+TITLE:: VoicerMIDISocket
+summary:: Directs note-on/off messages to a Voicer object
+categories:: External Control>MIDI
+related:: Classes/AbstractMIDISocket, Classes/Voicer, Guides/ddwMIDI_Guide
+
+DESCRIPTION::
+VoicerMIDISocket makes it convenient to play a link::Classes/Voicer:: by MIDI keyboard.
+
+There is a strict division of labor:
+
+list::
+## link::Classes/Voicer:: handles all interaction with the server. It provides the programmatic interface to trigger and release notes (using frequency as the note ID), and manage "global controls" (e.g., a filter frequency that should always be the same across all notes).
+## VoicerMIDISocket receives MIDI messages and uses Voicer's programmatic interface to play the notes. It also includes convenience methods to attach the Voicer's global controls to link::Classes/VoicerMIDIController:: responders.
+::
+
+MIDI note data are sent to the Voicer as follows:
+
+definitionlist::
+## Note number || Converted to frequency in Hz, and passed to the synth's code::freq:: argument. The conversion is done by the socket's link::#-midiToFreq:: function. If this function is not provided, then link::#*defaultMidiToFreq:: is used.
+## Velocity || Divided by 127 and passed to the synth's code::gate:: argument. The SynthDef can convert this to an amplitude using link::Classes/Latch:: and some range mapping: e.g., code::Latch.kr(gate, gate).linlin(0, 1, 0.1, 0.5)::.
+::
+
+The note data are also provided to an event pattern that supplies arbitrary arguments for each note. See link::#-noteOnArgsPat::.
+
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new instance. Arguments are:
+
+Definitionlist::
+## chan || The messages' source. See link::Guides/ddwMIDI_Guide#Identifying MIDI channels::.
+## lo || The lowest MIDI note to which this socket will respond.
+## hi || The highest MIDI note to which this socket will respond.
+## noteOnPat || See link::#-noteOnArgsPat::.
+## midi2Freq || A custom function to translate MIDI note number into frequency. If not provided, the default function will be used; see link::#*defaultMidiToFreq::.
+::
+
+returns:: The socket instance.
+
+
+METHOD:: defaultMidiToFreq
+The default function to convert the incoming MIDI note number into frequency (Hz). During library initialization, this is assigned code::_.midicps::. You may change this function at any time, and it will apply to any new VoicerMIDISockets created in the future. It does not retroactively alter existing sockets.
+
+This function must be deterministic. link::Classes/Voicer:: will fail to release notes correctly if this function returns different frequencies for the same note number.
+
+PRIVATE:: initClass
+
+
+INSTANCEMETHODS::
+
+COPYMETHOD:: AbstractMIDISocket -free
+
+METHOD:: panic
+Calls the target Voicer's link::Classes/Voicer#-panic#panic:: method, shutting off all notes. Purely a convenience.
+
+
+Subsection:: Member variables
+
+METHOD:: lowkey
+The lowest MIDI note to which this socket will respond. With code::hikey::, this variable supports keyboard splits by creating multiple VoicerMIDISockets on the same channel, with different key ranges.
+
+
+METHOD:: hikey
+The highest MIDI note to which this socket will respond.
+
+
+METHOD:: transpose
+A number of semitones to add to the note number, before converting to frequency. May be fractional, in which case it also serves as a tuning parameter.
+
+
+METHOD:: midiToFreq
+A custom function to translate MIDI note number into frequency. See link::#*defaultMidiToFreq::.
+
+
+METHOD:: noteOnArgsPat
+An emphasis::event pattern:: (e.g., link::Classes/Pbind::) providing additional argument values to the Voicer. The pattern can access note number and velocity by code::Pkey(\midinote):: and code::Pkey(\velocity)::, respectively. All key-value pairs in the pattern's output events will be passed to the Voicer as note-onset synth arguments. Uses:
+
+list::
+## Map note number or velocity onto Voicer synth parameters.
+## Randomize, or otherwise algorithmically generate, parameter values per note. For example, each note could play at a random pan position.
+::
+
+code::
+// assuming 'k' is a VoicerMIDISocket,
+// map velocity onto amp, and randomize 'pan'
+
+k.noteOnArgsPat = Pbind(
+	\amp, Pkey(\velocity).linlin(0, 127, 0.05, 0.25),
+	\pan, Pwhite(-1.0, 1.0, inf)
+);
+::
+
+METHOD:: noteOnArgsEvent
+An link::Classes/Event:: containing default values to provide to code::noteOnArgsPat::.
+
+
+Subsection:: Global controls
+
+The following methods interface with emphasis::global controls:: in the Voicer. Once a control is mapped globally, it makes sense to set its value using a physical continuous controller.
+
+The connection between MIDI CC and global control is handled by link::Classes/VoicerMIDIController::. You may use this class directly. In most cases, though, it's easier if the VoicerMIDISocket "owns" the controllers, so that (for instance) freeing the socket will also release the controllers.
+
+METHOD:: addControl
+Adds a MIDI controller to this socket instance. Two possible cases:
+
+list::
+## The voicer emphasis::already has:: a global control under this name: The new MIDI controller will point to the existing global control. (In this case, the code::value:: and code::spec:: arguments are optional. If provided, they won't be used.)
+## The voicer emphasis::does not have:: a global control for this name: The code::addControl:: method will create the global control in the voicer for you, and attach the MIDI controller. This is provided for convenience.
+::
+
+
+ARGUMENT:: ccnum
+The controller number. See link::Guides/ddwMIDI_Guide#Controller_Numbers::.
+
+ARGUMENT:: name
+The synth argument name (as a Symbol).
+
+ARGUMENT:: value
+If a new global control is being created (because none existed), this is the initial value. (If a global control already existed, this is ignored.)
+
+ARGUMENT:: spec
+If a new global control is being created (because none existed), this is the link::Classes/ControlSpec::. (If a global control already existed, this is ignored.)
+
+ARGUMENT:: overrideChan
+By default (if this argument is not given), then MIDI controller will be created on the same MIDI channel as the socket. You may specify a different channel here -- for instance, if you have a full-size keyboard without many continuous controllers, and another device with several knobs, the socket can receive notes from the keyboard, and you can create controller mappings to the other device.
+
+returns:: The socket instance (not the new MIDI controller object).
+
+
+METHOD:: removeControl
+Disconnect and remove a VoicerMIDIController.
+
+ARGUMENT:: control
+A way to identify the controller to remove. One of the following:
+
+list::
+## A VoicerMIDIController object.
+## A link::Classes/CControl:: object (referring to the MIDI controller number).
+## A code::\symbol:: referring to the synth parameter name.
+## An integer for the MIDI controller number.
+::
+
+returns:: The socket instance.
+
+
+METHOD:: searchControl
+Look up a VoicerMIDIController (attached to this socket) by the parameter name.
+
+ARGUMENT:: control
+A code::\symbol:: referring to the synth parameter name.
+
+returns:: The VoicerMIDIController instance.
+
+
+METHOD:: ccs
+An Array, containing the VoicerMIDIControllers attached to this socket.
+
+
+METHOD:: searchControlNum
+Look up a VoicerMIDIController (attached to this socket) by the controller number.
+
+ARGUMENT:: control
+An integer or code::CControl:: instance.
+
+returns:: The VoicerMIDIController instance.
+
+
+Subsection:: General/inherited methods
+
+COPYMETHOD:: AbstractMIDISocket -parent
+COPYMETHOD:: AbstractMIDISocket -enable
+COPYMETHOD:: AbstractMIDISocket -disable
+COPYMETHOD:: BasicMIDISocket -active
+COPYMETHOD:: AbstractMIDISocket -clear
+COPYMETHOD:: BasicMIDISocket -noteOn
+COPYMETHOD:: BasicMIDISocket -noteOff
+
+PRIVATE:: init, active, clear, noteOff, noteOn
+
+EXAMPLES::
+
+code::
+(
+SynthDef(\synthbass, { |out, gate = 1, freq = 440, freqlag|
+	var amp = Latch.kr(gate, gate).linlin(0, 1, 0.1, 0.35),
+	sig = Mix(Saw.ar(Lag.kr(freq, freqlag) * [1, 1.006])),
+	feg = EnvGen.kr(Env([9000, 800], [0.1], \exp)),
+	eg = EnvGen.kr(Env.adsr(0.01, 0.08, 0.6, 0.1), gate, doneAction: 2);
+	sig = RLPF.ar(sig, feg, 0.4, amp);
+	Out.ar(out, (sig * eg).dup);
+}).add;
+)
+
+~bass = MonoPortaVoicer(1, \synthbass).portaTime_(0.1);
+
+~default = Voicer(20, \default);
+
+// To create a keysplit:
+// Create one socket, pointing to one Voicer, responding to a range of MIDI notes
+// Create a second socket, on another Voicer, responding to a different range
+// Here, the bass responds up to B1 (if we count middle-C as C3)
+k = VoicerMIDISocket([\all, \omni], ~bass, 0, 47);
+l = VoicerMIDISocket([\all, \omni], ~default, 48, 127);
+
+// auto-create a new global control, and MIDI-map it
+// modwheel will now pan the upper notes
+l.addControl(1, \pan, 0, \bipolar);
+
+// use noteOnArgsPat to map velocity to amplitude for ~default
+// (note that the bass already does this, using 'gate' in the SynthDef)
+l.noteOnArgsPat = Pbind(
+	\amp, Pkey(\velocity).linlin(0, 127, 0.1, 0.4)
+);
+
+l.transpose = 0.5;  // quarter-tone fun vs. bass
+
+// clean up
+k.free;
+l.free;  // this also disconnects the CC1 controller
+~bass.free;
+~default.free;
+::

@@ -407,13 +407,15 @@ VoicerGCProxy {
 
 	set { arg value, updateGUI = true, latency, resync = true;
 		gc.notNil.if({ gc.set(value, false, latency, resync) });
-		this.changed((what: \value, updateGUI: updateGUI, resync: resync));
+		// 16-0504: "updateBus: false" because gc.set already updated the bus
+		this.changed((what: \value, updateGUI: updateGUI, resync: resync, updateBus: false));
 	}
 
 	update { arg theChanger, args;
 			// should only do something if it's the result of the slider being moved
-		case { gc.notNil and: { theChanger.isKindOf(NumberEditor) } }
-				{ gc.set(theChanger.value, false); }	// false = don't reupdate gui
+		// I believe this first case will never happen anymore
+		case //{ gc.notNil and: { theChanger.isKindOf(NumberEditor) } }
+				// { gc.set(theChanger.value, false); }	// false = don't reupdate gui
 			{ args.respondsTo(\keysValuesDo) }	// standard dictionary check
 				{	(args[\what] == \modelWasFreed).if({
 						this.modelWasFreed;
@@ -478,7 +480,7 @@ VoicerGCProxy {
 	// into the proxy and the display will update
 	// this is a private class -- do not call outside the context of gui-ing a voicer or proxy
 VoicerGCView {
-	var	<editor, <editorGUI, <nameView,	// internal
+	var	<editorGUI, <nameView,	// internal
 		<midiDrag,	// make midi routings draggable
 		<model,		// conn to other objects--model should be a VoicerGCProxy
 		<parentGui;
@@ -495,7 +497,6 @@ VoicerGCView {
 			// but it shouldn't if voicerGUI was passed in as argument
 		(voicerGUI = voicerGUI ?? { model.parentProxy.editor }).notNil.if({
 			{
-			editor = NumberEditor(model.value, model.spec);
 			midiDrag = GUI.dragBoth.new(voicerGUI.controlView, Rect(0, 0, 30, 20))
 				.align_(\center)
 				.font_(GUI.font.new("Helvetica", 10))
@@ -504,9 +505,12 @@ VoicerGCView {
 				})
 				.beginDragAction_({ model.midiControl });
 			nameView = GUI.staticText.new(voicerGUI.controlView, Rect(0, 0, 100, 20));
-			editorGUI = editor.gui(voicerGUI.controlView, Rect(0, 0, 150, 20));
-			editor.addDependant(model);
-			voicerGUI.controlView.decorator.nextLine;  // insure correct formatting for next
+				editorGUI = LayoutValueSlider(voicerGUI.controlView, Rect(0, 0, 150, 20),
+					gcproxy.value, gcproxy.spec, 40)
+				.action_({ |view|
+					gcproxy.set(view.value, false);
+				});
+			voicerGUI.controlView.startRow; //.decorator.nextLine;  // insure correct formatting for next
 
 			this.displayNameSet;		// displays with midi routing if any
 			doRefresh.if({ voicerGUI.sizeWindow; });  // make sure it shows
@@ -516,12 +520,10 @@ VoicerGCView {
 	}
 
 	remove { arg doRefresh = true, resizeNow = true;
-		editor.removeDependant(model);
 		this.releaseFromDependencies;
 		doRefresh.if({  // doRefresh is true when removing a control, false when freeing whole gui
 			this.removeViews(resizeNow);
 		});
-		editor = nil;
 		editorGUI = nil;
 	}
 
@@ -556,7 +558,11 @@ VoicerGCView {
 	update { |theChanger, args|
 		args.notNil.if({
 			switch(args[\what])
-				{ \value } { this.updateView(args[\updateBus] ? true) }
+				{ \value } {
+					if(args[\updateGUI] ? true) {
+						this.updateView(args[\updateBus] ? true);
+					};
+				}
 				{		// default action, update gui
 					this.updateView(false);
 					this.updateStatus;
@@ -568,11 +574,11 @@ VoicerGCView {
 			// nameView.notClosed is an indirect check
 			// if window has closed, nameView.notClosed will be false
 			// and there is no need to update the views
-		if(editor.notNil) {
+		if(editorGUI.notNil) {
 			{
 				if(nameView.notClosed) {
-					editor.value_(model.value, false);
-					updateBus.if({ editor.changed }, { editorGUI.update });
+					editorGUI.spec_(model.spec).value_(model.value);
+					if(updateBus) { model.set(model.value, false) };
 				};
 				nil
 			}.defer;
@@ -582,13 +588,10 @@ VoicerGCView {
 	updateStatus {
 		this.displayNameSet;
 			// if visible, update spec and value because
-		// the proxy might be pointing to something else now
+			// the proxy might be pointing to something else now
 		{
-			if(editor.notNil and: { nameView.notClosed }) {
-				editor.removeDependant(model);	// changing editor must not affect model yet
-				editor.spec_(model.spec).value_(model.value);
-				editorGUI.update;
-				editor.addDependant(model);
+			if(editorGUI.notNil and: { nameView.notClosed }) {
+				editorGUI.spec_(model.spec).value_(model.value);
 			};
 		}.defer;
 	}

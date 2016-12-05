@@ -1,0 +1,9 @@
+(
+    \name:         "ServerOptionsGui",
+    \path:         "ServerOptionsGui",
+    \summary:      "A GUI tool to set Server options",
+    \author:       "Yvan Volochine",
+    \version:      "0.1",
+    \url:          "https://github.com/gusano/ServerOptionsGui",
+    \isCompatible: { Main.versionAtLeast(3, 6) },
+)

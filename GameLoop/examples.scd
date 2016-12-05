@@ -1,16 +1,25 @@
+
+/*
+These example are for development and should not be used as a reference. For actual 
+examples refer to the proper help files :)
+*/
+
+
 ( // GENERAL SETUP
   //~decoder = GameLoopDecoder.newStereo;
   ~decoder = GameLoopDecoder.binauralAmbIEM;
   ~gameloop = GameLoop(100, 100, 1).play(0.05);
-  ~gameloop.makeEdgeWalls;
+  /* ~gameloop.makeEdgeWalls; */
   ~gameloop.gui;
+
 
   //some more walls for tests
   a = Wall(RealVector2D[5,10], RealVector2D[13, 29]);
   b = Wall(RealVector2D[20,20], RealVector2D[40, 35]);
-  ~gameloop.entManager.addWall(a);
-  ~gameloop.entManager.addWall(b);
+  /* ~gameloop.entManager.addWall(a); */
+  /* ~gameloop.entManager.addWall(b); */
 )
+
 ( // CAMERA SETUP
   ~camera = Camera2D(
     ~gameloop.world,
@@ -25,6 +34,36 @@
 
   ~camera.attach(~camrep);
 );
+
+( // SWITCH SPACE TESTS
+~gameloop.switchSpace(20, 20, 0.5);
+~gameloop.switchSpace(200, 200, 0.5);
+~gameloop.switchSpace(40, 40, 1);
+~gameloop.switchSpace(40, 30, 1);
+~gameloop.switchSpace(80, 80, 0.5);
+)
+
+( // simple example
+  ~entity = Vehicle(
+    ~gameloop.world,
+    position: ~gameloop.center + 0.3,
+    velocity: RealVector2D[0,0],
+    radius: 0.7,
+    maxSpeed: 2.6
+  );
+
+  //a sound rep
+  ~rep = SoundRepresentation(
+    ~gameloop.repManager,
+    /* input:{BPF.ar(in:WhiteNoise.ar(0.2), freq: rrand(100, 19000.0), rq:0.3)} */
+  );
+  ~entity.attach(~rep);
+
+  //and a visual representation
+  ~visrep = VisualRepresentation(~gameloop.repManager, color: Color.green);
+  ~entity.attach(~visrep);
+)
+
 ( // FORCEMANAGER TEST
   3.do{
     { arg wander, forceManager;
@@ -96,7 +135,9 @@
     position: RealVector2D[10,10],
     velocity: RealVector2D[0.5, 0.7],
   );
-)
+
+
+
 
 // -----------------------\
 // ----------------------- \
@@ -252,14 +293,6 @@
   ~camera.remove
   ~gameloop.resetCamera;
 )
-( // SWITCH SPACE TESTS
-~gameloop.makeWalls;
-~gameloop.switchSpace(20, 20, 0.5);
-~gameloop.switchSpace(200, 200, 0.5);
-~gameloop.switchSpace(40, 40, 1);
-~gameloop.switchSpace(40, 30, 1);
-~gameloop.switchSpace(80, 80, 0.5);
-)
 ( // COLLISION TESTS
   ~entity1 = Vehicle(
     ~gameloop.world,
@@ -314,6 +347,10 @@
 
 
 
+
+
+
+
                 GGGGGGGGGGGGG                                                            LLLLLLLLLLL
              GGG.:::::::::::G                                                            L.::::::::L
            GG.:::::::::::::G                                                             L.::::::::L
@@ -336,6 +373,9 @@
                                                                                                                                                    p.::::::p
                                                                                                                                                    p.::::::p
                                                                                                                                                    ppppppppp
+
+
+
 )
 ( // FORCE MANAGER TEST
   a = ForceManager();
@@ -368,4 +408,7 @@
     RealVector2D[ 20.123526692651, 19.959488813858 ]
   );
 )
+
+
+//TESTS
 

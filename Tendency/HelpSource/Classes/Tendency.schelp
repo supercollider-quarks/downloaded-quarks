@@ -1,0 +1,335 @@
+TITLE:: Tendency
+summary:: Creates dynamic random number distributions
+categories:: Randomness
+
+DESCRIPTION::
+Tendency stores data for creating random values where the parameters for the random number generation occur over time.
+
+subsection:: Some important issues regarding Tendency
+
+Though the parameters code::'parX':: and code::'parY':: (see link::#*new:: method below) are gnerally used to describe bounds over time, in certain distributions, these actual parameters may control other aspects of a random distribution. See link::#-cauchyRandAt::, link::#-gaussRandAt:: and link::#-poissonRandAt:: for more details.
+
+subsection:: Using Tendency
+
+The basic usage of Tendency will be through the link::#-at:: method. A random value will be calculated according to the  state of code::'parX':: and code::'parY':: at code::'time':: for a specific code::'dist'::.
+
+Below is a listing of distributions with examples and how arguments will map to parameters; soft::n/a:: means a parameter is not used in a distribution.
+
+strong::Linear distributions:::
+TABLE::
+##	strong::distribution:: || strong::parX:: || strong:: parY:: ||strong::parA::||strong::parB::||strong::more info::
+##	code::\uniform:: || low || high	 || soft::n/a:: || soft::n/a:: || link::#-uniformAt::
+##	code::\lpRand::	 || low || high || soft::n/a::|| soft::n/a:: || link::#-lpRandAt::
+##	code::\hpRand:: || low || high || soft::n/a:: || soft::n/a::|| link::#-hpRandAt::
+##	code::\meanRand:: || low || high || soft::n/a:: || soft::n/a:: || link::#-meanRandAt::
+::
+strong::Non-linear distributions:::
+TABLE::
+##	strong::distribution:: || strong::parX:: || strong:: parY:: ||strong::parA::||strong::parB::||strong::more info::
+##	code::\expRand:: || low || high	|| soft::n/a:: || soft::n/a:: || link::#-expRandAt::
+##	code::\exponential::	|| density || soft::n/a:: || soft::n/a:: || soft::n/a:: ||  link::#-expAt::
+##	code::\gamma:: || mode || soft::n/a:: || soft::n/a:: || soft::n/a:: || link::#-gammaAt::
+##	code::\laplace::	 || dispersion || soft::n/a:: || soft::n/a:: || soft::n/a:: || link::#-laplaceAt::
+##	code::\alaplace:: || dispersion || soft::n/a:: || soft::n/a:: || soft::n/a:: || link::#-alaplaceAt::
+##	code::\hcos:: || dispersion || soft::n/a:: || soft::n/a:: || soft::n/a:: || link::#-hcosAt::
+##	code::\logistic:: || dispersion || soft::n/a:: || soft::n/a::	 || soft::n/a:: || link::#-logisticAt::
+##	code::\poisson:: || mean || soft::n/a:: || soft::n/a:: || soft::n/a:: || link::#-poissonRandAt::
+##	code::\arcsin:: || dispersion || soft::n/a:: || soft::n/a:: || soft::n/a:: || link::#-arcsinAt::
+::
+strong::Symmetrical non-linear distributions:::
+TABLE::
+##	strong::distribution:: || strong::parX:: || strong:: parY:: ||strong::parA::||strong::parB::||strong::more info::
+##	code::\betaRand::	|| low || high	 || lowProb || highProb || link::#-betaRandAt::
+##	code::\cauchy::	 || mean || spread || posOnly|| soft::n/a:: || link::#-cauchyRandAt::
+##	code::\gauss:: || dev || mean || soft::n/a:: || soft::n/a:: || link::#-gaussRandAt::
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+Creates a new code::Tendency:: object. Any of the values below may be a link::Classes/SimpleNumber::, an link::Classes/Env:: or a link::Classes/Function::. If a code::Function:: is used, the current time will be passed into the code::Function::.
+note::The kind of distribution may change the meaning of some of the initial args (e.g., code::'parX':: may be treated as a code::'mean'::).::
+
+ARGUMENT:: parX
+For the most common usage, describes the upper bounds of the distribution.
+
+ARGUMENT:: parY
+For the most common usage, describes the upper bounds of the distribution.
+
+ARGUMENT:: parA
+For some distributions, the control of a specific parameter.
+
+ARGUMENT:: parB
+For some distributions, the control of a specific parameter.
+
+ARGUMENT:: defDist
+A default distribution to use.
+
+returns:: a new code::Tendency::
+
+
+INSTANCEMETHODS::
+
+METHOD:: at
+Basic usage of Tendency.
+
+ARGUMENT:: time
+The time to calculate a random number for.
+
+ARGUMENT:: dist
+The distribution to use. If supplied, the *defDist is overridden.
+
+returns:: Calculated value at time provided.
+
+Discussion::
+code::
+// Basic example
+(
+g = Tendency.new(
+	Env([1.0, 0.5, 1.0], [0.5, 0.5]),
+	Env([0.9, 0.0, 0.9], [0.8, 0.2], [-10, 5]));
+n = 500; // get 500 samples
+o = n.collect({arg i; i = i / n; g.at(i)});
+o.plot(discrete: true);
+)
+
+// Using different distributions with envelopes and time
+(
+a = Tendency.new(Env([0.01, 1.0], [1]), 1.0);
+z = 500.collect({arg i; a.at(i / 500, \gauss)}); // Tendency at takes a time for the Envs
+z.plot(discrete: true, minval: -3, maxval: 3);
+)
+(
+a = Tendency.new(Env([0.01, 1.0], [1]));
+z = 500.collect({arg i; a.at(i / 500, \arcsin)});
+z.plot(discrete: true, minval: 0, maxval: 1);
+)
+::
+
+METHOD:: uniformAt
+Uniform distribution.
+Convenience method for code::.at(time, \uniform)::.
+
+code::
+a = Tendency.new(1.0, 0.0); z = 500.collect({arg i; a.at(i)}); z.plot(discrete: true);
+::
+
+METHOD:: lpRandAt
+Lowpass distribution.
+Convenience method for code::.at(time, \lpRand)::.
+
+code::
+a = Tendency.new(1.0, 0.0); z = 500.collect({arg i; a.at(i, \lpRand)}); z.plot(discrete: true);
+::
+
+METHOD:: hpRandAt
+Highpass distribution.
+Convenience method for code::.at(time, \hpRand)::.
+
+code::
+a = Tendency.new(1.0, 0.0); z = 500.collect({arg i; a.at(i, \hpRand)}); z.plot(discrete: true);
+::
+
+METHOD:: meanRandAt
+Mean (bandpass) distribution.
+Convenience method for code::.at(time, \meanRand)::.
+
+code::
+a = Tendency.new(1.0, 0.0); z = 500.collect({arg i; a.at(i, \meanRand)}); z.plot(discrete: true);
+::
+
+METHOD:: expRandAt
+Exponential distribution.
+Convenience method for code::.at(time, \expRand)::.
+Note that we need to avoid code::0.0::.
+
+code::
+a = Tendency.new(0.0001, 1.0); z = 500.collect({arg i; a.at(i, \expRand)}); z.plot(discrete: true);
+::
+
+METHOD:: expAt
+Exponential distribution.
+Convenience method for code::.at(time, \exponential)::.
+'parX' parameter control on density.
+
+code::
+a = Tendency.new(0.5); z = 500.collect({arg i; a.at(i, \exponential)}); z.plot(discrete: true, minval: 0, maxval: 5);
+a = Tendency.new(1); z = 500.collect({arg i; a.at(i, \exponential)}); z.plot(discrete: true, minval: 0, maxval: 5);
+a = Tendency.new(2); z = 500.collect({arg i; a.at(i, \exponential)}); z.plot(discrete: true, minval: 0, maxval: 5);
+::
+
+METHOD:: gammaAt
+Gamma distribution.
+Convenience method for code::.at(time, \gamma)::.
+'parX' controls mode or peak.
+
+code::
+a = Tendency.new(2.0); z = 500.collect({arg i; a.at(i, \gamma)}); z.plot(discrete: true, minval: 0, maxval: 12);
+a = Tendency.new(4.0); z = 500.collect({arg i; a.at(i, \gamma)}); z.plot(discrete: true, minval: 0, maxval: 12);
+a = Tendency.new(8.0); z = 500.collect({arg i; a.at(i, \gamma)});	z.plot(discrete: true, minval: 0, maxval: 12);
+::
+
+METHOD:: laplaceAt
+Laplace distribution.
+Convenience method for code::.at(time, \laplace)::.
+'parX' value controls dispersion.
+
+code::
+a = Tendency.new(0.01); z = 500.collect({arg i; a.at(i, \laplace)}); z.plot(discrete: true, minval: -3, maxval: 3);
+a = Tendency.new(0.1, 0); z = 500.collect({arg i; a.at(i, \laplace)}); z.plot(discrete: true, minval: -3, maxval: 3);
+a = Tendency.new(1.0, 0); z = 500.collect({arg i; a.at(i, \laplace)}); z.plot(discrete: true, minval: -3, maxval: 3);
+::
+
+METHOD:: alaplaceAt
+Special case of laplace distribution, creates a gap in the centerv (anti-laplace).
+Convenience method for code::.at(time, \alaplace)::.
+'parX' value controls dispersion.
+
+code::
+a = Tendency.new(0.01); z = 500.collect({arg i; a.at(i, \alaplace)}); z.plot(discrete: true, minval: -3, maxval: 3);
+a = Tendency.new(0.1); z = 500.collect({arg i; a.at(i, \alaplace)}); z.plot(discrete: true, minval: -3, maxval: 3);
+a = Tendency.new(1.0, 0); z = 500.collect({arg i; a.at(i, \alaplace)}); z.plot(discrete: true, minval: -3, maxval: 3);
+::
+
+METHOD:: hcosAt
+Hyperbolic cosine distribution.
+Convenience method for code::.at(time, \hcos)::.
+'parX' value controls dispersion.
+
+code::
+a = Tendency.new(0.01); z = 500.collect({arg i; a.at(i, \hcos)}); z.plot(discrete: true, minval: -3, maxval: 3);
+a = Tendency.new(0.1); z = 500.collect({arg i; a.at(i, \hcos)}); z.plot(discrete: true, minval: -3, maxval: 3);
+a = Tendency.new(1.0); z = 500.collect({arg i; a.at(i, \hcos)}); z.plot(discrete: true, minval: -3, maxval: 3);
+::
+
+METHOD:: logisticAt
+Logistic distribution.
+Convenience method for code::.at(time, \logistic)::.
+'parX' value controls dispersion.
+
+code::
+a = Tendency.new(0.01); z = 500.collect({arg i; a.at(i, \logistic)}); z.plot(discrete: true, minval: -3, maxval: 3);
+a = Tendency.new(0.1); z = 500.collect({arg i; a.at(i, \logistic)}); z.plot(discrete: true, minval: -3, maxval: 3);
+a = Tendency.new(1.0); z = 500.collect({arg i; a.at(i, \logistic)}); z.plot(discrete: true, minval: -3, maxval: 3);
+::
+
+METHOD:: poissonRandAt
+Poisson distribution.
+Convenience method for code::.at(time, \poisson)::.
+'parX' value is the mean of the distribution.
+This distribution has a discrete histogram (not continuous). It returns always integer values.
+
+code::
+a = Tendency.new(4); z = 500.collect({arg i; a.at(i, \poisson)}); z.plot(discrete: true); z.histo.plot(discrete: true, bounds: Rect(0,0,400,300), name: "histogram");
+a = Tendency.new(6); z = 500.collect({arg i; a.at(i, \poisson)}); z.plot(discrete: true); z.histo.plot(discrete: true, bounds: Rect(0,0,400,300), name: "histogram");
+::
+
+METHOD:: arcsinAt
+Arcsin distribution.
+Convenience method for code::.at(time, \arcsin)::.
+'parX' value controls dispersion (spread).
+Output range is between 0 and this value. Histogram shape is similar to beta with parA=parB=0.5.
+
+code::
+a = Tendency.new(0.01); z = 500.collect({arg i; a.at(i, \arcsin)}); z.maxItem; z.plot(discrete: true, minval: 0, maxval: 10); z.histo.plot(discrete: true, bounds: Rect(0,0,400,300), name: "histogram");
+a = Tendency.new(0.1); z = 500.collect({arg i; a.at(i, \arcsin)}); z.maxItem; z.plot(discrete: true, minval: 0, maxval: 1);
+a = Tendency.new(1.0); z = 500.collect({arg i; a.at(i, \arcsin)}); z.maxItem; z.plot(discrete: true, minval: 0, maxval: 1)
+::
+
+METHOD:: betaRandAt
+Beta distribution.
+Convenience method for code::.at(time, \betaRand)::.
+This distribution takes two extra parameters parA and parB to describe where the likelihood that a random value will occur near parX (parA) or parY (parB).
+
+code::
+// parA = parB = 0.5: histogram has symmetrical shape
+a = Tendency.new(1.0, 0.0, 0.5, 0.5); z = 500.collect({arg i; a.at(i, \betaRand)}); z.plot(discrete: true); z.histo.plot(discrete: true, bounds: Rect(0,0,400,300), name: "histogram");
+
+// parA = 0.5, parB = 0.25: histogram lopsided towards parX end
+a = Tendency.new(1.0, 0.0, 0.5, 0.25); z = 500.collect({arg i; a.at(i, \betaRand)}); z.plot(discrete: true); z.histo.plot(discrete: true, bounds: Rect(0,0,400,300), name: "histogram");
+
+// parA = 0.25, parB = 0.5: histogram lopsided towards low end
+a = Tendency.new(1.0, 0.0, 0.25, 0.5); z = 500.collect({arg i; a.at(i, \betaRand)}); z.plot(discrete: true); z.histo.plot(discrete: true, bounds: Rect(0,0,400,300), name: "histogram");
+::
+
+METHOD:: cauchyRandAt
+Cauchy distribution.
+Convenience method for code::.at(time, \cauchy)::.
+This distribution has a symmetrical histogram around 0.
+For this implementation 'parX' controls its dispersion. If parA = 1, only positive values are returned.
+
+code::
+// small dispersion around 0.0
+a = Tendency.new(0.01); z = 500.collect({arg i; a.at(i, \cauchy)}); z.plot(discrete: true, minval: -3, maxval: 3);
+
+// larger dispersion around 0.0
+a = Tendency.new(0.1); z = 500.collect({arg i; a.at(i, \cauchy)}); z.plot(discrete: true, minval: -3, maxval: 3);
+
+// even larger dispersion around 0.0, return only positive half
+a = Tendency.new(1.0, parA: 1); z = 500.collect({arg i; a.at(i, \cauchy)}); z.plot(discrete: true, minval: -3, maxval: 3);
+::
+
+METHOD:: gaussRandAt
+Gaussian distribution.
+Convenience method for code::.at(time, \gauss)::.
+This distribution has a bell-shaped symmetrical histogram. 'parX' is the deviation or width of the bell.
+
+code::
+// small deviation
+a = Tendency.new(0.01); z = 500.collect({arg i; a.at(i, \gauss)}); z.plot(discrete: true, minval: -3, maxval: 3);
+
+// larger deviation
+a = Tendency.new(0.1); z = 500.collect({arg i; a.at(i, \gauss)}); z.plot(discrete: true, minval: -3, maxval: 3);
+
+// even larger deviation
+a = Tendency.new(1.0); z = 500.collect({arg i; a.at(i, \gauss)}); z.plot(discrete: true, minval: -3, maxval: 3);
+::
+
+METHOD:: asStream
+
+Use this Tendency like a link::Classes/Stream::.
+
+code::
+(
+SynthDef(\tendency, {arg freq;
+	Out.ar(0, SinOsc.ar(freq, 0, XLine.kr(0.1, 0.0001, 1, doneAction: 2)));
+}).send(s);
+)
+(
+Routine.run({
+	g = Tendency.new(1760.0, 440.0, Env([0.01, 2.0], [10], \sin), Env([0.01, 2.0], [10], \sin)).asStream(\betaRand);
+	t = Main.elapsedTime;
+	while({
+		Synth(\tendency, [\freq, g.next]);
+		0.02.wait;
+		(Main.elapsedTime - t) < 10;
+	})
+})
+)
+::
+
+METHOD:: parXAt
+returns:: 'parX' at time
+
+METHOD:: parYAt
+returns:: 'parY' at time
+
+METHOD:: defDist
+returns:: default distribution
+
+METHOD:: parX
+METHOD:: parY
+METHOD:: parB
+METHOD:: parA
+
+METHOD:: valAt
+ARGUMENT:: obj
+ARGUMENT:: time
+returns:: ...
+
+METHOD:: embedInStream
+ARGUMENT:: inval
+ARGUMENT:: dist
+ARGUMENT:: parA
+ARGUMENT:: parB
+returns:: ...

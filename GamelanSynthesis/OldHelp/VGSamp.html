@@ -1,0 +1,370 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title></title>
+<meta name="Generator" content="Cocoa HTML Writer">
+<meta name="CocoaVersion" content="949.35">
+<style type="text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 14.0px Helvetica}
+p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Monaco; min-height: 15.0px}
+p.p3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 10.0px Monaco}
+p.p4 {margin: 0.0px 0.0px 0.0px 0.0px; font: 10.0px Monaco; color: #a91616}
+p.p5 {margin: 0.0px 0.0px 0.0px 0.0px; font: 10.0px Monaco; min-height: 14.0px}
+p.p6 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco; color: #606060}
+p.p7 {margin: 0.0px 0.0px 0.0px 0.0px; font: 7.0px Monaco; min-height: 10.0px}
+p.p8 {margin: 0.0px 0.0px 0.0px 0.0px; font: 10.0px Monaco; color: #0014bc; min-height: 14.0px}
+p.p9 {margin: 0.0px 0.0px 0.0px 0.0px; font: 10.0px Monaco; color: #0014bc}
+p.p10 {margin: 0.0px 0.0px 0.0px 0.0px; font: 10.0px Monaco; color: #307109}
+p.p11 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Monaco; color: #a91616}
+p.p12 {margin: 0.0px 0.0px 0.0px 0.0px; font: 10.0px Monaco; color: #606060}
+p.p13 {margin: 0.0px 0.0px 0.0px 0.0px; font: 17.0px Monaco; color: #a91616}
+p.p14 {margin: 0.0px 0.0px 0.0px 0.0px; font: 14.0px Monaco; color: #a91616}
+p.p15 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Monaco; color: #a91616}
+p.p16 {margin: 0.0px 0.0px 0.0px 0.0px; font: 10.0px Monaco; color: #a91616; min-height: 14.0px}
+span.s1 {font: 20.0px Helvetica; color: #0014bc}
+span.s2 {font: 18.0px Monaco}
+span.s3 {color: #0014bc}
+span.s4 {color: #000000}
+span.s5 {font: 10.0px Monaco; color: #0014bc}
+span.s6 {font: 10.0px Monaco; color: #000000}
+span.s7 {color: #307109}
+span.s8 {color: #a91616}
+span.s9 {color: #606060}
+span.Apple-tab-span {white-space:pre}
+</style>
+</head>
+<body>
+<p class="p1"><span class="s1"><b>VGSamp</b></span><span class="s2"> </span><b><span class="Apple-tab-span">	</span>a flexible sampler for the </b><span class="s3"><b>VGG</b></span><b> gamelan sample database.</b></p>
+<p class="p1"><b><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>superclass </b><span class="s3"><b>VGTuning</b></span><b> has gamelan tuning information;</b></p>
+<p class="p1"><b><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>partials-based resonator synthesis is done in </b><span class="s3"><b>VGReson</b></span><b>.<span class="Apple-converted-space"> </span></b></p>
+<p class="p1"><b><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>adc, jrh, rschuetz.</b></p>
+<p class="p2"><br></p>
+<p class="p3"><span class="s3">Server</span>.default = s = <span class="s3">Server</span>.internal;<span class="Apple-converted-space"> <span class="Apple-tab-span">	</span></span></p>
+<p class="p3">s.boot;</p>
+<p class="p3">(</p>
+<p class="p4"><span class="s3">VGTuning</span><span class="s4">.init(s);<span class="Apple-tab-span">	</span></span>// happens on initClass too</p>
+<p class="p5"><br></p>
+<p class="p6"><span class="s5">VGSamp</span><span class="s6">.dir_(</span><span class="s5">Platform</span><span class="s6">.</span><span class="s4">userAppSupportDir ++ </span>"/vgg/synthData/samples gamKUG/"<span class="s4">);</span></p>
+<p class="p3"><span class="s3">VGSamp</span>.prepPaths;<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></p>
+<p class="p7"><br></p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.readBufs;<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// this takes about 15 secs and lots of RAM.</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// both pelog and slendro are always loaded.<span class="Apple-converted-space"> </span></p>
+<p class="p3">)</p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.checkLoaded;<span class="Apple-tab-span">	</span></span>// check if buffers seem ok</p>
+<p class="p5"><br></p>
+<p class="p4">/////// setup is complete now. ////////////////</p>
+<p class="p5"><br></p>
+<p class="p4">/////// tests: ////////////////</p>
+<p class="p5"><br></p>
+<p class="p3"><span class="s3">VGSamp</span>.playTest(<span class="s7">\slendro</span>);</p>
+<p class="p3"><span class="s3">VGSamp</span>.playTest(<span class="s7">\pelog</span>);</p>
+<p class="p3"><span class="s3">VGSamp</span>.playTest(<span class="s7">\neutral</span>);</p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.playTest;<span class="Apple-tab-span">	</span></span>// all three</p>
+<p class="p8"><br></p>
+<p class="p9">TdefAllGui<span class="s4">.new;</span></p>
+<p class="p10"><span class="s3">Tdef</span><span class="s4">(</span>\VGSampTest<span class="s4">).pause;</span></p>
+<p class="p10"><span class="s3">Tdef</span><span class="s4">(</span>\VGSampTest<span class="s4">).resume;</span></p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// <span class="Apple-tab-span">	</span>VGSamp has a Gui, and the individual sonators can be played from the buttons.<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// <span class="Apple-tab-span">	</span>tuning parameters from the GUI is not hooked up yet.<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="s3">VGSamp</span>.makeWin(<span class="s7">\slendro</span>);</p>
+<p class="p3"><span class="s3">VGSamp</span>.makeWin(<span class="s7">\pelog</span>);</p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// sample and file info are sorted apart in 3 dictionaries;</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// maybe neutral could have a better name.</p>
+<p class="p3"><span class="s3">VGSamp</span>.instDicts.keys;<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="s8">// these three</span></p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.instDicts.slendro; <span class="Apple-tab-span">	</span></span>// slendro samples are here,<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.instDicts.pelog;<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// pelog samples here,</p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.instDicts.neutral;<span class="Apple-tab-span">	</span></span>// all others go here.</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// play some notes</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\PekingA</span>, <span class="s7">\noteKey</span>: \61, amp: 0.2)).play;</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\PekingA</span>, <span class="s7">\noteKey</span>: \61, amp: 0.2, laras: <span class="s7">\pelog</span>)).play;</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\PekingA</span>, <span class="s7">\noteKey</span>: \63, amp: 0.2)).play;</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\PekingA</span>, <span class="s7">\noteKey</span>: \63, amp: 0.2, laras: <span class="s7">\pelog</span>)).play;</p>
+<p class="p5"><br></p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kendhang</span>, <span class="s7">\noteKey</span>: <span class="s7">\g_ket</span>)).put(<span class="s7">\amp</span>, 5).play;</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kendhang</span>, <span class="s7">\noteKey</span>: <span class="s7">\c_thung</span>, amp: 0.2)).play;</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kendhang</span>, <span class="s7">\noteKey</span>: <span class="s7">\c_tapRight</span>, amp: 0.2)).play; <span class="s8">// error</span></p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kendhang</span>, <span class="s7">\noteKey</span>: <span class="s7">\c_tapLeft</span>, amp: 0.2)).play; <span class="s8">// error</span></p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kendhang</span>, <span class="s7">\noteKey</span>: <span class="s7">\c_hen</span>, amp: 0.2)).play; <span class="s8">// error</span></p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kendhang</span>, <span class="s7">\noteKey</span>: <span class="s7">\c_dhen</span>, amp: 0.2)).play;</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kendhang</span>, <span class="s7">\noteKey</span>: <span class="s7">\c_ket</span>, amp: 0.2)).play;</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// slendro is loaded at the same time.</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\PekingA</span>, noteKey: \61, amp: 1, laras: <span class="s7">\slendro</span>)).play;</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\PekingA</span>, noteKey: \61, amp: 1, laras: <span class="s7">\pelog</span>)).play;<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\PekingA</span>, noteKey: \61, amp: 1)).play;</p>
+<p class="p5"><br></p>
+<p class="p10"><span class="s3">VGSamp</span><span class="s4">.bufenv[</span>\gamKUG_Sl_SaronA_46<span class="s4">].duration;</span></p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// compare samples between pelog and slendro</p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.keyFor(</span><span class="s7">\DemungA</span><span class="s4">, \43, </span><span class="s7">\pelog</span><span class="s4">);<span class="Apple-tab-span">	</span></span>// returns buffername for an istr and note</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\DemungA</span>, noteKey: \43, laras: <span class="s7">\pelog</span>)).putAll((amp: 2, dur: 10)).play;</p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.keyFor(</span><span class="s7">\DemungA</span><span class="s4">, \43, </span><span class="s7">\slendro</span><span class="s4">);<span class="Apple-tab-span">	</span></span>// returns slendro buffername for an instr and note</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\DemungA</span>, noteKey: \43, laras: <span class="s7">\slendro</span>)).putAll((amp: 1, dur: 10)).play;</p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p11"><span class="s4"><span class="Apple-tab-span">	</span></span>// Volume Balancing - SaronA is already balanced:</p>
+<p class="p3"><span class="s3">VGSamp</span>.laras;<span class="Apple-converted-space"> <span class="Apple-tab-span">	</span></span></p>
+<p class="p3"><span class="s3">VGSamp</span>.keyFor(instKey: <span class="s7">\SaronA</span>, noteKey: \51, laras: <span class="s7">\pelog</span>).postcs;</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\SaronA</span>, noteKey: \51, amp: 0.2, laras: <span class="s7">\pelog</span>)).putAll((dur: 10)).postcs.play;</p>
+<p class="p5"><br></p>
+<p class="p10"><span class="s3">VGSamp</span><span class="s4">.ampComps[</span>'gamKUG_Pl_SaronA_56'<span class="s4">]</span></p>
+<p class="p10"><span class="s3">VGSamp</span><span class="s4">.getAmpComp(</span>'gamKUG_Pl_SaronA_56'<span class="s4">);</span></p>
+<p class="p5"><br></p>
+<p class="p3"><span class="s3">VGSamp</span>.keyFor(instKey: <span class="s7">\SaronA</span>, noteKey: \51, laras: <span class="s7">\slendro</span>).postcs;</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\SaronA</span>, noteKey: \51, amp: 0.123, laras: <span class="s7">\slendro</span>)).putAll((dur: 10)).postcs.play;</p>
+<p class="p10"><span class="s3">VGSamp</span><span class="s4">.getAmpComp(</span>'gamKUG_Sl_SaronA_56'<span class="s4">); </span><span class="s8">// not balanced yet</span></p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// add more balancing data for other instruments here :</p>
+<p class="p3"><span class="s3">Document</span>.open(<span class="s3">VGSamp</span>.balancePath);</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// maybe use utilites for tuning from here.<span class="Apple-converted-space"> </span></p>
+<p class="p12">"BalancingVGG_SaronA"<span class="s4">.openHelpFile;</span></p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p13"><span class="s4"><span class="Apple-tab-span">	</span></span>//<span class="Apple-tab-span">	</span>Using VGSamp in Patterns:</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// in patterns, you pass in an instKey and a noteKey;<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// this creates an event with<span class="Apple-converted-space">  </span>the following keys:</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>//<span class="Apple-tab-span">	</span>'instrument' (a synthdefname: vgsamp1),<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>//<span class="Apple-tab-span">	</span>'bufnum' : the buffer number that vgsamp1 needs for that sample,</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// 'out', 'pan': looked up from global instrument settings,<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>//<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>unless one passes in a vlue for them</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// 'amp': a passed-in value for amp (or a default) is multiplied with</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>//<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>volumeBalancing and global instrument volume.</p>
+<p class="p5"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></p>
+<p class="p3"><span class="s3">VGSamp</span>.keyFor(instKey: <span class="s7">\GongAgeng</span>, noteKey: \13, laras: <span class="s7">\neutral</span>);</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kenong</span>, noteKey: \51, laras: <span class="s7">\pelog</span>)).play;<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kenong</span>, noteKey: \51, laras: <span class="s7">\slendro</span>)).play;<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kenong</span>, noteKey: \46, laras: <span class="s7">\pelog</span>)).play;<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kenong</span>, noteKey: \46, laras: <span class="s7">\slendro</span>)).play;<span class="Apple-converted-space"> </span></p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// this event can be played very simply:</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kenong</span>, noteKey: \51, laras: <span class="s7">\pelog</span>)).play;</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kenong</span>, noteKey: \51, laras: <span class="s7">\slendro</span>)).play;</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// a pattern that plays all PekingA notes</p>
+<p class="p3">(</p>
+<p class="p3"><span class="s3">Pdef</span>(<span class="s7">\pekingA</span>).clear;<span class="Apple-converted-space"> </span></p>
+<p class="p10"><span class="s3">Pdef</span><span class="s4">(</span>\pekingA<span class="s4">,<span class="Apple-converted-space"> </span></span></p>
+<p class="p9">Pbind<span class="s4">(</span></p>
+<p class="p10"><span class="s4"><span class="Apple-tab-span">	</span></span>\laras<span class="s4">, </span>\slendro<span class="s4">,</span></p>
+<p class="p10"><span class="s4"><span class="Apple-tab-span">	</span></span>\instKey<span class="s4">, </span>\PekingA<span class="s4">,</span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\amp</span>, 1,</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\noteKey</span>, <span class="s3">Pseq</span>([\56, \61, \62, \63, \65, \66, \71, <span class="s7">\rest</span>], <span class="s3">inf</span>),<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// *** look up VGSamp info, and post the full event: ***/</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\samp</span>, <span class="s3">Pfunc</span>({ <span class="s3">|ev|</span> ev.putAll(<span class="s3">VGSamp</span>.eventFor(ev)); <span class="s7">\vgsamp</span> }),</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\dur</span>, 0.5</p>
+<p class="p3">)).play;</p>
+<p class="p3">)</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// all the drum-stroke names you can use:<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="s3">VGSamp</span>.instDicts.neutral[<span class="s7">\Kendhang</span>].keys.asArray.postcs;</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// a stupid pattern that plays all available drum strokes, each one repeated 2-4 times</p>
+<p class="p3">(</p>
+<p class="p10"><span class="s3">Pdef</span><span class="s4">(</span>\Kendhangan<span class="s4">,<span class="Apple-converted-space"> </span></span></p>
+<p class="p9"><span class="s4"><span class="Apple-tab-span">	</span></span>Pbind<span class="s4">(</span></p>
+<p class="p10"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>\instKey<span class="s4">, </span>\Kendhang<span class="s4">,<span class="Apple-converted-space"> </span></span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="s7">\noteKey</span>, <span class="s3">Pstutter</span>(<span class="s3">Prand</span>([2,3,4], <span class="s3">inf</span>),<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="s3">Pseq</span>(<span class="s3">VGSamp</span>.instDicts.neutral[<span class="s7">\Kendhang</span>].keys.asArray, <span class="s3">inf</span>)),</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="s7">\amp</span>, 1,</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="s7">\dur</span>, <span class="s3">Prand</span>( [1/4, 1/8, 1/8], <span class="s3">inf</span>),</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="s7">\samp</span>, <span class="s3">Pfunc</span>({ <span class="s3">|ev|</span> ev.putAll(<span class="s3">VGSamp</span>.eventFor(ev)); <span class="s7">\vgsamp</span> })</p>
+<p class="p3"><span class="Apple-tab-span">	</span>)</p>
+<p class="p3">).play;</p>
+<p class="p3">)</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4">(<span class="Apple-tab-span">	</span></span>// play a pattern with all gendhing samples:</p>
+<p class="p10"><span class="s3">Pdef</span><span class="s4">(</span>\Kendhangan<span class="s4">,<span class="Apple-converted-space"> </span></span></p>
+<p class="p9"><span class="s4"><span class="Apple-tab-span">	</span></span>Pbind<span class="s4">(</span></p>
+<p class="p10"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>\instKey<span class="s4">, </span>\Kendhang<span class="s4">, <span class="Apple-tab-span">	</span></span><span class="s8">//<span class="Apple-converted-space"> </span></span></p>
+<p class="p10"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>\noteKey<span class="s4">, </span><span class="s3">Pseq</span><span class="s4">([ </span>'g_tak'<span class="s4">, </span>'g_ket'<span class="s4">, </span>'g_thong'<span class="s4">, </span>'g_thung'<span class="s4">, </span>'g_bem'<span class="s4">], </span><span class="s3">inf</span><span class="s4">),<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>\amp<span class="s4">, 0.2,<span class="Apple-converted-space"> </span></span></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span><span class="s7">\pan</span><span class="s4">, 0.5,<span class="Apple-tab-span">	</span></span>// pan to the right</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="s7">\dur</span>, <span class="s3">Prand</span>( [1/4, 1/8, 1/8], <span class="s3">inf</span>),</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// this line will be simpler eventually.</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="s7">\samp</span>, <span class="s3">Pfunc</span>({ <span class="s3">|ev|</span> ev.putAll(<span class="s3">VGSamp</span>.eventFor(ev)); <span class="s7">\vgsamp</span> })</p>
+<p class="p3"><span class="Apple-tab-span">	</span>)</p>
+<p class="p3">).play;</p>
+<p class="p3">)</p>
+<p class="p5"><br></p>
+<p class="p14">// Panning / output modes:<span class="Apple-converted-space"> </span></p>
+<p class="p5"><br></p>
+<p class="p3">(</p>
+<p class="p10"><span class="s3">Pdef</span><span class="s4">(</span>\pekingA<span class="s4">,</span></p>
+<p class="p9">Pbind<span class="s4">(</span></p>
+<p class="p10"><span class="s4"><span class="Apple-tab-span">	</span></span>\laras<span class="s4">, </span>\pelog<span class="s4">,</span></p>
+<p class="p10"><span class="s4"><span class="Apple-tab-span">	</span></span>\instKey<span class="s4">, </span>\PekingA<span class="s4">,</span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\amp</span>, 1,</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\noteKey</span>, <span class="s3">Pseq</span>([\61, \62, \63, \64, \65, \66, \67, <span class="s7">\rest</span>], <span class="s3">inf</span>),<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\samp</span>, <span class="s3">Pfunc</span>({ <span class="s3">|ev|</span> ev.putAll(<span class="s3">VGSamp</span>.eventFor(ev)); <span class="s7">\vgsamp</span> }),</p>
+<p class="p4">//<span class="Apple-tab-span">	</span>\pan, 1, <span class="Apple-tab-span">	</span>// uncomment here to override instrument-based panning</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\dur</span>, 0.5</p>
+<p class="p3">)).play;</p>
+<p class="p3">)</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// panning is looked up in the instrument globals if not given.</p>
+<p class="p3"><span class="s3">VGTuning</span>.setGloBus(<span class="s7">\PekingA</span>, <span class="s7">\pan</span>, 1); <span class="Apple-tab-span">	</span><span class="s8">// all right</span></p>
+<p class="p3"><span class="s3">VGTuning</span>.setGloBus(<span class="s7">\PekingA</span>, <span class="s7">\pan</span>, 0.0);<span class="Apple-tab-span">	</span><span class="s8">// center</span></p>
+<p class="p3"><span class="s3">VGTuning</span>.setGloBus(<span class="s7">\PekingA</span>, <span class="s7">\pan</span>, -1);<span class="Apple-tab-span">	</span><span class="s8">// all left</span></p>
+<p class="p5"><br></p>
+<p class="p3">s.scope(8);</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// multichannel out: \out is looked up in instrument globals if not given in the pattern.</p>
+<p class="p3"><span class="s3">VGTuning</span>.setGloBus(<span class="s7">\PekingA</span>, <span class="s7">\out</span>, 4, <span class="s7">\pan</span>, -1);<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="s3">VGTuning</span>.setGloBus(<span class="s7">\PekingA</span>, <span class="s7">\out</span>, 2, <span class="s7">\pan</span>, -1);</p>
+<p class="p3"><span class="s3">VGTuning</span>.setGloBus(<span class="s7">\PekingA</span>, <span class="s7">\out</span>, 1, <span class="s7">\pan</span>, -1);</p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// amp: ampComp value, instument value and stream value are multiplied.</p>
+<p class="p3"><span class="s3">VGTuning</span>.setGloBus(<span class="s7">\PekingA</span>, <span class="s7">\amp</span>, 0); <span class="Apple-tab-span">	</span><span class="s8">// instrument mute</span></p>
+<p class="p4"><span class="s3">VGTuning</span><span class="s4">.setGloBus(</span><span class="s7">\PekingA</span><span class="s4">, </span><span class="s7">\amp</span><span class="s4">, 1);<span class="Apple-tab-span">	</span></span>// instrument back on</p>
+<p class="p4"><span class="s3">VGTuning</span><span class="s4">.globals[</span><span class="s7">\PekingA</span><span class="s4">];<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// all global data for PekingA</p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p3">(</p>
+<p class="p10"><span class="s3">Pdef</span><span class="s4">(</span>\outTest<span class="s4">,</span></p>
+<p class="p9">Pbind<span class="s4">(</span></p>
+<p class="p10"><span class="s4"><span class="Apple-tab-span">	</span></span>\laras<span class="s4">, </span>\slendro<span class="s4">,</span></p>
+<p class="p10"><span class="s4"><span class="Apple-tab-span">	</span></span>\instKey<span class="s4">, </span><span class="s3">Pseq</span><span class="s4">([ </span>\PekingA<span class="s4">, </span>\SaronA<span class="s4">, </span>\DemungA<span class="s4">, </span>\BonangBar<span class="s4">, </span>\BonangPan<span class="s4">, </span>\PekingA<span class="s4">], </span><span class="s3">inf</span><span class="s4">),</span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\amp</span>, 1,</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\noteKey</span>, <span class="s3">Pseq</span>([\61, \51, \41, \41, \51, <span class="s7">\rest</span>], <span class="s3">inf</span>),<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\samp</span>, <span class="s3">Pfunc</span>({ <span class="s3">|ev|</span> ev.putAll(<span class="s3">VGSamp</span>.eventFor(ev)); <span class="s7">\vgsamp</span> }),</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\dur</span>, 0.5</p>
+<p class="p3">)).play;</p>
+<p class="p3">)</p>
+<p class="p3"><span class="s3">VGSamp</span>.makeWin</p>
+<p class="p5"><br></p>
+<p class="p14"><span class="s4">(<span class="Apple-tab-span">	</span></span>// switch to stereo, with individual panning</p>
+<p class="p3">(</p>
+<p class="p3">PekingA: -0.8,<span class="Apple-converted-space"> </span></p>
+<p class="p3">SaronA: -0.4,<span class="Apple-converted-space"> </span></p>
+<p class="p3">DemungA: 0.0,<span class="Apple-converted-space"> </span></p>
+<p class="p3">BonangBar: 0.4,</p>
+<p class="p3">BonangPan: 0.8</p>
+<p class="p3">).keysValuesDo { <span class="s3">|iname, val|</span><span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s3">VGTuning</span>.setGloBus(iname, <span class="s7">\pan</span>, val)</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>.setGloBus(iname, <span class="s7">\out</span>, 0);<span class="Apple-converted-space"> </span></p>
+<p class="p3">};</p>
+<p class="p3">)</p>
+<p class="p5"><br></p>
+<p class="p3">s.scope(5);</p>
+<p class="p14"><span class="s4">(<span class="Apple-tab-span">	</span></span>// switch to multichannel, no panning - multiple mono</p>
+<p class="p3">(</p>
+<p class="p3">PekingA: 0,<span class="Apple-converted-space"> </span></p>
+<p class="p3">SaronA:<span class="Apple-converted-space">  </span>1,<span class="Apple-converted-space"> </span></p>
+<p class="p3">DemungA: 2,<span class="Apple-converted-space"> </span></p>
+<p class="p3">BonangBar: 3,</p>
+<p class="p3">BonangPan: 4</p>
+<p class="p3">).keysValuesDo { <span class="s3">|iname, val|</span><span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s3">VGTuning</span>.setGloBus(iname, <span class="s7">\out</span>, val)</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>.setGloBus(iname, <span class="s7">\pan</span>, -1);<span class="Apple-converted-space">  </span><span class="s8">// = left</span></p>
+<p class="p3">};</p>
+<p class="p3">)</p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p14"><span class="s4"><span class="Apple-tab-span">	</span></span>// retuning an instrument:</p>
+<p class="p15"><span class="s4"><span class="Apple-tab-span">	</span></span>// retuning by hand, using \rate argument:</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\PekingA</span>, noteKey: \66)).put(<span class="s7">\rate</span>, 1).postln.play;</p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\PekingA</span>, noteKey: \66)).put(<span class="s7">\rate</span>, 0.9).postln.play;</p>
+<p class="p5"><br></p>
+<p class="p5"><span class="Apple-tab-span">	</span></p>
+<p class="p15"><span class="s4"><span class="Apple-tab-span">	</span></span>// for sketch retuning by lookup; better lokup scheme to be written later:</p>
+<p class="p3">(</p>
+<p class="p3"><span class="s3">Pdefn</span>(<span class="s7">\tunePekingA</span>, <span class="s3">Pfunc</span>({ <span class="s3">|ev|</span> ().at(ev.noteKey) ? 1 }));</p>
+<p class="p10"><span class="s3">Pdef</span><span class="s4">(</span>\pekingA<span class="s4">,</span></p>
+<p class="p9">Pbind<span class="s4">(</span></p>
+<p class="p10"><span class="s4"><span class="Apple-tab-span">	</span></span>\laras<span class="s4">, </span>\slendro<span class="s4">,</span></p>
+<p class="p10"><span class="s4"><span class="Apple-tab-span">	</span></span>\instKey<span class="s4">, </span>\PekingA<span class="s4">,<span class="Apple-converted-space"> </span></span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\noteKey</span>, <span class="s3">Pseq</span>([\56, \61, \62, \63], <span class="s3">inf</span>),<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\amp</span>, 0.5,</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\pan</span>, -1,<span class="Apple-converted-space"> </span></p>
+<p class="p10"><span class="s4"><span class="Apple-tab-span">	</span></span>\rate<span class="s4">, </span><span class="s3">Pdefn</span><span class="s4">(</span>\tunePekingA<span class="s4">),</span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\samp</span>, <span class="s3">Pfunc</span>({ <span class="s3">|ev|</span> ev.putAll(<span class="s3">VGSamp</span>.eventFor(ev)); <span class="s7">\vgsamp</span> }),</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="s7">\dur</span>, 0.5</p>
+<p class="p3">)).play;</p>
+<p class="p3">)</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// + 20 cents for \56</p>
+<p class="p3"><span class="s3">Pdefn</span>(<span class="s7">\tunePekingA</span>, <span class="s3">Pfunc</span>({ <span class="s3">|ev|</span> (<span class="s7">'56'</span>: (20/100).midiratio).at(ev.noteKey).postln ? 1 }));</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// + 40 cents for \56</p>
+<p class="p3"><span class="s3">Pdefn</span>(<span class="s7">\tunePekingA</span>, <span class="s3">Pfunc</span>({ <span class="s3">|ev|</span> (<span class="s7">'56'</span>: (40/100).midiratio).at(ev.noteKey).postln ? 1 }));</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// + 60 cents</p>
+<p class="p3"><span class="s3">Pdefn</span>(<span class="s7">\tunePekingA</span>, <span class="s3">Pfunc</span>({ <span class="s3">|ev|</span> (<span class="s7">'56'</span>: (60/100).midiratio).at(ev.noteKey).postln ? 1 }));</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// no retuning again</p>
+<p class="p3"><span class="s3">Pdefn</span>(<span class="s7">\tunePekingA</span>, <span class="s3">Pfunc</span>({ <span class="s3">|ev|</span> ().at(ev.noteKey).postln ? 1 }));</p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p4">/*********************** extra info, more low level tests ***********************/</p>
+<p class="p5"><br></p>
+<p class="p4">//<span class="Apple-tab-span">	</span>More lookup examples:</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.keyFor(</span><span class="s7">\PekingA</span><span class="s4">, \66);<span class="Apple-tab-span">	</span></span>// pelog by default</p>
+<p class="p3"><span class="s3">VGSamp</span>.keyFor(<span class="s7">\PekingA</span>, \66, <span class="s7">\slendro</span>);</p>
+<p class="p10"><span class="s3">VGSamp</span><span class="s4">.keyFor(</span>\KendhangGdh<span class="s4">, </span>\bem<span class="s4">, </span>\neutral<span class="s4">);</span></p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// a utility to listen to individual samples:</p>
+<p class="p3">x = <span class="s3">VGSamp</span>.play(<span class="s7">\Kenong</span>, \43);</p>
+<p class="p4"><span class="s4">x.release(0.1);<span class="Apple-tab-span">	</span></span>// and to stop it</p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// or you can also use the synthdefname :<span class="Apple-converted-space"> </span></p>
+<p class="p3">x = <span class="s3">Synth</span>(<span class="s9">"vgsamp1"</span>, [<span class="s7">\bufnum</span>, 13, <span class="s7">\amp</span>, 1, <span class="s7">\pan</span>, -0.5]);<span class="Apple-converted-space"> </span></p>
+<p class="p3">x.release;</p>
+<p class="p5"><br></p>
+<p class="p4">/**** <span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>the synthdefs params are:<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="Apple-tab-span">	</span>\out - <span class="Apple-tab-span">	</span>[0, 1, 2 .. <span class="Apple-tab-span">	</span>the output bus channel to play on (0 unless multichannel playback).<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="Apple-tab-span">	</span>\amp - <span class="Apple-tab-span">	</span>0.0 - 1.0<span class="Apple-converted-space">  <span class="Apple-tab-span">	</span></span>samples are not leveled equally yet].<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="Apple-tab-span">	</span>\pan -<span class="Apple-converted-space">  <span class="Apple-tab-span">	</span></span>-1.0 - 1.0<span class="Apple-tab-span">	</span>stereo panning<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="Apple-tab-span">	</span>\bufnum - <span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>the numberID (bufnum) of the buffer that contains<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>that sample in VGSamp.bufenv.<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="Apple-tab-span">	</span>\gate - <span class="Apple-tab-span">	</span>0, 1<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>setting to 0 releases the playback</p>
+<p class="p4">****/</p>
+<p class="p4">// some more background on how things work:</p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.verbose;<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// determines whether VGSamp posts info or not.</p>
+<p class="p3"><span class="s3">VGSamp</span>.verbose_(<span class="s3">false</span>);<span class="Apple-tab-span">	</span><span class="s8">// is quiet</span></p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.verbose_(</span><span class="s3">true</span><span class="s4">);<span class="Apple-tab-span">	</span></span>// is verbose (this is default).</p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.defaultDir; <span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// where Gamelan samples folder should be!</p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.instGroups.postcs;<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// insts are organized in groups.</p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.instsDict.postcs; </span><span class="s9">""</span><span class="s4">;<span class="Apple-tab-span">	</span></span>// where the raw instrument infos live</p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.filesDict.postcs; </span><span class="s9">""</span><span class="s4">;<span class="Apple-tab-span">	</span></span>// where file/bufnum are looked up</p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.makeSynDef;<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// store the synthdef for VGSamp.</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// if you want to keep the samples in some specific place, do this:</p>
+<p class="p4">// <span class="Apple-tab-span">	</span>VGSamp.dir_("myGamelanFolder/wav_files/");</p>
+<p class="p4">// <span class="Apple-tab-span">	</span>VGSamp.dir_("/MyDisk/someFolder/gamelanStuff/gamKUG_wavs/");</p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// this is how lookups work:</p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.keyFor(</span><span class="s7">\Kenong</span><span class="s4">, \43);<span class="Apple-tab-span">	</span></span>// return buffername for an istr and note</p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.keyFor(</span><span class="s7">\Kenong</span><span class="s4">, \12); <span class="Apple-tab-span">	</span></span>// complains if note is not there ...</p>
+<p class="p4"><span class="s3">VGSamp</span><span class="s4">.keyFor(</span><span class="s7">\piano</span><span class="s4">, \43); <span class="Apple-tab-span">	</span></span>// and if instrument is not there.</p>
+<p class="p5"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// samples are loaded in buffers and accessible by name;</p>
+<p class="p10"><span class="s3">VGSamp</span><span class="s4">.bufenv[</span>\Sl_Kenong_43<span class="s4">];</span></p>
+<p class="p3"><span class="s3">VGSamp</span>.eventFor((instKey: <span class="s7">\Kerploing</span>, noteKey: \51)).play;</p>
+<p class="p5"><br></p>
+<p class="p5"><br></p>
+<p class="p4">/********* TO DO ******</p>
+<p class="p16"><br></p>
+<p class="p4">support global bus on VGSamp:<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="Apple-tab-span">	</span>syndef should read globalbus and instr bus.<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="Apple-tab-span">	</span>global gbus: tune, amp, ignore ringtime, out, rev ...<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="Apple-tab-span">	</span>instr<span class="Apple-converted-space">  </span>ibus: tune, amp, ignore ringtime, out, rev ...</p>
+<p class="p4"><span class="Apple-tab-span">	</span>get global pan into evnetFor ...<span class="Apple-converted-space"> </span></p>
+<p class="p16"><span class="Apple-tab-span">	</span></p>
+<p class="p4"><span class="Apple-tab-span">	</span>then samples can be retuned,<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="Apple-tab-span">	</span>panned and played out of different channels.<span class="Apple-converted-space"> </span></p>
+<p class="p4">***********************/</p>
+</body>
+</html>

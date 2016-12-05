@@ -1,0 +1,56 @@
+TITLE:: Require
+summary:: A node.js style Require, for including .scd files
+categories:: Files
+
+DESCRIPTION:: Require is a simple class for including code from external .scd files.
+The simplest usage is via the Require() constructor:
+code::
+Require("synths/*")
+Require("midicontrollers")
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+Run code or include an object from an external .scd file.
+
+Required files are cached, so they are guaranteed to be only executed once.
+For example, if [A] [B] and [C] each includes [D], [D] will only every be executed once (unless the always argument is specified).
+
+ARGUMENT:: identifier
+A relative or absolute path to a file or directory. Identifiers not starting from a root path are assumed to be relative to the file containing the Require statement. A .scd extension is implicitly included if not specified. Wildcards can be used to include multiple files (see link::Classes/String#-pathMatch::).
+
+ARGUMENT:: cmdPeriod
+A link::Classes/Boolean:: specifying whether the required file should be reloaded after a link::Classes/CmdPeriod::. This should generally be true if the .scd in question contains objects that are freed after a link::Classes/CmdPeriod:: (i.e. synths, busses).
+
+ARGUMENT:: always
+A link::Classes/Boolean:: specifying whether the .scd should be reloaded every time it is Require'd, whether or not the file has changed, or it has been required before.
+
+returns:: Return value is the result of executing the file as a function - usually the return value of the last line of code. This can be ignored, or used to return a singleton-like object. For example:
+code::
+~mixer = Require("mixer");
+::
+might return a global mixer object specified in mixer.scd. It will return a cached copy unless code::always:true:: is specified. If multiple files are Require'd via a wildcard, the return value is an array of the result of executing each file.
+
+METHOD:: reset
+Reset the cache of Require'd objects. This will cause all Require calls to re-load the scd's the next time they are run.
+
+EXAMPLES::
+
+code::
+// Run the code in ./controllers.scd
+Require("controllers");
+
+// Run the code in ./mixer.scd, and store the result in ~mixer
+~mixer = Require("mixer");
+
+// Run all of the .scd's in the ./synths directory. Always re-run, even if the values haven't changed
+Require("synths/*", always:true);
+
+// Run an .scd at an absolute path
+Require("/Users/me/Desktop/audioscope.scd");
+
+// Run the code in ./reverb.scd, and clear the cache after a CmdPeriod. We can imagine reverb.scd runs a Reverb synth on the server, which CmdPeriod would free.
+Require("reverb", cmdPeriod:true)'
+
+::

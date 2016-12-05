@@ -7,9 +7,9 @@ EnvEditor : Editor {
 
 	var <>levelSpec;
 
-	*new { arg env,levelSpec;
-		if(levelSpec.isNil,{
-			levelSpec = StaticSpec(env.levels.minItem,env.levels.maxItem);
+	*new { arg env, levelSpec;
+		if(levelSpec.isNil, {
+			levelSpec = StaticSpec(env.levels.minItem, env.levels.maxItem);
 		});
 		^super.new.value_(env).levelSpec_(levelSpec.asSpec)
 	}
@@ -20,33 +20,33 @@ EnvEditor : Editor {
 		^value.deepCopy
 	}
 	// you must access everything through me;
-	putTime { arg i,t;
-		value.times.put(i,t);
+	putTime { arg i, t;
+		value.times.put(i, t);
 		value.changed;
 		this.changed;
 	}
-	putLevel { arg i,l;
-		value.levels.put(i,l);
+	putLevel { arg i, l;
+		value.levels.put(i, l);
 		value.changed;
 		this.changed;
 	}
 	setCurve {arg c;
-		if(c.isFloat,{
+		if(c.isFloat, {
 			// curvatures may not be within 0.001 of 0.0
 			// or EnvGen blows up ?!
-			if(c.abs < 0.001,{ c = 0.001 });// sign not significant at this magnitude
+			if(c.abs < 0.001, { c = 0.001 });// sign not significant at this magnitude
 			value.curves = c;
-		},{
+		}, {
 			value.curves = c;
 		});
 		value.changed;
 		this.changed;
 	}
-	putCurve { arg i,c;
+	putCurve { arg i, c;
 		// curvatures may not be within 0.001 of 0.0
 		// or EnvGen blows up ?!
-		if(c.abs < 0.001,{ c = 0.001 });
-		value.curves.put(i,c);
+		if(c.abs < 0.001, { c = 0.001 });
+		value.curves.put(i, c);
 		value.changed;
 		this.changed;
 	}
@@ -58,7 +58,7 @@ EnvEditor : Editor {
 	env {// direct access for the gui
 		^value // the prototype env that we edit
 	}
-	copy { ^this.class.new(value.deepCopy,levelSpec) }
+	copy { ^this.class.new(value.deepCopy, levelSpec) }
 	guiClass { ^EnvEditorGui }
 
 }

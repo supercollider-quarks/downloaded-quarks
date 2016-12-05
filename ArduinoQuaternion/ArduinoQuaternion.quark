@@ -1,0 +1,10 @@
+(
+  name: "ArduinoQuaternion",
+  summary: "A Serial parser to read in Quaternions and output Euler coordinates. Extends Quaternion class.",
+  version: "0.1.0",
+  schelp: "ArduinoQuaternion",
+  dependencies: ["MathLib", "arduino"],
+  author: ["Michael McCrea", "Fabio Varesano"],
+  copyright: "Michael McCrea, 2016",
+  since: "2016"
+)

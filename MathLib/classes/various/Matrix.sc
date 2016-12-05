@@ -7,7 +7,7 @@
 
 Matrix[slot] : Array {
 
-	*newClear { arg rows=1, cols=1; // return (rows x cols) - zero matrix 
+	*newClear { arg rows=1, cols=1; // return (rows x cols) - zero matrix
 		^super.fill(rows, { Array.newClear(cols).fill(0) });
 	}
 	*with { arg array; // return matrix from 2D array (array of rows)
@@ -44,35 +44,49 @@ Matrix[slot] : Array {
 		});
 		^matrix
 	}
+	*newDFT { arg n;
+		var dft;
+		dft = sqrt(n).reciprocal * super.fill(n, { |r|
+			Array.fill(n, { |c| Polar(1, -2pi * r * c / n) })
+		});
+		^dft
+	}
+	*newIDFT { arg n;
+		var idft;
+		idft = sqrt(n) * n.reciprocal * super.fill(n, { |r|
+			Array.fill(n, { |c| Polar(1, 2pi * r * c / n) })
+		});
+		^idft
+	}
 
 	/* Class method: *mul
 	   Matrix multiplication
-	   Parameter: 
+	   Parameter:
 	   	m1: Matrix 1
 	   	m2: Matrix 2
 	   Return:
 	   	out = m1 * m2
 	*/
 	*mul { arg m1=0, m2=0;
-		
+
 		var m2s;
 		var out, size;
-		
-		// TODO: do some checking here whether multiplication is possible	
+
+		// TODO: do some checking here whether multiplication is possible
 		size = m1.size;
 		out = Array.new(size);
 		size.do { out.add(Array.new(size)); };
-		
+
 		// swap the m2 Matrix (rows -> columns)
 		m2s = m2.flop;
-		
+
 		// multiplication
 		m1.do { arg row, i;
 			size.do { arg u;
 				out.at(i).add((row * m2s.at(u)).sum);
 			};
 		};
-		^out;	
+		^out;
 	}
 
 	rows {
@@ -108,15 +122,15 @@ Matrix[slot] : Array {
 		});
 	}
 	// single elements
-	at { arg row, col; 
-		^super.at(row).at(col); 
+	at { arg row, col;
+		^super.at(row).at(col);
 	}
 	get { arg row, col; // same as at
-		^super.at(row).at(col); 
+		^super.at(row).at(col);
 	}
-	put { arg row, col, val; 
+	put { arg row, col, val;
 		if( val.isNumber,{
-			super.at(row).put(col, val) 
+			super.at(row).put(col, val)
 		},{
 			error("not a number in Matrix-put");this.halt
 		});
@@ -125,7 +139,7 @@ Matrix[slot] : Array {
 	putRow { arg row, vals;
 		if(vals.size == this.cols,{
 			vals.size.do({ arg col;
-				this.put(row, col, vals.at(col)) 
+				this.put(row, col, vals.at(col))
 			})
 		},{
 			(vals.size).min(this.cols).do({ arg col;
@@ -136,7 +150,7 @@ Matrix[slot] : Array {
 	putCol { arg col, vals;
 		if(vals.size == this.rows,{
 			vals.size.do({ arg row;
-				this.put(row, col, vals.at(row)) 
+				this.put(row, col, vals.at(row))
 			})
 		},{
 			(vals.size).min(this.rows).do({ arg row;
@@ -144,17 +158,17 @@ Matrix[slot] : Array {
 			});"Warning: wrong number of vals".postln;
 		});
 	}
-	
-	fillRow { arg row, func; 
-		this.cols.do({ arg col; 
-			this.put(row, col, func.value(row, col)) 
-		}) 
+
+	fillRow { arg row, func;
+		this.cols.do({ arg col;
+			this.put(row, col, func.value(row, col))
+		})
 	}
-	fillCol { arg col, func; 
-		this.rows.do({ arg row; 
-			this.put(row, col, func.value(row, col)) 
-		}) 
-	}	
+	fillCol { arg col, func;
+		this.rows.do({ arg row;
+			this.put(row, col, func.value(row, col))
+		})
+	}
 	exchangeRow { arg posA, posB;
 		var rowA;
 		rowA = this.getRow(posA).copy;
@@ -229,7 +243,7 @@ Matrix[slot] : Array {
 	}
 	// returns arrays
 	getRow { arg row;
-		^super.at(row);	
+		^super.at(row);
 	}
 	getCol { arg col;
 		var res;
@@ -237,12 +251,12 @@ Matrix[slot] : Array {
 		this.rows.do({ arg row;
 			res = res.add( this.at(row, col) )
 		});
-		^res;	
+		^res;
 	}
 	getDiagonal {
 		var diagonal;
 			diagonal = Array.new;
-			(this.rows).min(this.cols).do({arg i; 
+			(this.rows).min(this.cols).do({arg i;
 				diagonal = diagonal.add(this.at(i,i));
 			});
 			^diagonal;
@@ -255,7 +269,7 @@ Matrix[slot] : Array {
 		^Matrix.with([this.getCol(col)]).flop;
 	}
 	// returns matrix without row(row)/col(col)
-	removeRow { arg row; 
+	removeRow { arg row;
 		var array;
 			array = Array.new;
 			this.rows.do({ arg i;
@@ -264,10 +278,10 @@ Matrix[slot] : Array {
 		^Matrix.with(array);
 	}
 	removeAt { arg row; ^this.removeRow(row); }
-	removeCol { arg col;	
-		^this.flop.removeRow(col).flop;	
+	removeCol { arg col;
+		^this.flop.removeRow(col).flop;
 	}
-	
+
 	doRow { arg row, func;
 		this.getRow(row).do({ arg item,i;
 			func.value(item, i);
@@ -287,7 +301,7 @@ Matrix[slot] : Array {
 			});
 		});
 	}
-	
+
 	sub { arg row, col; // return submatrix to element(row,col)
 		^this.removeRow(row).removeCol(col);
 	}
@@ -299,7 +313,7 @@ Matrix[slot] : Array {
 		this.rows.do({ arg i; array = array.add(this.getRow(i)) });
 		^array.flat;
 	}
-	flatten { ^this.flat; } 
+	flatten { ^this.flat; }
 	flop { // return transpose matrix with rows cols and cols rows
 		var flopped;
 		flopped = Matrix.newClear(this.cols, this.rows);
@@ -308,11 +322,11 @@ Matrix[slot] : Array {
 		});
 		^flopped
 	}
-	
-	
-	
-	
-	
+
+
+
+
+
 	// math
 	mul { arg multplier2; // return matrix A(m,n) * B(n,r) = AB(m,r)
 		var result;
@@ -322,8 +336,8 @@ Matrix[slot] : Array {
 			result = Matrix.newClear(this.cols, multplier2.rows);
 			this.cols.do({ arg j;
 				multplier2.rows.do({ arg i;
-					result.put(i, j, ( 
-						multplier2.getRow(i) * (this.getCol(j)) 
+					result.put(i, j, (
+						multplier2.getRow(i) * (this.getCol(j))
 					).sum );
 				});
 			});
@@ -334,24 +348,24 @@ Matrix[slot] : Array {
 			this.halt;
 		})});
 	}
-	
-	
+
+
 	* { arg that; // return matrix A(m,n) * B(n,r) = AB(m,r)
 		var result;
-		
+
 		if ( that.isNumber, {
 			^this.mulNumber(that);
-		},{ 
+		},{
 			^this.mulMatrix(that);
 		});
 	}
-	
+
 	mulMatrix { arg aMatrix;
 		var result;
-		
+
 		if( this.cols == aMatrix.rows, {
 			result = Matrix.newClear(this.rows, aMatrix.cols);
-			
+
 			this.rows.do({ arg rowI;
 				aMatrix.cols.do({ arg colI;
 					result.put(
@@ -368,10 +382,10 @@ Matrix[slot] : Array {
 			this.halt;
 		});
 	}
-	
-	
+
+
 	mulNumber { arg aNumber;
-		^(super * aNumber);	
+		^(super * aNumber);
 	}
 	+ { arg summand2;
 		var result;
@@ -404,14 +418,14 @@ Matrix[slot] : Array {
 			},{error("sizes don't fit in Matrix-plus");this.halt;});
 		});
 	}
-	subNumber { arg aNumber; 
+	subNumber { arg aNumber;
 		^(super - aNumber);
 	}
 	== { arg matrix2;
 		^(this.flat == matrix2.flat);
 	}
 	det { // return the determinant as float
-		var elements, detSum = 0; 
+		var elements, detSum = 0;
 		if( this.rows == this.cols,{
 			if( (this.rows * this.cols) == 1,{^this.at(0,0)},{
 				elements = this.getRow(0);
@@ -431,7 +445,7 @@ Matrix[slot] : Array {
 		var adjoint;
 		adjoint = Matrix.newClear(this.rows, this.cols);
 		this.rows.do({ arg i;
-			this.cols.do({ arg j; 
+			this.cols.do({ arg j;
 				adjoint.put(i,j,this.cofactor(i,j));
 			});
 		});
@@ -440,7 +454,7 @@ Matrix[slot] : Array {
 	inverse { // return the inverse matrix
 		if(this.det != 0.0,{
 			^(this.adjoint / (this.det) );
-			},{error("matrix singular in Matrix-inverse");this.halt;}); 
+			},{error("matrix singular in Matrix-inverse");this.halt;});
 	}
 	gram { // the gram matrix
 		^(this.flop * this);
@@ -506,25 +520,25 @@ Matrix[slot] : Array {
 	}
 	isIdentity {
 		if( this.rows == this.cols,{
-			^(this.every({arg row,i; 
+			^(this.every({arg row,i;
 				row.every({ arg colElement,j;
 					if( i == j ,{
 						(colElement == 1)
 					},{
 						(colElement == 0)
-					}) 
+					})
 				});
 			});)
 		},{error("matrix not square in Matrix-isIdentity");this.halt;});
 	}
-	isDiagonal { 
-		^(this.every({arg row,i; 
+	isDiagonal {
+		^(this.every({arg row,i;
 			row.every({ arg colElement,j;
 				if( i == j ,{
 					(colElement != 0)
 				},{
 					(colElement == 0)
-				}) 
+				})
 			});
 		});)
 	}
@@ -533,7 +547,7 @@ Matrix[slot] : Array {
 	}
 	isIdempotent {
 		^(this.squared.flat == this.flat);
-	} 
+	}
 
 	sumCols { |function|
 		^this.asArray.sum(function)
@@ -569,7 +583,7 @@ Matrix[slot] : Array {
 // testing isSquare, isSingular, isRegular
 // added sum, sumRow, sumCol
 // replaced binary and unary operators
-// added shape 
+// added shape
 // added plus
 // added isSymmetric, isAntiSymmetric
 // added isPositive, isNonNegative
@@ -594,13 +608,13 @@ Matrix[slot] : Array {
 // restriction for psydoInverse
 // psydoInverse --> pseudoInverse
 // pseudoInverse also for rows < cols
-// changed grammian 
+// changed grammian
 // fill as class method and with function
 // fillCol and fillRow with function
 // added  doRow, doCol, doMatrix
 // added exchangeRow, exChangeCol
 // added postmln
-// added collect 
+// added collect
 // changed addRow, addCol (reciever unchanged, no flop)
 // changed getCol (no flop)
 // added inserRow, insertCol

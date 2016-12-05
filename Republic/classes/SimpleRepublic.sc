@@ -173,16 +173,16 @@ SimpleRepublic {
 	makeResponder {
 		resp = OSCresponderNode(nil, republicName, 
 			{ |t, r, msg, replyAddr|
-				var otherNick, otherID, addr, extraData;
-				var tempo, beats, serverConfig;
+				var otherNick, otherID, addr, serverConfig;
 				
 				otherNick = msg[1];
 				otherID = msg[2];
-				extraData = msg[3..];
+				// 3 & 4 are not used anymore but kept for backwards compatibility
+				serverConfig = msg[5..];
 							
 				if(this.hasJoined(otherNick).not) { 
 					addr = NetAddr(replyAddr.addr.asIPString, replyAddr.port);
-					this.addParticipant(otherNick, addr, otherID, extraData);
+					this.addParticipant(otherNick, addr, otherID, serverConfig);
 					(" ---> % has joined the Republic. ---".format(otherNick)).repostln;
 				};
 				presence.put(otherNick, graceCount);

@@ -1,1 +1,1 @@
-SimpleTriggerGui : AbstractPlayerGui {	guiBody { arg layout;		ActionButton(layout,model.name ? "trig",{ model.trig;});	}}
+SimpleTriggerGui : AbstractPlayerGui {	guiBody { arg layout;		ActionButton(layout, model.name ? "trig", { model.trig;});	}}

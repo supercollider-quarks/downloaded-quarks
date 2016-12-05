@@ -1,0 +1,40 @@
+TITLE:: MicKeyFunc
+summary:: key and mouse interface function
+categories:: transnd>ui
+related:: Classes/MicKeyWindow, Classes/MicKeySynth
+
+DESCRIPTION::
+an interface for keys to fire functions. link::Classes/MicKeyWindow:: listens to key strokes down, up and the time in-between. it then passes the 'timer' 'mx', 'my' to the function associated with your key. additionally mouse's vertical and horizontal scrolls are passed as buses, so you may get a nice intertial control into your synth. See link::Classes/MicKeySynth:: for sound examples.
+
+CLASSMETHODS::
+private:: dict
+
+method:: new
+argument:: key
+UTF8 key character as a link::Classes/Symbol::
+argument:: func
+a link::Classes/Function::
+
+method:: clear
+clean everthing up
+
+INSTANCEMETHODS::
+private:: initMicKeyFunc, wrapFunc, dict
+
+EXAMPLES::
+code::
+// the listener
+MicKeyWindow.front;
+
+// your func for key 'a'. see post window
+MicKeyFunc(\a, { |...args| args.postln });
+
+(
+// try 'a' & 'b'
+MicKeyFunc(\a, { MicKeyWindow.inform("Hello.") });
+MicKeyFunc(\b, { MicKeyWindow.inform("Hi!") });
+)
+
+// clean
+MicKeyFunc.clear;
+::

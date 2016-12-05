@@ -2,97 +2,97 @@
 
 AbstractPlayer : AbstractFunction  {
 
-	var <path,>name;
-	var <synth,<group,<server,<patchOut,defName;
+	var <path, >name;
+	var <synth, <group, <server, <patchOut, defName;
 	var <status;
-	 // nil, isPreparing, readyForPlay, isPlaying,isStopped, isStopping, isFreeing, isFreed
+	 // nil, isPreparing, readyForPlay, isPlaying, isStopped, isStopping, isFreeing, isFreed
 
 	classvar <>bundleClass;
 
-	*bundle { |server,atTime,buildFunction|
+	*bundle { |server, atTime, buildFunction|
 		var bundle;
 		bundle = AbstractPlayer.bundleClass.new;
 		buildFunction.value(bundle);
-		bundle.sendAtTime(server,atTime);
+		bundle.sendAtTime(server, atTime);
 	}
 
-	play { arg group,atTime,bus;
+	play { arg group, atTime, bus;
 		var timeOfRequest;
-		if(this.isPlaying,{ ^this });
+		if(this.isPlaying, { ^this });
 		timeOfRequest = Main.elapsedTime;
-		if(bus.notNil,{
+		if(bus.notNil, {
 			bus = bus.asBus;
-			if(group.isNil,{
+			if(group.isNil, {
 				server = bus.server;
 				this.group = server.asGroup;
-			},{
+			}, {
 				this.group = group.asGroup;
 				server = this.group.server;
 			})
-		},{
+		}, {
 			this.group = group.asGroup;
 			server = this.group.server;
 			// leave bus nil
 		});
-		if(server.serverRunning.not,{
+		if(server.serverRunning.not, {
 			/*
 				the hole here is if you manually stop and then restart the server.
 				I have no way of knowing that you did that, so the Instr defs are not cleared */
-			server.startAliveThread(0.1,0.4);
+			server.startAliveThread(0.1, 0.4);
 			server.waitForBoot({
-				if(server.dumpMode != 0,{
+				if(server.dumpMode != 0, {
 					server.stopAliveThread;
 				});
 				InstrSynthDef.clearCache(server);
-				if(server.isLocal,{
+				if(server.isLocal, {
 					InstrSynthDef.loadCacheFromDir(server);
 				});
-				this.prPlay(atTime,bus,timeOfRequest);
+				this.prPlay(atTime, bus, timeOfRequest);
 				nil
 			});
-		},{
-			this.prPlay(atTime,bus,timeOfRequest)
+		}, {
+			this.prPlay(atTime, bus, timeOfRequest)
 		});
 
 		CmdPeriod.add(this);
 	}
 
-	prPlay { arg atTime,bus,timeOfRequest;
+	prPlay { arg atTime, bus, timeOfRequest;
 		var bundle;
-		if(status === \isPlaying,{ ^"already playing".inform });
+		if(status === \isPlaying, { ^"already playing".inform });
 
 		bundle = AbstractPlayer.bundleClass.new;
-		if(status !== \readyForPlay,{
+		if(status !== \readyForPlay, {
 			this.prepareToBundle(group, bundle, false, bus)
 		});
 		this.spawnToBundle(bundle);
-		bundle.sendAtTime(this.server,atTime ? this.defaultAtTime,timeOfRequest);
+		bundle.sendAtTime(this.server, atTime ? this.defaultAtTime, timeOfRequest);
 	}
 	prSetStatus { arg newStatus;
 		status = newStatus;
-		NotificationCenter.notify(this,\statusDidChange,status);
+		NotificationCenter.notify(this, \statusDidChange, status);
 	}
 	isPrepared {
-		^#[\readyForPlay, \isPlaying,\isStopped, \isStopping].includes(status)
+		^#[\readyForPlay, \isPlaying, \isStopped, \isStopping].includes(status)
 	}
-	readyForPlay { ^[\readyForPlay,\isPlaying,\isStopped,\isStopping].includes(status) }
-	prepareForPlay { arg group,private = false,bus;
-		AbstractPlayer.bundle(group.asTarget.server,nil,{ |bundle|
-			this.prepareToBundle(group,bundle,private,bus);
+	readyForPlay { ^[\readyForPlay, \isPlaying, \isStopped, \isStopping].includes(status) }
+	prepareForPlay { arg group, private = false, bus;
+		AbstractPlayer.bundle(group.asTarget.server, nil, { |bundle|
+			this.prepareToBundle(group, bundle, private, bus);
 		});
 	}
 
-	prepareToBundle { arg agroup,bundle,private = false, bus;
+	prepareToBundle { arg agroup, bundle, private = false, bus;
 		this.prSetStatus(\isPreparing);
 		bundle.addFunction({
-			if(status == \isPreparing,{
+			if(status == \isPreparing, {
 				this.prSetStatus(\readyForPlay);
 			})
 		});
 		group = agroup.asGroup;
 		server = group.server;
-		this.loadDefFileToBundle(bundle,server);
-		this.makePatchOut(group,private,bus,bundle);
+		this.loadDefFileToBundle(bundle, server);
+		this.makePatchOut(group, private, bus, bundle);
 		this.makeResourcesToBundle(bundle);
 		this.prepareChildrenToBundle(bundle);
 		this.loadBuffersToBundle(bundle);
@@ -104,32 +104,32 @@ AbstractPlayer : AbstractFunction  {
 			// could just be asked if the def was in there ?
 			// this pass thru of defWasLoaded was because of some
 			// double loads
-			child.prepareToBundle(group,bundle,true,nil);
+			child.prepareToBundle(group, bundle, true, nil);
 		});
 	}
-	loadDefFileToBundle { arg bundle,server;
-		var def,dn;
+	loadDefFileToBundle { arg bundle, server;
+		var def, dn;
 		// Patch needs to know children numChannels
 		// before it can know its own.
 		// this is the only reason we are forcing the children to load
 		// their defs here rather then letting them each do it in their own
 		// prepareToBundle
 		this.children.do({ arg child;
-			child.loadDefFileToBundle(bundle,server);
+			child.loadDefFileToBundle(bundle, server);
 		});
 		// I might be producing a stream
 		// and I'll pass it to your synthArg
-		if(this.rate === 'stream',{ ^this });
+		if(this.rate === 'stream', { ^this });
 
 		dn = this.defName;
-		if(InstrSynthDef.cacheAt(dn,server).isNil,{
+		if(InstrSynthDef.cacheAt(dn, server).isNil, {
 			def = this.asSynthDef;
 			defName = def.name;
-			
+
 			bundle.addPrepare(["/d_recv", def.asBytes]);
 
 			InstrSynthDef.watchServer(server);
-			InstrSynthDef.cachePut(def,server);
+			InstrSynthDef.cachePut(def, server);
 		});
 	}
 	// the default behavior for play
@@ -138,60 +138,60 @@ AbstractPlayer : AbstractFunction  {
 	//makeResourcesToBundle { }
 	//freeResourcesToBundle { }
 
-	makePatchOut { arg agroup,private = false,bus,bundle;
+	makePatchOut { arg agroup, private = false, bus, bundle;
 		group = agroup.asGroup;
 		server = group.server;
-		this.topMakePatchOut(group,private,bus);
+		this.topMakePatchOut(group, private, bus);
 	}
-	topMakePatchOut { arg agroup,private = false,bus;
+	topMakePatchOut { arg agroup, private = false, bus;
 		this.group = agroup;
 		bus = bus ?? {
 			BusSpec(this.rate,
 					this.numChannels ?? {Error("numChannels is nil"+this.class+this).throw},
 					private)
 		};
-		if(patchOut.isNil,{
-			patchOut = PatchOut(this,group,bus)
+		if(patchOut.isNil, {
+			patchOut = PatchOut(this, group, bus)
 		});
 		^patchOut
 	}
 
 	setPatchOut { arg po; // not while playing
 		patchOut = po;
-		if(patchOut.notNil,{
+		if(patchOut.notNil, {
 			server = patchOut.server;
 		});
 	}
 
-	spawn { arg atTime,timeOfRequest;
+	spawn { arg atTime, timeOfRequest;
 		var bundle;
 		bundle = AbstractPlayer.bundleClass.new;
 		this.spawnToBundle(bundle);
-		bundle.sendAtTime(this.server,atTime,timeOfRequest);
+		bundle.sendAtTime(this.server, atTime, timeOfRequest);
 	}
-	spawnOn { arg group,bus, atTime,timeOfRequest;
+	spawnOn { arg group, bus, atTime, timeOfRequest;
 		var bundle;
 		bundle = AbstractPlayer.bundleClass.new;
-		this.spawnOnToBundle(group,bus,bundle);
-		bundle.sendAtTime(this.server,atTime,timeOfRequest);
+		this.spawnOnToBundle(group, bus, bundle);
+		bundle.sendAtTime(this.server, atTime, timeOfRequest);
 	}
-	spawnToBundle { arg bundle,selector=\addToTailMsg;
+	spawnToBundle { arg bundle, selector=\addToTailMsg;
 		bundle.addFunction({this.didSpawn});
 		this.children.do({ arg child;
 			child.spawnToBundle(bundle);
 		});
-		synth = Synth.basicNew(this.defName,server);
-		this.annotate(synth,"synth");
+		synth = Synth.basicNew(this.defName, server);
+		this.annotate(synth, "synth");
 		NodeWatcher.register(synth);
 		bundle.add(
-			synth.perform(selector,this.group,this.synthDefArgs)
+			synth.perform(selector, this.group, this.synthDefArgs)
 		);
 	}
-	spawnOnToBundle { arg agroup,bus,bundle;
+	spawnOnToBundle { arg agroup, bus, bundle;
 		// spawn on a group / bus to bundle
-		if(patchOut.isNil,{
-			this.makePatchOut(agroup,true,bus,bundle);
-		},{
+		if(patchOut.isNil, {
+			this.makePatchOut(agroup, true, bus, bundle);
+		}, {
 			this.bus = bus;
 			this.group = agroup;
 		});
@@ -211,34 +211,34 @@ AbstractPlayer : AbstractFunction  {
 		// sending the OSC is irrelevant since the root node already freed
 	}
 
-	onPlay { arg func,timeout,listener,oneShot=true,throwErrorOnTimeout=nil;
-		^this.prOn(\isPlaying,func,timeout,listener,oneShot,throwErrorOnTimeout)
+	onPlay { arg func, timeout, listener, oneShot=true, throwErrorOnTimeout=nil;
+		^this.prOn(\isPlaying, func, timeout, listener, oneShot, throwErrorOnTimeout)
 	}
-	onStop { arg func,timeout,listener,oneShot=true,throwErrorOnTimeout=nil;
-		^this.prOn(\isStopped,func,timeout,listener,oneShot,throwErrorOnTimeout)
+	onStop { arg func, timeout, listener, oneShot=true, throwErrorOnTimeout=nil;
+		^this.prOn(\isStopped, func, timeout, listener, oneShot, throwErrorOnTimeout)
 	}
-	onReady { arg func,timeout,listener,oneShot=true,throwErrorOnTimeout=nil;
-		^this.prOn(\readyForPlay,func,timeout,listener,oneShot,throwErrorOnTimeout)
+	onReady { arg func, timeout, listener, oneShot=true, throwErrorOnTimeout=nil;
+		^this.prOn(\readyForPlay, func, timeout, listener, oneShot, throwErrorOnTimeout)
 	}
 	freeOnStop {
-		^this.prOn(\isStopped,{this.free},nil,this,true,false)
+		^this.prOn(\isStopped, {this.free}, nil, this, true, false)
 	}
-	prOn { arg status,func,timeout,listener,oneShot=true,throwErrorOnTimeout=nil;
-		var nr,key,happened=false,msg;
-		key = [listener ? func,status];
-		nr = NotificationCenter.register(this,\statusDidChange,key ,{ arg newStatus;
-				if(newStatus === status,{
-					if(oneShot,{ nr.remove; happened=true });
+	prOn { arg status, func, timeout, listener, oneShot=true, throwErrorOnTimeout=nil;
+		var nr, key, happened=false, msg;
+		key = [listener ? func, status];
+		nr = NotificationCenter.register(this, \statusDidChange, key , { arg newStatus;
+				if(newStatus === status, {
+					if(oneShot, { nr.remove; happened=true });
 					func.value(this)
 				})
 			});
-		if(timeout.notNil,{
+		if(timeout.notNil, {
 			{
-				if(happened.not,{
+				if(happened.not, {
 					msg = status.asString + "timeout" +this+listener;
-					if(throwErrorOnTimeout,{ 
+					if(throwErrorOnTimeout, {
 						Error(msg).throw
-					},{
+					}, {
 						msg.warn
 					});
 					nr.remove
@@ -251,59 +251,59 @@ AbstractPlayer : AbstractFunction  {
 
 	// these always call children
 	stop { arg atTime;
-		if(server.notNil,{
-			AbstractPlayer.bundle(server,atTime ? this.server.latency,{ |bundle|
-				this.stopToBundle(bundle,true);
+		if(server.notNil, {
+			AbstractPlayer.bundle(server, atTime ? this.server.latency, { |bundle|
+				this.stopToBundle(bundle, true);
 			})
 		});
 		CmdPeriod.remove(this);
 	}
 	stopToBundle { arg bundle;
-		if([\isStopped,\isStopping,\isFreed,\isFreeing].includes(status).not,{
+		if([\isStopped, \isStopping, \isFreed, \isFreeing].includes(status).not, {
 			this.prSetStatus(\isStopping);
 			this.children.do({ arg child;
 				child.stopToBundle(bundle);
 			});
 			this.freeSynthToBundle(bundle);
-			bundle.addMessage(this,\didStop);
+			bundle.addMessage(this, \didStop);
 		})
 	}
 	didStop {
-		if(status === \isStopping,{
+		if(status === \isStopping, {
 			this.prSetStatus(\isStopped);
-			NotificationCenter.notify(this,\didStop);
+			NotificationCenter.notify(this, \didStop);
 		});
 	}
-	release { arg releaseTime,atTime;
-		AbstractPlayer.bundle(server,atTime,{ |rb|
-			this.releaseToBundle(releaseTime,rb);
+	release { arg releaseTime, atTime;
+		AbstractPlayer.bundle(server, atTime, { |rb|
+			this.releaseToBundle(releaseTime, rb);
 		})
 	}
-	releaseToBundle { arg releaseTime,bundle;
-		releaseTime = max(releaseTime ? 0.1,0.01);
-		if(synth.isPlaying,{
+	releaseToBundle { arg releaseTime, bundle;
+		releaseTime = max(releaseTime ? 0.1, 0.01);
+		if(synth.isPlaying, {
 			bundle.add(synth.releaseMsg(releaseTime));
 			bundle.addFunction({
-				SystemClock.sched(releaseTime+0.1,{
+				SystemClock.sched(releaseTime+0.1, {
 					this.stop;
 					nil;
 				})
 			});
-		},{
+		}, {
 			this.stopToBundle(bundle)
 		})
 	}
 
 	free { arg atTime;
-		if([\isFreed,\isFreeing].includes(status).not,{
-			AbstractPlayer.bundle(server,atTime,{ |bundle|
+		if([\isFreed, \isFreeing].includes(status).not, {
+			AbstractPlayer.bundle(server, atTime, { |bundle|
 				this.freeToBundle(bundle);
 			})
 		});
 	}
 	freeToBundle { arg bundle;
-		if([\isFreed,\isFreeing].includes(status).not,{
-			if(status === \isPlaying,{
+		if([\isFreed, \isFreeing].includes(status).not, {
+			if(status === \isPlaying, {
 				// sends to all the children
 				this.stopToBundle(bundle);
 			});
@@ -315,21 +315,21 @@ AbstractPlayer : AbstractFunction  {
 			this.freePatchOutToBundle(bundle);
 
 			this.prSetStatus(\isFreeing);
-			bundle.addMessage(this,\didFree);
+			bundle.addMessage(this, \didFree);
 		})
 	}
 	freeResourcesToBundle {}
 	didFree {
-		if(status == \isFreeing,{
+		if(status == \isFreeing, {
 			this.prSetStatus(\isFreed);
 			^true
-		},{
+		}, {
 			^false
 		})
 	}
 	// these don't call children
 	freeSynthToBundle { arg bundle;
-		if(synth.isPlaying,{ // ? false
+		if(synth.isPlaying, { // ? false
 			synth.freeToBundle(bundle);
 		});
 		bundle.addFunction({
@@ -345,9 +345,9 @@ AbstractPlayer : AbstractFunction  {
 			//server = nil;
 		});
 	}
-	record { arg path,endBeat,onComplete,recHeaderFormat, recSampleFormat,atTime;
+	record { arg path, endBeat, onComplete, recHeaderFormat, recSampleFormat, atTime;
 		var recorder;
-		recorder = PlayerRecorder(this,recHeaderFormat,recSampleFormat);
+		recorder = PlayerRecorder(this, recHeaderFormat, recSampleFormat);
 		^recorder.record(path,
 			endBeat,
 			onComplete,
@@ -355,30 +355,30 @@ AbstractPlayer : AbstractFunction  {
 	}
 
 	busIndex {
-		if(patchOut.isNil,{ ^nil });
+		if(patchOut.isNil, { ^nil });
 		^this.patchOut.bus.index
 	}
 	bus {
-		if(patchOut.isNil,{ ^nil });
+		if(patchOut.isNil, { ^nil });
 		^patchOut.bus
 	}
 	bus_ { arg b;
-		if(b.notNil,{
-			if(patchOut.notNil,{
+		if(b.notNil, {
+			if(patchOut.notNil, {
 				patchOut.bus = b;
-			},{
+			}, {
 				Error(this.asString + " is not prepared for play, there is no patchOut to store the bus in").throw;
 			})
 		});
 	}
 	group_ { arg g;
 		// does not dynamically change your group
-		if(g.notNil,{
+		if(g.notNil, {
 			group = g.asGroup;
 		})
 	}
-	setGroupToBundle { arg g,b;
-		if(synth.notNil,{
+	setGroupToBundle { arg g, b;
+		if(synth.notNil, {
 			g = g.asGroup;
 			b.add( synth.moveToHeadMsg(g) );
 			this.subGroups.do { arg sg;
@@ -395,11 +395,11 @@ AbstractPlayer : AbstractFunction  {
 	//  this works for simple audio function subclasses
 	//  but its probably more complicated if you have inputs
 	asSynthDef {
-		^SynthDef(this.defName,{ arg out = 0;
-			if(this.rate == \audio,{
-				Out.ar(out,this.ar)
-			},{
-				Out.kr(out,this.kr)
+		^SynthDef(this.defName, { arg out = 0;
+			if(this.rate == \audio, {
+				Out.ar(out, this.ar)
+			}, {
+				Out.kr(out, this.kr)
 			})
 		})
 	}
@@ -411,7 +411,7 @@ AbstractPlayer : AbstractFunction  {
 		});
 	}
 	synthDefArgs {
-		^[\out,patchOut.synthArg]
+		^[\out, patchOut.synthArg]
 	}
 	defName {
 		^defName ?? {this.class.name.asString}
@@ -419,34 +419,34 @@ AbstractPlayer : AbstractFunction  {
 	rate { ^\audio }
 	numChannels { ^1 }
 	spec {
-		if(this.rate.isNil,{ ( this.asString + ": rate is unknown, guessing \control").warn });
-		^if(this.rate == \audio,{
+		if(this.rate.isNil, { ( this.asString + ": rate is unknown, guessing \control").warn });
+		^if(this.rate == \audio, {
 			AudioSpec(this.numChannels)
-		},{
-			ControlSpec(-1,1)
+		}, {
+			ControlSpec(-1, 1)
 			// or trig
 		})
 	}
 	subGroups { ^[] }
 
-	addToSynthDef {  arg synthDef,name;
+	addToSynthDef {  arg synthDef, name;
 		// the value doesn't matter, just building the synth def now.
 		// value will be passed to the real synth at play time
 		synthDef.addIr(name, 0); // \out is an .ir bus index
 	}
-	// synth arg is the argument value (float,integer) to pass to the synth itself.
+	// synth arg is the argument value (float, integer) to pass to the synth itself.
 	// the synth arg for a player is the index of the bus that it is playing on
 	synthArg { ^patchOut.synthArg }
 	instrArgFromControl { arg control;
 		// a Patch could be either
 		this.rate.switch(
-			\audio,{
-				^In.ar(control,this.numChannels ?? {Error("numChannels is nil"+this).throw})
+			\audio, {
+				^In.ar(control, this.numChannels ?? {Error("numChannels is nil"+this).throw})
 			},
-			\control,{
-				^In.kr(control,this.numChannels ?? {Error("numChannels is nil"+this).throw})
+			\control, {
+				^In.kr(control, this.numChannels ?? {Error("numChannels is nil"+this).throw})
 			},
-			\stream,{
+			\stream, {
 				^control
 				//this.synthArg
 			},
@@ -460,12 +460,12 @@ AbstractPlayer : AbstractFunction  {
 	// inside an InstrSynthDef a player can insert itself as a stepchild
 	// of the patch and play inline
 	ar {
-		if(UGen.buildSynthDef.class === InstrSynthDef,{
+		if(UGen.buildSynthDef.class === InstrSynthDef, {
 			// if not built, then build in case numChannels/rate are unknown
 			this.asSynthDef;
 			^UGen.buildSynthDef.playerIn(this)
-		},{
-			SubclassResponsibilityError(this,thisMethod,this.class).throw
+		}, {
+			SubclassResponsibilityError(this, thisMethod, this.class).throw
 		})
 	}
 	kr { ^this.ar }
@@ -474,33 +474,33 @@ AbstractPlayer : AbstractFunction  {
 
 	// ugen style syntax
 	*ar { arg ... args;
-		^this.performList(\new,args).ar
+		^this.performList(\new, args).ar
 	}
 	*kr { arg ... args;
-		^this.performList(\new,args).kr
+		^this.performList(\new, args).kr
 	}
 	plot { arg duration=5.0, bounds;
-		{this.value}.plot2(duration,this.server,bounds?Rect(0,0,900,800))
+		{this.value}.plot2(duration, this.server, bounds?Rect(0, 0, 900, 800))
 	}
 	/** hot patching **/
 	connectTo { arg hasInput;
-		this.connectToPatchIn(hasInput.patchIn,this.isPlaying ? false);
+		this.connectToPatchIn(hasInput.patchIn, this.isPlaying ? false);
 	}
-	connectToInputAt { arg player,inputIndex=0;
-		this.connectToPatchIn(player.patchIns.at(inputIndex),this.isPlaying ? false)
+	connectToInputAt { arg player, inputIndex=0;
+		this.connectToPatchIn(player.patchIns.at(inputIndex), this.isPlaying ? false)
 	}
-	connectToPatchIn { arg patchIn,needsValueSetNow = true;
+	connectToPatchIn { arg patchIn, needsValueSetNow = true;
 		// if my bus is public, change to private
 		var b;
-		if(this.isPlaying and: {this.rate == \audio} and: {this.bus.isAudioOut},{
-			this.bus = b = Bus.alloc(this.rate,this.server,this.numChannels);
-			AbstractPlayer.annotate(b,"connected to patch in, made bus");
+		if(this.isPlaying and: {this.rate == \audio} and: {this.bus.isAudioOut}, {
+			this.bus = b = Bus.alloc(this.rate, this.server, this.numChannels);
+			AbstractPlayer.annotate(b, "connected to patch in, made bus");
 		});
-		if(patchOut.isNil,{
+		if(patchOut.isNil, {
 			"no PatchOut: this object not prepared".error;
 			this.dump;
 		});
-		this.patchOut.connectTo(patchIn,needsValueSetNow)
+		this.patchOut.connectTo(patchIn, needsValueSetNow)
 	}
 	disconnect {
 		patchOut.disconnect;
@@ -511,8 +511,8 @@ AbstractPlayer : AbstractFunction  {
 		function.value(this);
 		this.children.do({arg c;
 			var n;
-			n = c.tryPerform(\deepDo,function);
-			if(n.isNil,{ function.value(c) });
+			n = c.tryPerform(\deepDo, function);
+			if(n.isNil, { function.value(c) });
 		});
 	}
 	allChildren {
@@ -538,14 +538,14 @@ AbstractPlayer : AbstractFunction  {
 	beatDuration { ^nil } // nil means inf
 	timeDuration { var bd;
 		bd = this.beatDuration;
-		if(bd.notNil,{
+		if(bd.notNil, {
 			^Tempo.beats2secs(bd)
-		},{
+		}, {
 			^nil
 		});
 	}
 
-	// support Pseq([ aPlayer, aPlayer2],inf) etc.
+	// support Pseq([ aPlayer, aPlayer2], inf) etc.
 	// you need to have prepared me and set any busses.
 	// i need to have a finite duration.
 	embedInStream { arg inval;
@@ -559,33 +559,33 @@ AbstractPlayer : AbstractFunction  {
 	name {
 		^(name ??
 		{
-			name = if(path.notNil,{
+			name = if(path.notNil, {
 						PathName(path).fileName
-					},nil);
+					}, nil);
 			name
 		})
 	}
 	asString { ^this.name ?? { super.asString } }
 
 	path_ { arg p;
-		path = if(p.isNil,p ,{
+		path = if(p.isNil, p , {
 			path = PathName(p).asRelativePath
 		})
 	}
 
 	save { arg apath;
 		var evpath;
-		if(File.exists(apath),{
+		if(File.exists(apath), {
 			evpath = apath.escapeChar($ );
 			("cp " ++ evpath + evpath ++ ".bak").unixCmd;
 		});
 		this.asCompileString.write(apath);
-		if(path != apath,{ this.didSaveAs(apath); });
+		if(path != apath, { this.didSaveAs(apath); });
 	}
 	didSaveAs { arg apath;
 		path = apath;
 		name = nil;
-		NotificationCenter.notify(AbstractPlayer,\saveAs,[this,path]);
+		NotificationCenter.notify(AbstractPlayer, \saveAs, [this, path]);
 	}
 
 	asCompileString { // support arg sensitive formatting
@@ -598,36 +598,36 @@ AbstractPlayer : AbstractFunction  {
 		// anything with a path gets stored as abreviated
 		var args;
 		args = this.storeArgs;
-		if(args.notEmpty,{
-			if(stream.isKindOf(PrettyPrintStream),{
+		if(args.notEmpty, {
+			if(stream.isKindOf(PrettyPrintStream), {
 				stream.storeArgs( enpath(args) );
-			},{
+			}, {
 				stream << "(" <<<* enpath(args) << ")"
 			});
-		},{
+		}, {
 			stream << ".new";
 		})
 	}
 	simplifyStoreArgs { arg args; ^args }
 
-	annotate { arg thing,note;
-		if(\Annotations.asClass.notNil,{
+	annotate { arg thing, note;
+		if(\Annotations.asClass.notNil, {
 			Annotations.register(this);
-			Annotations.put(thing,this,note)
+			Annotations.put(thing, this, note)
 		})
 	}
-	*annotate { arg thing,note;
-		if(\Annotations.asClass.notNil,{
-			Annotations.put(thing,note)
+	*annotate { arg thing, note;
+		if(\Annotations.asClass.notNil, {
+			Annotations.put(thing, note)
 		})
 	}
 	*getAnnotation { arg thing;
 		if(\Annotations.asClass.isNil, { ^nil });
 		^Annotations.at(thing)
 	}
-	*removeAnnotation { arg thing; 
+	*removeAnnotation { arg thing;
 		if(\Annotations.asClass.isNil, { ^nil });
-		Annotations.unregister(thing) 
+		Annotations.unregister(thing)
 	}
 
 	// using the arg passing version
@@ -647,7 +647,7 @@ AbstractPlayer : AbstractFunction  {
 
 
 SynthlessPlayer : AbstractPlayer {
-	
+
 	var <>isPlaying=false;
 
 	loadDefFileToBundle { }
@@ -656,7 +656,7 @@ SynthlessPlayer : AbstractPlayer {
 		this.children.do({ arg child;
 			child.spawnToBundle(bundle);
 		});
-		bundle.addMessage(this,\didSpawn);
+		bundle.addMessage(this, \didSpawn);
 	}
 	didSpawn {
 		super.didSpawn;
@@ -666,12 +666,12 @@ SynthlessPlayer : AbstractPlayer {
 		super.didStop;
 		isPlaying = false;
 	}
-	releaseToBundle { arg releaseTime = 0.1,bundle;
+	releaseToBundle { arg releaseTime = 0.1, bundle;
 		// children release  ?
-		bundle.addMessage(this,\stop);
+		bundle.addMessage(this, \stop);
 	}
-	connectToPatchIn { arg patchIn,needsValueSetNow = true;
-		this.patchOut.connectTo(patchIn,needsValueSetNow)
+	connectToPatchIn { arg patchIn, needsValueSetNow = true;
+		this.patchOut.connectTo(patchIn, needsValueSetNow)
 	}
 }
 
@@ -708,9 +708,9 @@ AbstractPlayerProxy : AbstractPlayer { // won't play if source is nil
 	synthArg { ^this.source.synthArg }
 	rate { ^this.source.rate }
 	numChannels { ^this.source.numChannels }
-	loadDefFileToBundle { arg b,server;
-		if(this.source.notNil,{
-			this.source.loadDefFileToBundle(b,server)
+	loadDefFileToBundle { arg b, server;
+		if(this.source.notNil, {
+			this.source.loadDefFileToBundle(b, server)
 		})
 	}
 	defName { ^this.source.defName }
@@ -730,12 +730,12 @@ AbstractPlayerProxy : AbstractPlayer { // won't play if source is nil
 	instrArgFromControl { arg control;
 		^this.source.instrArgFromControl(control)
 	}
-	initForSynthDef { arg synthDef,argi;
+	initForSynthDef { arg synthDef, argi;
 		// only used for building the synthDef
-		this.source.initForSynthDef(synthDef,argi)
+		this.source.initForSynthDef(synthDef, argi)
 	}
 	connectToPatchIn { arg patchIn, needsValueSetNow=true;
-		this.source.connectToPatchIn(patchIn,needsValueSetNow);
+		this.source.connectToPatchIn(patchIn, needsValueSetNow);
 	}
 	didStop {
 		//isPlaying = false;
@@ -744,15 +744,15 @@ AbstractPlayerProxy : AbstractPlayer { // won't play if source is nil
 		socketStatus = \isSleeping;
 	}
 	children {
-		if(this.source.notNil,{
+		if(this.source.notNil, {
 			^[this.source]
-		},{
+		}, {
 			^[]
 		});
 	}
 	prepareChildrenToBundle { arg bundle;
 		this.children.do({ arg child;
-			child.prepareToBundle(group,bundle,true,this.bus);
+			child.prepareToBundle(group, bundle, true, this.bus);
 		});
 	}
 }

@@ -1,0 +1,186 @@
+TITLE:: OSCMon
+summary:: A Monitor for OSC traffic
+categories:: Modality, OSC
+related:: Overviews/Modality, Classes/MKtl, Classes/OSCFunc, Classes/OSCdef
+
+DESCRIPTION::
+OSCMon monitors captures incoming OSC messages, keeping recent ones around for analyis and display. It can show the  message sizes, relative arrival times for multiple sources.
+
+code::
+
+
+o = OSCMon.new; 	// make one
+o.enable;			// turn it on
+o.show;				// show them on gui, no po
+o.watchStatus = true; s.boot;
+
+o.trace;			// post messages
+// show status messages from server too
+o.watchStatus = false;
+o.list.size;
+o.anaDict.nicknames.as(Event);
+o.addresses;
+(
+n = NetAddr.localAddr;
+Tdef(\test, {
+	loop {
+		(exprand(0.03, 0.3) * 3).wait;
+		n.sendMsg([\test, \yo, \mama].choose,
+			*{ 10.rand }.dup(rrand(3, 10)));
+	};
+});
+Tdef(\test).play;
+)
+
+o.anaDict[\nicknames];
+o.anaDict[\messagesByAddr];
+o.anaDict[\msgNamesByAddr];
+
+
+o.timeWindow = 25;
+
+o.trace(false); 	// no posting
+o.postInfo;			// and post current state
+
+o.disable;
+o.enable;
+
+
+
+o.anaDict[\nicknames];
+o.anaDict[\messagesByAddr];
+o.anaDict[\msgNamesByAddr];
+
+o.addNickname(\manta, NetAddr("127.0.0.1", 8000));
+
+o.anaDict[\messagesByAddr][\homeclient];
+
+// make a local net address to send/receive messages to monitor;
+(
+n = NetAddr.localAddr;
+Tdef(\test, {
+	loop {
+		(exprand(0.03, 0.3) * 3).wait;
+		n.sendMsg([\test, \yo, \mama].choose,
+			*{ 10.rand }.dup(rrand(3, 10)));
+	};
+});
+Tdef(\test).play;
+)
+	// addresses and msgNames are kept
+o.addresses;
+o.msgNames;
+o.list.keep(10).postln;
+	// TBD: statistics on who sent how much
+	// which messages are most frequent
+
+	// add nicknames for known addresses
+	// post all messages by source
+	// post all messages by name and/or source
+
+o.free;
+
+::
+
+
+CLASSMETHODS::
+
+METHOD:: colors
+some colors to use in the visualisation
+
+private:: prepColors
+
+METHOD:: new
+make a new OSCMon
+argument:: bufsize
+ with a buffersize of how many messages to keep,
+argument:: timeWindow
+a length of time within which to keep messages
+argument:: action
+and an action to do when a new message comes in
+
+INSTANCEMETHODS::
+
+private:: init, nameOrAddr, addDefaultNicknames, analyse, addToList
+
+METHOD:: bufsize
+the maximum number of messages to store
+
+METHOD:: timeWindow
+the maximum time window in which to store messages
+
+METHOD:: listenFunc
+internal: the function with which OSCMon listen to osc traffic.
+
+METHOD:: list
+the list of recorded message entries
+
+METHOD:: addresses
+the addresses from which messages have been sent
+
+METHOD:: msgNames
+the msgNames monitored
+
+METHOD:: anaDict
+a dict containing various analyses of the osc data
+
+METHOD:: postInfo
+post info on current recorded messages
+
+
+METHOD:: enable, disable
+enable and disable listening
+METHOD:: enabled
+get flag whether oscmon is listening
+
+METHOD:: verbose
+get or set flag whether to post info on incoming traffic
+METHOD:: trace
+set verbose flag, default flag is true
+
+METHOD:: watchStatus
+get and set flag whether to record server status messages
+
+METHOD:: action
+a custom action to perform on all incoming messages
+
+METHOD:: addNickname
+argument:: name
+argument:: addr
+add a nickname for an incoming address
+
+METHOD:: removeNickname
+argument:: name
+remove a nickname
+
+METHOD:: free
+free the resources of this oscmon
+
+METHOD:: refreshAddrsAndNames
+refresh analysis of present addresses and names
+
+METHOD:: addAddr, removeAddr
+argument:: addr
+add/remove an address to/from addrNames
+
+METHOD:: addMsgName, removeMsgName
+add or remove a messageName from msgNames
+
+METHOD:: postMessagesFrom
+post all messages from address at index
+
+
+METHOD:: show
+make a named display window for the oscmon
+
+METHOD:: w, u
+its display window and userview
+METHOD:: refresh
+refresh display
+
+METHOD:: clearMsgNames, clearAddrs
+clear msgNames or addresses
+
+METHOD:: trackMsgs, trackAddrs
+get and set flags whether to track msgNames and addresses
+

@@ -307,6 +307,8 @@ returns:: code::nil:: or an link::Classes/Event:: containing the constraints in 
 METHOD:: addAction
 Add an action to the widget's link::Classes/CV::.
 
+See also the related class method link::Classes/CVCenter#*addActionAt::
+
 argument:: name
 a link::Classes/Symbol:: or a link::Classes/String::, representing the name under which the action will be stored
 
@@ -439,9 +441,13 @@ private:: prInitOscConnect
 private:: prInitOscDisplay
 private:: prInitOscInputRange
 private:: prInitActionsControl
+private:: prInitSlidersTextConnection
 private:: background
 private:: stringColor
-
+private:: activeTextB
+private:: activeSliderB
+private:: connectS
+private:: connectTF
 
 subsection:: Extending the API
 warning::The following features are experimental and one should study the internal workings of CVWidget closely before using them - especially the structure of controllers and models: link::#-wdgtControllersAndModels::.
@@ -626,9 +632,14 @@ CVWidgets cannot gain focus themselves. However, their elements (buttons, slider
 returns:: an link::Classes/Array:: of GUI elements
 
 METHOD:: msSize
-Though this is an instance var defined in CVWidget it applies to CVWidgetMS only: It returns the snumber of slots of the multi-slider of a link::Classes/CVWidgetMS::.
+Though this is an instance var defined in CVWidget it applies to CVWidgetMS only: It returns the number of slots of the multi-slider of a link::Classes/CVWidgetMS::.
 
 returns:: an link::Classes/Integer::
+
+METHOD:: cvArray
+link::Classes/CVWidgetMS:: only.
+
+returns:: an link::Classes/Array:: of link::Classes/CV::s after applying the method link::Classes/CVWidgetMS#-split#split:: on a given CVWidgetMS.
 
 METHOD:: front
 Sends the widget's window to front.
@@ -673,6 +684,17 @@ a link::Classes/Boolean::
 
 returns:: the receiver
 
+METHOD:: connectGUI
+Determine whether sliders and number/textfields CV shall update according to the value of the internal CV. This may be useful especially if many CVs (e.g. within link::Classes/CVCenter::) are updated simultaniously at a high rate as that will cause a high CPU load and the GUI may quickly freeze.
+
+argument:: connectSlider
+a link::Classes/Boolean:: (optional), determining whether the CVWidget's sliders/knob shall update to the value of the internal CV
+
+argument:: connectTextField
+a link::Classes/Boolean:: (optional), determining whether the CVWidget's number-/textfield shall update to the value of the internal CV
+
+returns:: the receiver
+
 METHOD:: widgetXY
 Sets/gets the XY-position of a widget within its parent window.
 
@@ -700,6 +722,10 @@ METHOD:: close
 If the widget is part of the CVCenter-GUI all its elements will be removed, otherwise close the widget.
 
 returns:: the receiver
+
+METHOD:: isCVCWidget
+
+returns:: a link::Classes/Boolean::, indicating whether the given CVWidget is part of link::Classes/CVCenter::
 
 METHOD:: isClosed
 

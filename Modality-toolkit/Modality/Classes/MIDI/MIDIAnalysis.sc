@@ -1,5 +1,7 @@
 MIDIAnalysis {
+
 	classvar elements, respTypes, elemDictByType, results;
+
 	*analyse { |rawCapture|
 		respTypes = [];
 		elements = rawCapture.clump(2).collect {
@@ -73,21 +75,6 @@ results = results ++ [
 
 	*compressInfo { |dict, key|
 		^dict.collectAs(_[key], Array).asSet.asArray.sort.unbubble;
-	}
-	// too tired to figure this out now.. later
-	reduceToConsecutive {|array|
-
-	}
-
-	*checkMsgTypes { |devDesc|
-		var types = Set.new;
-		devDesc.collect { |el, i| if (i.odd) {
-			var type = el[\midiMsgType];
-			type ?? { Error("MIDI device description element must have midiMsgType field: %".format(el)).throw };
-			types.add(el[\midiMsgType])
-
-		} };
-		^types.asArray;
 	}
 
 	*checkForMultiple { |devDesc, typeToFilterBy, dictKeyToCompress|

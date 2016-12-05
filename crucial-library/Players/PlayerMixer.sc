@@ -9,18 +9,18 @@ PlayerMixer : AbstractPlayer {  // will become a HasPatchIns
 
 
 	asSynthDef {
-		^SynthDef(this.defName,{ arg out=0;
+		^SynthDef(this.defName, { arg out=0;
 			var inputBuses;
-			if(players.size > 1,{
-				inputBuses = Control.names(Array.fill(players.size,{ arg i; "in"++i.asString}))
-							.ir(Array.fill(players.size,0))
-							.collect({ arg in; In.ar(in,this.numChannels) });
+			if(players.size > 1, {
+				inputBuses = Control.names(Array.fill(players.size, { arg i; "in"++i.asString}))
+							.ir(Array.fill(players.size, 0))
+							.collect({ arg in; In.ar(in, this.numChannels) });
 				Out.ar(out,
 					Mix.new(
 						inputBuses
 					)
 				)
-			},{
+			}, {
 				Out.ar(out,
 					In.ar( Control.names(["in0"]).ir([0]), this.numChannels)
 				)
@@ -31,29 +31,29 @@ PlayerMixer : AbstractPlayer {  // will become a HasPatchIns
 	synthDefArgs {
 		var l;
 		l = Array(players.size * 2 + 2);
-		l.addAll(["out",this.synthArg]);
-		players.do({ arg pl,pli;
-				l.addAll(["in" ++ pli.asString,pl.synthArg]);
+		l.addAll(["out", this.synthArg]);
+		players.do({ arg pl, pli;
+				l.addAll(["in" ++ pli.asString, pl.synthArg]);
 		});
 		^l
 	}
 	respawnMixerToBundle { arg bundle;
-		var dn,bytes;
-		if(synth.notNil,{
+		var dn, bytes;
+		if(synth.notNil, {
 			bundle.add(synth.freeMsg);
 		});
-		synth = Synth.basicNew(this.defName,server);
+		synth = Synth.basicNew(this.defName, server);
 		NodeWatcher.register(synth);
-		this.annotate(synth,"synth,respawned");
+		this.annotate(synth, "synth, respawned");
 
 		dn = this.defName.asSymbol;
-		if(Library.at(SynthDef,this.server,dn).isNil,{
+		if(Library.at(SynthDef, this.server, dn).isNil, {
 			bundle.add(["/d_recv", this.asSynthDef.asBytes,
-					synth.addToTailMsg(this.group,this.synthDefArgs) ]);
-			Library.put(SynthDef,server,dn,true);
-		},{
+					synth.addToTailMsg(this.group, this.synthDefArgs) ]);
+			Library.put(SynthDef, server, dn, true);
+		}, {
 			bundle.add(
-				synth.addToTailMsg(this.group,this.synthDefArgs)
+				synth.addToTailMsg(this.group, this.synthDefArgs)
 			);
 		});
 	}
@@ -61,10 +61,10 @@ PlayerMixer : AbstractPlayer {  // will become a HasPatchIns
 	addPlayer { arg player;
 		var bundle;
 		players = players.add(player);
-		if(this.isPlaying,{
+		if(this.isPlaying, {
 			bundle = AbstractPlayer.bundleClass.new;
 			//start player
-			player.makePatchOut(this.group,true,nil,bundle);
+			player.makePatchOut(this.group, true, nil, bundle);
 
 			//TODO   prepareToBundle
 
@@ -74,21 +74,21 @@ PlayerMixer : AbstractPlayer {  // will become a HasPatchIns
 		});
 	}
 	removePlayerAt { arg pli;
-		var bundle,player;
+		var bundle, player;
 		player = players.removeAt(pli);
-		if(player.notNil and: {this.isPlaying},{
+		if(player.notNil and: {this.isPlaying}, {
 			bundle = AbstractPlayer.bundleClass.new;
 			//stop player
-			player.releaseToBundle(0.1,bundle);
+			player.releaseToBundle(0.1, bundle);
 			this.respawnMixerToBundle(bundle);
 			bundle.send(this.server);
 		});
 	}
-	putPlayer { arg i,pl;
-		players.put(i,pl);
+	putPlayer { arg i, pl;
+		players.put(i, pl);
 		// if playing stop the old one in that spot
 		// and spawn the new one on that bus
-		if(this.isPlaying,{
+		if(this.isPlaying, {
 			"PlayerMixer-putPlayer while playing not yet implemented.".warn;
 		});
 	}
@@ -105,7 +105,7 @@ PlayerMixer : AbstractPlayer {  // will become a HasPatchIns
 
 GroupedPlayerMixer : PlayerMixer {
 
-	var groupings,groups;
+	var groupings, groups;
 
 	*new { arg ... players;
 		^super.new.gpminit(players)
@@ -116,10 +116,10 @@ GroupedPlayerMixer : PlayerMixer {
 	}
 
 	makeResourcesToBundle { arg bundle;
-		groups = groupings.collect({ |pls,i|
+		groups = groupings.collect({ |pls, i|
 			var g;
 			g = Group.basicNew(this.server);
-			this.annotate(g,"group"+i);
+			this.annotate(g, "group"+i);
 			NodeWatcher.register(g);
 			bundle.add( g.addToTailMsg(group) );
 			g
@@ -127,9 +127,9 @@ GroupedPlayerMixer : PlayerMixer {
 		super.makeResourcesToBundle(bundle);
 	}
 	prepareChildrenToBundle { arg bundle;
-		groupings.do({ |pls,gi|
+		groupings.do({ |pls, gi|
 			pls.do({ |pl|
-				pl.prepareToBundle( groups[gi], bundle,true, nil )
+				pl.prepareToBundle( groups[gi], bundle, true, nil )
 			})
 		})
 	}

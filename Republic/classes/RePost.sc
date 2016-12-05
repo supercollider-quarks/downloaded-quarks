@@ -50,9 +50,9 @@ RePost {
 }
 
 + String { 
-	repost { RePost(this) }
-	repostln { RePost(this ++ $\n) }
-	repostcln {  RePost("//" + this + $\n) }
+	repost { { RePost(this) }.defer }
+	repostln { { RePost(this ++ $\n) }.defer }
+	repostcln { { RePost("//" + this + $\n) }.defer }
 	repostc { "// ".post; this.post; }
 	repostf { |...items| 
 		^this.prFormat( items.collect(_.asString) ).repost 

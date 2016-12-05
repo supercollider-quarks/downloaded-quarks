@@ -1,0 +1,75 @@
+TITLE:: CombletN
+summary:: comb filter with slow decay rise
+categories:: UGens>Filters
+related:: Classes/CombN, Classes/CombletL, Classes/CombletC
+
+DESCRIPTION::
+This is a comb filter whose impulse response is shaped like a Decay2 envelope. It is possible to control the attacktime and decaytime.
+
+CombletN is equivalent to:
+code::
+CombN(in, freq, maxdelay, delaytime, decaytime)
+- CombN(in, freq, maxdelay, delaytime, risetime)
+::
+
+This allows very smooth reverb tails which begin with a slow rise rather than a dense echo pattern.
+
+code::
+(
+x = {
+    var src = Decay2.ar(Impulse.ar(0.5, 0.99), 0.001, 0.1, PinkNoise.ar(1));
+	var comb = CombN.ar(src, 0.05, 0.05, 3);
+    src + comb;
+}.play;
+)
+x.free;
+(
+x = {
+    var src = Decay2.ar(Impulse.ar(0.5, 0.99), 0.001, 0.1, PinkNoise.ar(1));
+	var comb = CombletN.ar(src, 0.05, 0.05, 3, 1);
+    src + comb;
+}.play;
+)
+x.free;
+
+
+classmethods::
+
+argument::in
+The input signal.
+
+argument::maxdelaytime
+The maximum delay time in seconds. Used to initialize the delay buffer size.
+
+argument::delaytime
+Delay time in seconds.
+
+argument::decaytime
+Time for the echoes to decay by 60 decibels. If this time is negative then the feedback coefficient will be negative, thus emphasizing only odd harmonics at an octave lower.
+
+argument::risetime
+Decay time for the echoes that are subtracted to filter the attack of the response. If decaytime is negative, risetime should be too.
+
+argument::mul
+Output will be multiplied by this value.
+
+argument::add
+This value will be added to the output.
+
+
+discussion::
+Note that if attacktime == decaytime then the signal cancels out,
+and if attacktime > decaytime then the response is inverted.
+
+
+CLASSMETHODS::
+
+METHOD:: combClass
+the class of comb to use, which determines interpolation used:
+CombN for CombletN, CombL for CombletL, and CombC for CombletC.
+
+EXAMPLES::
+
+code::
+
+::

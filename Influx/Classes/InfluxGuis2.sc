@@ -199,13 +199,13 @@ InfluxIOWGui : JITGui {
 		if (newState[\object] != prevState[\object]) {
 			if (object.notNil) {
 				inValsGui.object_(object.inValDict);
-				object.inNames.do(inValsGui.specs.put(_, \pan.asSpec));
+				object.inNames.do(inValsGui.putSpec(_, \pan.asSpec));
 				this.addInvalActions;
 
 				wGui.object_(object);
 
 				outValsGui.object_(object.outValDict);
-				object.outNames.do(outValsGui.specs.put(_, \pan.asSpec));
+				object.outNames.do(outValsGui.putSpec(_, \pan.asSpec));
 				// display only!
 				outValsGui.zone.enabled_(false);
 			};
@@ -221,7 +221,7 @@ InfluxIOWGui : JITGui {
 		inValsGui.widgets.do { |widge|
 			if (widge.isKindOf(EZSlider)) {
 				widge.action = widge.action.addFunc({ |widge|
-					object.calcOutVals;
+					object.calcOutVals.doAction;
 				});
 			}
 		}

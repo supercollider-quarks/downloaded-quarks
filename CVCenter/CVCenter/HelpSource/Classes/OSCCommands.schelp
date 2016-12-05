@@ -31,7 +31,7 @@ OSCCommands.collectTempIPsAndCmds(false) // stop collecting
 OSCCommands.tempCollectRunning // should return false now
 ::
 
-argument:: play 
+argument:: play
 a link::Classes/Boolean::, indicating whether the process shall be started or stopped - default: code::true::
 
 returns:: this (OSCCommands)
@@ -44,13 +44,13 @@ a link::Classes/String:: or a link::Classes/Symbol:: representing the name of th
 
 returns:: this (OSCCommands)
 
-METHOD:: makeWindow
+METHOD:: front
 Open the interactive GUI that shows the user all currently collected command-names resp. remove unwanted names.
 
 returns:: this (OSCCommands)
 
 METHOD:: window
-The link::Classes/Window:: created when calling link::#*makeWindow::.
+The link::Classes/Window:: created when calling link::#*front::.
 
 returns:: a link::Classes/Window::
 
@@ -93,7 +93,7 @@ For the following example you will have to have installed an application capable
 
 code::
 // most easy
-OSCCommands.makeWindow;
+OSCCommands.front;
 
 // start the collecting-process
 // the application sending OSC-commands should be up and running

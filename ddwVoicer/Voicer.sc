@@ -44,7 +44,7 @@ Voicer {		// collect and manage voicer nodes
 				target = ParGroup.basicNew(targ.server, targ.server.nodeAllocator.allocPerm);
 				targ.doWhenReady {
 					// but can't add immediately
-					targ.server.sendMsg(*(target.newMsg(targ.synthgroup)));
+					targ.server.sendBundle(targ.server.latency, target.newMsg(targ.synthgroup));
 					iMadeTarget = true;
 				}
 			} {
@@ -117,11 +117,11 @@ Voicer {		// collect and manage voicer nodes
 	}
 
 	earliest {	// earliest triggered node
-		^nodes.copy.sort({ arg a, b; a.lastTrigger < b.lastTrigger }).at(0)
+		^nodes.minItem(_.lastTrigger)
 	}
 
 	latest {
-		^nodes.copy.sort({ arg a, b; a.lastTrigger > b.lastTrigger }).at(0)
+		^nodes.maxItem(_.lastTrigger)
 	}
 
 		// find earliest active node with this frequency
@@ -135,7 +135,7 @@ Voicer {		// collect and manage voicer nodes
 			nodesTemp = (IdentitySet(nodesTemp.size).addAll(nodesTemp).removeAll(susPedalNodes))
 				.asArray;
 		});
-		^nodesTemp.sort({ |a, b| a.lastTrigger < b.lastTrigger }).at(0)
+		^nodesTemp.minItem(_.lastTrigger)
 	}
 
 		// this method is reserved for Event usage
@@ -194,12 +194,12 @@ Voicer {		// collect and manage voicer nodes
 
 	preferEarly {
 			// find first non-playing node -- THE DEFAULT METHOD
-		^this.nonplaying.sort({ arg a, b; a.lastTrigger < b.lastTrigger }).at(0)
+		^this.nonplaying.minItem(_.lastTrigger)
 	}
 
 	preferLate {
 			// find last non-playing node
-		^this.nonplaying.sort({ arg a, b; a.lastTrigger > b.lastTrigger }).at(0)
+		^this.nonplaying.maxItem(_.lastTrigger)
 	}
 
 // PLAYING/RELEASING METHODS:
@@ -540,6 +540,10 @@ Voicer {		// collect and manage voicer nodes
 
 	panic {		// free all nodes
 		nodes.do({ arg n; n.releaseNow });
+		// that's for bookkeeping but sometimes something gets lost
+		// so brutally kill everything in the target group too
+		// panic means PANIC
+		target.freeAll;
 	}
 
 	cleanup {		// free non-playing nodes; kind of superfluous now
@@ -656,9 +660,8 @@ Voicer {		// collect and manage voicer nodes
 				var	lag, strum, sustain, i, timingOffset = ~timingOffset ? 0, releaseGate,
 					voicer = ~voicer;
 
-				~freq = (~freq.value + ~detune).asArray;
-
-				if (~freq.isSymbol.not) {
+				if(currentEnvironment.isRest.not or: { voicer.isNil }) {
+					~freq = (~freq.value + ~detune).asArray;
 					~amp = ~amp.value.asArray;
 					lag = ~lag;
 					strum = ~strum;
@@ -683,7 +686,7 @@ Voicer {		// collect and manage voicer nodes
 					~nodes.do({ |node, i|
 						var latency, freq, length;
 
-						latency = i * strum + lag;
+						latency = lag;
 							// backward compatibility: I should NOT add server latency
 							// for newer versions with Julian's schedbundle method
 						if(~addServerLatencyToLag ? false) {
@@ -692,14 +695,14 @@ Voicer {		// collect and manage voicer nodes
 						freq = ~freq.wrapAt(i);
 						length = ~sustain.wrapAt(i);
 
-						~schedBundleArray.(latency, ~timingOffset,
+						~schedBundleArray.(latency, ~timingOffset + (i * strum),
 							node.server,
 							node.server.makeBundle(false, {
 								node.trigger(freq, ~gate.wrapAt(i), ~args.wrapAt(i));
 							})
 						);
 						(length.notNil and: { length != inf }).if({
-							thisThread.clock.sched(length + timingOffset, {
+							thisThread.clock.sched(length + timingOffset + (i * strum), {
 								voicer.releaseNode(node, freq, releaseGate.wrapAt(i),
 									node.server.latency.notNil.if({ lag + node.server.latency }));
 							});

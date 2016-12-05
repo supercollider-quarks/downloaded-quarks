@@ -1,0 +1,9 @@
+(
+  name: "PushPull",
+  summary: "Classes to interface with the PushPull",
+  version: "0.0.1",
+  schelp: "PushPullOSC_SE",
+  dependencies: ["MeTA", "Modality"],
+  license: "GPL",
+  copyright: "Till Bovermann, Dominik Hildebrand, Amelie Hinrichsen 2016"
+)

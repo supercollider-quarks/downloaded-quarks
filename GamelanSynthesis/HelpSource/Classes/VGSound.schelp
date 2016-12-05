@@ -1,0 +1,329 @@
+TITLE:: VGSound
+summary:: Virtual Gamelan sound rendering
+categories:: Extensions>Virtual Gamelan
+related:: Guides/VGStartup
+
+DESCRIPTION::
+Rendering gamelan data to sound with different synthesis variants
+
+
+CLASSMETHODS::
+
+METHOD:: initPlaybackSettings
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: startUp
+Trigger rendering and loading sounds (synths and samples). This can take ca. 30-40 seconds, and posts much detailed info.
+
+ARGUMENT:: doneFunc
+(describe argument here)
+
+ARGUMENT:: initSynth
+Choose whether synths are initialized (faster without)
+
+ARGUMENT:: loadSamp
+Choose whether samples are loaded (faster without)
+
+returns:: (describe returnvalue here)
+
+METHOD:: specsFor
+(describe method here)
+
+ARGUMENT:: instKey
+(describe argument here)
+
+ARGUMENT:: noteKey
+(describe argument here)
+
+ARGUMENT:: laras
+(describe argument here)
+
+ARGUMENT:: synthDefName
+(describe argument here)
+
+ARGUMENT:: addPartNum
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: eventType
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: tryComp
+(describe method here)
+
+ARGUMENT:: fileKey
+(describe argument here)
+
+ARGUMENT:: ampComp
+(describe argument here)
+
+ARGUMENT:: rootPitch
+(describe argument here)
+
+ARGUMENT:: octave
+(describe argument here)
+
+ARGUMENT:: repeats
+(describe argument here)
+
+ARGUMENT:: wait
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: synthEngines
+Print all available synthesis variants
+CODE::
+VGSound.synthEngines.keys.postcs;
+::
+
+returns:: (describe returnvalue here)
+
+METHOD:: getAmpComp
+(describe method here)
+
+ARGUMENT:: fileKey
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: orderOfPartials
+(describe method here)
+
+ARGUMENT:: partials
+(describe argument here)
+
+ARGUMENT:: freq
+(describe argument here)
+
+ARGUMENT:: ring
+(describe argument here)
+
+ARGUMENT:: amp
+(describe argument here)
+
+ARGUMENT:: attack
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: comp
+(describe method here)
+
+ARGUMENT:: fileKey
+(describe argument here)
+
+ARGUMENT:: ampComp
+(describe argument here)
+
+ARGUMENT:: rootPitch
+(describe argument here)
+
+ARGUMENT:: octave
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: server
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: verbose
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: eventFor
+(describe method here)
+
+ARGUMENT:: inval
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: rootPitches
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: getRootPitch
+(describe method here)
+
+ARGUMENT:: fileKey
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: loaded
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: makeDefaultEvent
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: playbackSettings
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: suggestComp
+(describe method here)
+
+ARGUMENT:: laras
+(describe argument here)
+
+ARGUMENT:: instKey
+(describe argument here)
+
+ARGUMENT:: noteKey
+(describe argument here)
+
+ARGUMENT:: baseAmp
+(describe argument here)
+
+ARGUMENT:: weights
+(describe argument here)
+
+ARGUMENT:: index
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: quit
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: ampComps
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: play
+Play the sounds of a specified group in rapid succession (test)
+
+ARGUMENT:: laras
+Choose among tuning related instrument-groupings: laras:\pelog or \slendro or \neutral
+CODE::
+VGSound.play(\slendro);
+::
+
+ARGUMENT:: synthDef
+Choose among one of the synthesis variants:
+LIST::
+## vgSampDyn: Samples that can be dynamically tuned
+## vgSampFix: Fixed parameters samples (less ressource intensive)
+## vgAddiAr: Additive synthesis, full resolution
+## vgAddiKr: Additive synthesis, slightly cheaper envelopes
+## vgRingz: ringing filters, no attack modeling
+## vgFormlet: ringing filters with modeled attack (not tuned well)
+::
+CODE::
+VGSound.play(\pelog, \vgSampDyn);
+::
+
+ARGUMENT:: event
+Allows to choose instrument and key in event-notation. You would specify an instrument name and a key to play a specific tone/sonator
+Instruments are addressed by 'instKey' and individual keys by 'noteKey'
+CODE::
+VGSound.play(\pelog, \vgSampDyn, (instKey: \BonangBar, noteKey: \56))
+::
+
+returns:: (describe returnvalue here)
+
+METHOD:: initClass
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+
+INSTANCEMETHODS::
+
+
+EXAMPLES::
+
+CODE::
+	// start Synths and Samples
+VGSound.startUp;
+
+	// no sampler, faster loading
+VGSound.startUp(loadSamp: false);
+
+	// test that everthing is fine
+VGSound.loaded;
+
+	// VGSound has a convenvience method to play sounds quickly,
+	// and debug info for it.
+
+	// play (laras, synthDef, event)
+VGSound.play;
+
+	// play all instruments/sonators for one tuning:
+VGSound.play(\slendro);
+VGSound.play(\pelog);
+VGSound.play(\neutral);
+
+
+	// use specific synthesis variants:
+VGSound.play(\pelog, \vgSampDyn); 	// sampling, retunable
+VGSound.play(\pelog, \vgSampFix); 	// sampling fixed params - e.g. for drums.
+VGSound.play(\pelog, \vgAddiAr); 	// additive synthesis, full resolution
+VGSound.play(\pelog, \vgAddiKr); 	// additive, slightly cheaper envelope
+VGSound.play(\pelog, \vgRingz); 	// ringing filters, no attack modeling
+VGSound.play(\pelog, \vgFormlet); 	// ringing filters with modeled attack - not tuned well yet.
+
+	// look up all variants:
+VGSound.synthEngines.keys.postcs;
+
+	// play a specific instrument
+VGSound.play(\slendro, \vgSampDyn, (instKey: \BonangBar));
+VGSound.play(\slendro, event: (instKey: \BonangBar));
+
+VGSound.play(\slendro, event: (instKey: \BonangPan));
+VGSound.play(\pelog, event: (instKey: \BonangPan));
+
+	// play a specific note:
+VGSound.play(\pelog, event: (instKey: \BonangPan, noteKey: \56));
+
+
+
+	// extensive tests
+VGSound.eventFor().play;			// rest
+VGSound.eventFor(()).play;			// rest
+VGSound.eventFor((instKey: \BonangBar)).play;	// rest
+
+		// correct
+VGSound.playbackSettings[\BonangBar].put(\mute, true);
+VGSound.eventFor((instKey: \BonangBar, noteKey: \56)).play;
+VGSound.playbackSettings[\BonangBar].put(\mute, false);	// rest, because muted
+VGSound.eventFor((instKey: \BonangBar, noteKey: \56)).play;
+
+VGSound.playbackSettings[\PekingA].put(\solo, true);
+VGSound.eventFor((instKey: \BonangBar, noteKey: \56)).play;	// rest because others are soloed
+VGSound.playbackSettings[\PekingA].put(\solo, false);
+
+// overwriting VGMixer/playbackSettings value for synthDef
+VGSound.eventFor((synthDef: \vgSampDyn, instKey: \BonangBar, noteKey: \56)).play;
+VGSound.eventFor((synthDef: \vgAddiKr, instKey: \BonangBar, noteKey: \56)).play;
+VGSound.eventFor((amp: 0.2, synthDef: \vgAddiAr, instKey: \BonangBar, noteKey: \56, sustain: 20)).play;
+
+VGSound.eventFor((instKey: \Kendhang, noteKey: \k_tapRight)).play;
+VGSound.eventFor((instKey: \Kendhang, noteKey: \k_tak)).play; // still broken
+VGSound.eventFor((instKey: \Kendhang, noteKey: \c_dhen)).play; // still broken
+
+	// remove direct drums names, or leave them in?
+VGSound.eventFor((instKey: \Ciblon, noteKey: \tapRight, amp: 10)).play;
+VGSound.eventFor((laras: \neutral, instKey: \Ciblon, noteKey: \tapRight)).play;
+
+VGSound.eventFor((laras: \pelog, instKey: \BonangBar, \noteKey: \56)).play;
+VGSound.eventFor((laras: \slendro, instKey: \BonangBar, \noteKey: \56)).play;
+::

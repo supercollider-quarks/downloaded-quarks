@@ -1,0 +1,22 @@
+class:: ServerOptionsGui
+summary:: A GUI to manage Server options
+related:: Server, ServerOptions
+categories::  Server
+
+Description::
+A GUI to easily browse and tweak a Server options.
+
+Warning:: strong::Qt GUI is needed:: to run emphasis::ServerOptionsGui::::
+
+Subsection:: Example
+
+code::
+s = Server.local;
+
+s.boot;
+
+g = ServerOptionsGui(s);
+
+// reboot the Server if needed
+s.reboot;
+::

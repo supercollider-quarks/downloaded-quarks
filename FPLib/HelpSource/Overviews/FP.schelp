@@ -83,14 +83,8 @@ http://en.wikipedia.org/wiki/Functional_reactive_programming
 Classes:
 FPSignal, EventStream and their children.
 
-These classes are based on [scala](http://reactive-web.tk/) and [haskell](http://www.haskell.org/haskellwiki/Reactive-banana) implementations of FRP.
+These classes follow more or less the api of reactive-banana (Haskell library - http://www.haskell.org/haskellwiki/Reactive-banana) and were originally based on code from reactive-web (Scala library - http://reactive-web.tk/).
 
-A monad for constructing the event processors graph is available which is compiled into a EventNetwork which can be started and stopped at will. The network description itself has this pseudo type:
+A monad for constructing the event processors graph is available which is compiled into an link::Classes/EventNetwork:: which can be started and stopped at will.
 
-code::
-//networkDescription : Writer( Unit, Tuple3([IO(IO())], [EventStream[IO[Unit]]], [IO] ) )
-  //                                     eventHandlers         reactimates        IOLater
-::
-
-Unfortunatelly we can't assign it to a type alias in SuperCollider (perhaps will wrap it in another class in the future).
-
+There is a class NNdef that attaches an FRP event network onto an Ndef source. The event network is reconstructed every time the Ndef source is changed. This allows jit style construction of FRP graphs together with usual supercollider DSP graphs (synthdefs).

@@ -1,0 +1,327 @@
+TITLE:: MLemurGui
+summary:: This class can be used to build a basic UI on the Lemur app using sc-lang.
+categories:: External Control>Lemur
+related:: Classes/EnvirGui, Classes/NetAddr, Classes/OSCFunc
+
+DESCRIPTION::
+Builds a basic control user interface on a remote device containing a Lemur application, connected through TCP.
+
+image::lpict.png#An interface build realtime with a part of the example code.::
+
+image::padswitches.png#An interface build realtime with a part of the example code.::
+
+The best way to setup a network is to create a adhoc and private LAN and to broadcast it via an onboard modem. This optimizes latency.
+This is how it is done in Mac OS X:
+numberedlist::
+## Open network preferences
+## Edit locations and add a new location.
+## Go to Advanced settings.
+## Go to tab TCP/IP.
+## Configure IPv4: Manually there.
+::
+
+The manual configuration could look like this:
+numberedlist::
+## IPv4 Addres: 192.10.1.16
+## Subnet Mask: 255.255.255.0
+## Router: empty
+## Configure IPv6: Automatically
+::
+
+The current set of available build message objects are:
+LIST::
+## addPage
+## fader
+## range
+## text
+## pads
+## switches
+::
+
+SOFT::
+Remark: In a working setting I always use a fixed Device name for broadcasting an ad-hoc network. This causes all the devices connected with static adresses to sync up more easily.
+::
+
+
+
+CLASSMETHODS::
+private:: initClass
+
+METHOD:: new
+Make a new dispatcher.
+
+returns:: A new instance.
+
+INSTANCEMETHODS::
+
+METHOD:: connect
+Establishes TCP and UDP connection between computer and the Lemur app.
+WARNING:: Make sure the ip address is correct and the Lemur application is on. ::
+
+argument:: ip
+This is the ip-address of the device where the Lemur app is located.
+
+METHOD:: disconnect
+Disconnect the connections of all instances of this class.
+
+METHOD:: sendPacket
+Converts a message string into an 8 bit integer array and send's it via TCP to the targetted Lemur app.
+argument:: message
+A XML message as Symbol or String.
+
+private:: resetCode
+
+METHOD:: resetAll
+Reset Lemur canvas so you can build an control GUI from scratch.
+
+private:: addPageCode
+private:: removePageCode
+
+METHOD:: addPage
+Add's a page.
+
+argument:: pagename
+Is also the id name.
+argument:: x
+argument:: y
+argument:: width
+argument:: height
+
+METHOD:: removePage
+Remove a page.
+
+
+private:: faderCode
+private:: removeFAderCode
+
+METHOD:: fader
+Add a Fader
+
+argument:: pagename
+Page to front: ~lm.oscaddr.sendMsg("/interface", pagename)
+argument:: idname
+The idname argument sets also the cmdname osc msg packet.
+argument:: x
+argument:: y
+argument:: width
+argument:: height
+
+METHOD:: removeFader
+Remove a Fader
+
+argument:: idname
+Is also the id name.
+
+private:: rangeCode
+private:: removeRangeCode
+
+METHOD:: range
+Add a Range Slider
+
+argument:: pagename
+This argument is needed to target the page to be build on, it can be a Symbol or String.
+argument:: idname
+The idname argument sets also the cmdname osc msg packet
+argument:: x
+argument:: y
+argument:: width
+argument:: height
+
+METHOD:: removeRange
+Remove a Range slider
+
+private:: textCode
+private:: removeTextCode
+
+METHOD:: text
+Add a Text object.
+argument:: pagename
+This argument is needed to target the page to be build on, it can be a Symbol or String.
+argument:: idname
+The idname argument sets also the cmdname osc msg packet
+argument:: content
+argument:: x
+argument:: y
+argument:: width
+argument:: height
+
+METHOD:: removeText
+Remove a Text object.
+
+METHOD:: pads
+Add a Pads object.
+argument:: pagename
+This argument is needed to target the page to be build on, it can be a Symbol or String.
+argument:: idname
+The idname argument sets also the cmdname osc msg packet
+argument:: x
+argument:: y
+argument:: width
+argument:: height
+argument:: column
+set amount of columns
+argument:: row
+set amount of rows
+argument:: colorOff
+Set off color of object with the Color class, i.e: Color.rand.
+argument:: colorOn
+Set on color of object with the Color class, i.e: Color.rand.
+
+METHOD:: removePads
+Remove a Pads object.
+
+METHOD:: switches
+Add a Switches object.
+argument:: pagename
+This argument is needed to target the page to be build on, it can be a Symbol or String.
+argument:: idname
+The idname argument sets also the cmdname osc msg packet
+argument:: x
+argument:: y
+argument:: width
+argument:: height
+argument:: column
+set amount of columns
+argument:: row
+set amount of rows
+argument:: colorOff
+Set off color of object with the Color class, i.e: Color.rand.
+argument:: colorOn
+Set on color of object with the Color class, i.e: Color.rand.
+
+METHOD:: removeSwitches
+Remove a Switches object.
+
+METHOD:: set_osctarget
+An osc target is where the lemur application is sending osc messages to.
+argument:: target_number
+set the target number of the to setup target.
+argument:: ip_host
+Set the receiver ip address. (for instance the ip-address of this computer)
+argument:: port
+Set the receiver port. (for instance the sclang port: 57120)
+
+
+METHOD:: buildBind
+Build auto interfaces together with MBindGui class.
+
+argument:: bindGui
+A nested MBindGui class.
+
+argument:: pageName
+visible page name.
+
+argument:: id
+The id name to is concatenate to the osc tag. Example tags: (p1Range1, p1Fader2 etc.)
+
+
+METHOD:: buildDemo
+Build auto interfaces on an controllable but yet an automatical way.
+
+argument:: typeArray
+An array of types of object's. Possible options: Fader or Range. Look at the examples.
+argument:: parNames
+An array of parameter names.
+argument:: pageName
+argument:: id
+The id name to is concatenate to the osc tag. Example tags: (p1Range1, p1Fader2 etc.)
+
+METHOD:: oscaddr
+NetAddr instance used to provide communication with the targetted Lemur app.
+
+private:: buildInfo
+private:: current_ip
+private:: removeFaderCode
+
+private:: convertColor
+private:: padsCode
+private:: removePadsCode
+private:: removeSwitchesCode
+private:: setColor
+private:: standardColor
+private:: switchesCode
+
+
+
+EXAMPLES::
+CODE::
+a = MLemurGui.new;
+
+a.connect("192.10.1.2");
+
+// Clear Lemur canvas if nescessary.
+a.resetAll;
+
+// The argument of an add element is also the osc tagname.
+OSCFunc.trace(true);
+
+// a little demo:
+a.buildDemo(\Fader ! 10, { |i| "par " ++ (i+1) } ! 10, "Sliders", 1);
+
+a.buildDemo({ [\Fader,\Range].choose } ! 10,{ |i| "par " ++ (i+1) } ! 10,"Range and Sliders", 2);
+
+// What buildDemo basically is doing.
+(
+z = a.addPageCode("collection");
+
+// adds gui elements to it.
+b = a.faderCode("collection","p1Fader1");
+c = a.faderCode("collection","p1Fader2", 106);
+d = a.faderCode("collection","p1Fader3", 206);
+e = a.faderCode("collection","p1Fader4", 306);
+f = a.rangeCode("collection","p1Range5", 406);
+g = a.rangeCode("collection","p1Range6", 506);
+
+a.sendPacket("<JZML>" ++ z ++ b ++ c ++ d ++ e ++ f ++ g ++ "<JZML>");
+)
+
+(
+a.addPage("custom build");
+a.fader("custom build","Fader1", 100,100, 400, 500);
+a.fader("custom build","Fader2", 600,100, 200, 500);
+)
+
+a.resetAll;
+
+a.disconnect;
+
+OSCFunc.trace(false);
+
+// another example of a additve synth.
+~lm = MLemurGui.new;
+~lm.connect("192.10.1.2",8002,8000);
+~lm.set_osctarget(0,"192.10.1.16", NetAddr.langPort);
+~lm.resetAll;
+
+// faders
+30 do: {|i|~lm.fader("klang",\sine++i,i%15*65+25,asInt(i/15%2,1)*350,65,350)};
+30 do: {|i|~lm.oscaddr.sendMsg('/sine'++i++'/x',1.0.linrand)};
+30 do: {|i|~lm.removeFader("klang",\sine++i)};
+
+~bunch = Array.fill(10, {
+	var name = "HAPPYCAMPER".scramble.asString, x = Pbrown(0,1023,30).asStream, y = Pbrown(0,768,30).asStream;
+	[name, r { inf do: { |i|
+		~lm.text("Thing", name, x: x.next, y: y.next, content: "boulehausenstock".scramble, width: 100);
+		exprand(0.01,0.01).wait;
+		}}.play
+	]
+});
+
+~bunch do: { |slot| ~lm.removeText("Thing",slot.first); slot.last.stop };
+
+~lm.oscaddr.sendMsg("/interface", "klang")
+~lm.oscaddr.sendMsg("/interface", "Thing");
+
+
+// pads and switches.
+(
+~lm.pads(x: 512, y: 100, width: 512,height: 512, column: 5, row: 5, colorOff: Color.blue, colorOn: Color.red);
+~lm.switches(x: 0, y: 100, width: 512,height: 512, column: 5, row: 5, colorOff: Color.red, colorOn: Color.black);
+)
+~lm.removeSwitches;~lm.removePads;
+
+~lm.disconnect;
+// set array with klang!
+
+
+::

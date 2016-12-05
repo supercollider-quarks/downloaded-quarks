@@ -1,0 +1,21 @@
+! dudon_ifbis.scl
+!
+Ifbis -c recurrent sequence :  x^5 - x^3 = 1  (not traditional)
+ 12
+!
+ 61/56
+ 8/7
+ 17/14
+ 9/7
+ 75/56
+ 10/7
+ 3/2
+ 11/7
+ 93/56
+ 7/4
+ 13/7
+ 2/1
+!
+! Ifbis sequence order : 9 11 14 17 21 26 32 40 49 61 75 93  (with 14 on C)
+! (closes in a 13 tones/octave scale between 11 and 176)
+! Dudon 2002, TL 19/11/2009

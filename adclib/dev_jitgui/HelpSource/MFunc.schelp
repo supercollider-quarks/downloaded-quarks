@@ -200,6 +200,13 @@ flag whether active
 ARGUMENT:: otherName
 the name relative to which to add
 
+METHOD:: useTry
+get and set flag whether to use .tryValue istead of .value
+
+METHOD:: tryValue
+wrap all function evaluations in try { }, so that if one fails,
+it posts good info, and all later functions in the list will still be
+evaluated.
 
 EXAMPLES::
 
@@ -231,6 +238,21 @@ m.value;
 m.enable(\ada);
 m.value;
 
+// useTry mode handles errors nicely:
+// only the broken function fails,
+// but it posts its name and code,
+// and all other functions are still evaluated.
+// It is less efficient than regular mode,
+// but useful for debugging.
+
+// replace a func so that it fails
+m.add(\bob, { \fail.becauseOfError });
+m.value;		// fails with a loud error
+m.tryValue;		// just says what the error is,
+				// and still does the other functions!
+m.useTry;		// flag for useTry mode
+m.useTry = true; // turn useTry mode on ...
+m.value.cs;		// and now .value uses try
 
 
 // add and remove functions, always by name

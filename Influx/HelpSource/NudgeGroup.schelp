@@ -1,0 +1,197 @@
+TITLE:: NudgeGroup
+summary:: A group of Nudges for changing params of a process
+categories:: Control
+related:: Classes/Nudge, Classes/Influx, Reference/MetaControl
+
+DESCRIPTION::
+
+First code examples:
+
+code::
+
+// make a nudgeable process:
+Ndef(\a, { |freq = 200, amp = 0.1, pan = 0.0| }).gui(3);
+
+// now the nudgegroup for its 3 params
+g = NudgeGroup(Ndef(\a), Ndef(\a).controlKeys);
+
+// if no params given, asks the object:
+g = NudgeGroup(Ndef(\a));
+g.object;
+g.params;
+g.nudgeList;
+g.nudgeDict;
+// use a single nudge
+g.at(\freq).nudge(0.1);
+g.nudgeAt(\freq, 0.1);
+
+// nudge whole group by some value
+g.nudge(0.1, 0.1, 0.1);
+
+// nudge group by unequal values
+g.nudge(0.1, -0.05, 0.03);
+
+// use an influx for the delta values
+i = Influx( 2, 3);
+i.deltaFor(0.1); // only x changes
+i.deltaFor(0.0, 0.1);  // only y changes
+i.deltaFor(0.1, -0.1);  // both x and y change
+
+// use influx for nudging:
+by influx x-axis only
+g.nudge(*i.deltaFor(0.1));
+
+// by influx y-axis only
+g.nudge(*i.deltaFor(0.0, 0.1));
+
+// by both x and y
+g.nudge(*i.deltaFor(-0.1, 0.1));
+
+g.nudge(*i.deltaFor(0.1.rand2, 0.1.rand2));
+
+
+// influence the process by 2dslider
+// - the further away from center, the bigger the deltas
+z = Slider2D().front;
+
+z.action = { |sl|
+	var x = sl.x - 0.5, y = sl.y - 0.5;
+	var scaler = 0.1;
+	g.nudge(*i.deltaFor(*[x, y]*scaler));
+};
+
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+argument:: object
+argument:: params
+
+
+INSTANCEMETHODS::
+
+METHOD:: object
+
+METHOD:: nudgePairs
+argument::  ... keysDeltas
+
+METHOD:: nudgeDict
+
+METHOD:: nudgeList
+
+METHOD:: nudge
+argument::  ... deltas
+
+METHOD:: init
+
+METHOD:: at
+argument:: keyOrIndex
+
+METHOD:: nudgeAt
+argument:: keyOrIndex
+argument:: delta
+
+METHOD:: params
+
+
+EXAMPLES::
+
+code::
+
+// EXAMPLE 1 - use pullToward with groups:
+// make an object with four params
+Ndef(\y, { |a,b,c,d| });
+Ndef(\y).controlKeys.do { |key| Ndef(\y).addSpec(key, [-10, 30]); };
+Ndef(\y).gui(4);
+
+// make a nudge group for it
+g = NudgeGroup(Ndef(\y));
+
+// now set it to random values, then pull toward max:
+g.nudgeList.do { |n| n.setUni(1.0.rand) };
+g.pullToward(1!4, 0.02); // repeat until there
+
+// larger maxDelta
+g.nudgeList.do { |n| n.setUni(1.0.rand) };
+g.pullToward(1!4, 0.04); // repeat until there
+
+// linear maxDelta for all params:
+// all move with same speed, closest arrive first
+g.nudgeList.do { |n| n.setUni(1.0.rand) };
+g.pullToward(1!4, 0.04, 0.0);
+
+// proportional maxDelta for all params:
+// distance is scaled like a crossfade, all arrive at the same time
+g.nudgeList.do { |n| n.setUni(1.0.rand) };
+g.pullToward(1!4, 0.04, 1);
+
+// default 0.5 sqrt(dist) for all params:
+// closer ones are slower, but still get there first
+g.nudgeList.do { |n| n.setUni(1.0.rand) };
+g.pullToward(1!4, 0.04, 0.5);
+
+// exp of 2 for all params:
+// closer ones move superslow, distances become more similar,
+// toward the end all move at same speed
+g.nudgeList.do { |n| n.setUni(1.0.rand) };
+g.pullToward(1!4, 0.04, 2);
+
+// exp of -1 : closer get faster, further ones slow down
+g.nudgeList.do { |n| n.setUni(1.0.rand) };
+g.pullToward(1!4, 0.04, -1);
+
+
+// EXAMPLE 2
+// - multiple controls nudging and pulling at the same time
+// influencing params on the same process
+
+Ndef(\y, { |a,b,c,d| });
+Ndef(\y).controlKeys.do { |key| Ndef(\y).addSpec(key, [-10, 30]); };
+Ndef(\y).gui(4);
+
+g = NudgeGroup(Ndef(\y));
+g.nudgeList.do { |n| n.setUni(1.0.rand) };
+
+Tdef(\pullDiag, {
+	// toward [1, 2, 3, 4]/4;
+	loop {
+		exprand(2.0, 8.0).wait;
+		rrand(20, 50).do {
+			\up.postln;
+			0.15.wait;
+			g.pullToward([1, 2, 3, 4]/4, 0.04, 0);
+		};
+	}
+}).play;
+
+
+Tdef(\nudgeDown, {
+	loop {
+		exprand(2.0, 8.0).wait;
+		rrand(20, 50).do {
+			"   down".postln;
+			0.1.wait;
+			g.nudge(*(-0.02!4));
+		};
+	}
+}).play;
+
+// play relative slider by hand
+~infl = Influx( 2, 4);
+Slider2D().front.action = { |sl|
+    var x = sl.x - 0.5, y = sl.y - 0.5;
+    var scaler = 0.1;
+	"      rel-slider".postln;
+    g.nudge(*~infl.deltaFor(*[x, y]*scaler));
+};
+
+// pull ac to x and bd to y pos of slider
+Slider2D().front.action = { |sl|
+    var x = sl.x * 2 - 1, y = sl.y * 2 - 1;
+    var scaler = 0.1;
+	"      slider".postln;
+	g.pullToward([x, y, x, y], 0.03);
+};
+
+::

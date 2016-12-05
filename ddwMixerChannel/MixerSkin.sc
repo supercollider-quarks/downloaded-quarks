@@ -5,7 +5,7 @@ MixerGUIDef {
 		<>viewBounds,	// bounds relative to channel origin
 		<>numPresendsShow = 1,
 		<>numPostsendsShow = 1,
-		<>color1, <>color2, <>clearColor;
+		>color1, >color2, >clearColor;
 
 	*initClass {
 		Class.initClassTree(MixerChannelDef);
@@ -34,15 +34,9 @@ MixerGUIDef {
 	}
 
 	init {
-		if(GUI.current.id == \cocoa) {
-				clearColor = Color.clear;
-				color1 = Color.new255(84, 31, 77);
-				color2 = Color.new255(230, 109, 225);
-		} {
-				clearColor = Color.new255(224, 223, 227);
-				color1 = clearColor;  // Color.new255(199, 227, 202);
-				color2 = clearColor;  // Color.new255(230, 109, 225);
-		};
+		clearColor = { QtGUI.palette.window };
+		color1 = clearColor;  // Color.new255(199, 227, 202);
+		color2 = clearColor;  // Color.new255(230, 109, 225);
 	}
 
 	makeViews { |layout, origin, mixer, mcgui|
@@ -68,6 +62,10 @@ MixerGUIDef {
 		});
 		^true
 	}
+
+	color1 { ^color1.value }
+	color2 { ^color2.value }
+	clearColor { ^clearColor.value }
 }
 
 MixerSkin {

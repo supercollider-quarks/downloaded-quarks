@@ -1,4 +1,4 @@
-/* (c) 2010-2013 Stefan Nussbaumer */
+/* (c) Stefan Nussbaumer */
 /*
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -29,29 +29,29 @@ CVWidget {
 	var visibleGuiEls, allGuiEls, <focusElements, <isCVCWidget = false;
 	var <widgetBg, <label, <nameField, wdgtInfo; // elements contained in any kind of CVWidget
 	var widgetXY, widgetProps, <>editor;
-	var <wdgtControllersAndModels, <midiOscEnv, <>oscReplyPort;
+	var <wdgtControllersAndModels, <midiOscEnv;
 	// persistent widgets
 	var isPersistent, oldBounds, oldName;
 	// extended API
 	var <synchKeys, synchedActions;
 	// special bookkeeping for CVWidgetMS
-	var msCmds, msSlots;
+	var msCmds, msSlots, msTooltipLines;
 	var slotCmdName, lastIntSlots, msSlotsChecked = false;
 	var lastMsgIndex, msMsgIndexDiffers = false, count = 0;
 	// CVWidgetMS
-	var <msSize;
+	var <msSize, <cvArray;
 
 	*initClass {
 		var scFunc, scPrefs = false;
 
 		Class.initClassTree(KeyDownActions);
+		Class.initClassTree(CVWidgetShortcuts);
 
 		StartUp.add({
-			midiSources = ();
-			if(Quarks.isInstalled("cruciallib"), {
-				Spec.add(\in, StaticIntegerSpec(0, Server.default.options.firstPrivateBus-1, 0));
-			})
+			Spec.add(\in, ControlSpec(0, Server.default.options.firstPrivateBus-1, \lin, 1.0, 0));
 		});
+
+		midiSources = ();
 
 		prefs = CVCenterPreferences.readPreferences;
 		// "prefs[\shortcuts][\cvwidget]: %\n".postf(prefs[\shortcuts][\cvwidget]);
@@ -60,371 +60,7 @@ CVWidget {
 		this.shortcuts = IdentityDictionary.new;
 
 		if(scPrefs == false, {
-			scFunc =
-			"// focus previous widget (alphabetically ordered)
-			{ |view|
-				block { |break|
-					CVCenter.cvWidgets.order.do({ |name, i|
-						if(CVCenter.cvWidgets[name].focusElements.includes(view)) {
-							break.value(
-								CVCenter.cvWidgets[CVCenter.cvWidgets.order.wrapAt(i-1)].parent.front.focus;
-								CVCenter.cvWidgets[CVCenter.cvWidgets.order.wrapAt(i-1)].label.focus;
-							)
-						}
-					})
-				};
-				true;
-			}";
-			this.shortcuts.put(
-				'alt + arrow left',
-				(
-					func: scFunc,
-					keyCode: KeyDownActions.keyCodes['arrow left'],
-					modifierQt: KeyDownActions.arrowsModifiersQt[\alt],
-					modifierCocoa: KeyDownActions.arrowsModifiersCocoa[\alt]
-				)
-			);
-			scFunc =
-			"// focus next widget (alphabetically ordered)
-			{ |view|
-				block { |break|
-					CVCenter.cvWidgets.order.do({ |name, i|
-						if(CVCenter.cvWidgets[name].focusElements.includes(view)) {
-							break.value(
-								CVCenter.cvWidgets[CVCenter.cvWidgets.order.wrapAt(i+1)].parent.front.focus;
-								CVCenter.cvWidgets[CVCenter.cvWidgets.order.wrapAt(i+1)].label.focus;
-							)
-						}
-					})
-				};
-				true;
-			}";
-			this.shortcuts.put(
-				'alt + arrow right',
-				(
-					func: scFunc,
-					keyCode: KeyDownActions.keyCodes['arrow right'],
-					modifierQt: KeyDownActions.arrowsModifiersQt[\alt],
-					modifierCocoa: KeyDownActions.arrowsModifiersCocoa[\alt]
-				)
-			);
-			scFunc =
-			"// open a CVWidget(MS)Editor and focus its Spec tab
-			{ |view|
-				block { |break|
-					CVCenter.all.keys.do({ |key|
-						if(CVCenter.cvWidgets[key].focusElements.includes(view)) {
-							break.value(
-								switch(CVCenter.cvWidgets[key].class,
-									CVWidgetMS, {
-										if(CVCenter.cvWidgets[key].editor.msEditor.isNil or:{
-											CVCenter.cvWidgets[key].editor.msEditor.isClosed }
-										) {
-											CVWidgetMSEditor(CVCenter.cvWidgets[key], 0)
-										} {
-											CVCenter.cvWidgets[key].editor.msEditor.front(0)
-										}
-									},
-									CVWidget2D, { #[lo, hi].do({ |slot|
-										if(CVCenter.cvWidgets[key].editor[slot].isNil or:{
-											CVCenter.cvWidgets[key].editor[slot].isClosed }
-										) {
-											CVWidgetEditor(CVCenter.cvWidgets[key], 0, slot)
-										} {
-											CVCenter.cvWidgets[key].editor[slot].front(0)
-										}
-									})},
-									{
-										if(CVCenter.cvWidgets[key].editor.isNil or:{
-											CVCenter.cvWidgets[key].editor.isClosed }
-										) {
-											CVWidgetEditor(CVCenter.cvWidgets[key], 0)
-										} {
-											CVCenter.cvWidgets[key].editor.front(0)
-										}
-									}
-								)
-							)
-						}
-					})
-				};
-				true;
-			}";
-			this.shortcuts.put(
-				\s,
-				(func: scFunc, keyCode: KeyDownActions.keyCodes[$s])
-			);
-			scFunc =
-			"// open a CVWidget(MS)Editor and focus its MIDI tab
-			{ |view|
-				block { |break|
-					CVCenter.all.keys.do({ |key|
-						if(CVCenter.cvWidgets[key].focusElements.includes(view)) {
-							break.value(
-								switch(CVCenter.cvWidgets[key].class,
-									CVWidgetMS, {
-										if(CVCenter.cvWidgets[key].editor.msEditor.isNil or:{
-											CVCenter.cvWidgets[key].editor.msEditor.isClosed }
-										) {
-											CVWidgetMSEditor(CVCenter.cvWidgets[key], 1)
-										} {
-											CVCenter.cvWidgets[key].editor.msEditor.front(1)
-										}
-									},
-									CVWidget2D, { #[lo, hi].do({ |slot|
-										if(CVCenter.cvWidgets[key].editor[slot].isNil or:{
-											CVCenter.cvWidgets[key].editor[slot].isClosed }
-										) {
-											CVWidgetEditor(CVCenter.cvWidgets[key], 1, slot)
-										} {
-											CVCenter.cvWidgets[key].editor[slot].front(1)
-										}
-									})},
-									{
-										if(CVCenter.cvWidgets[key].editor.isNil or:{
-											CVCenter.cvWidgets[key].editor.isClosed }
-										) {
-											CVWidgetEditor(CVCenter.cvWidgets[key], 1)
-										} {
-											CVCenter.cvWidgets[key].editor.front(1)
-										}
-									}
-								)
-							)
-						}
-					})
-				};
-				true;
-			}";
-			this.shortcuts.put(
-				\m,
-				(func: scFunc, keyCode: KeyDownActions.keyCodes[$m])
-			);
-			scFunc =
-			"// open a CVWidget(MS)Editor and focus its OSC tab
-			{ |view|
-				block { |break|
-					CVCenter.all.keys.do({ |key|
-						if(CVCenter.cvWidgets[key].focusElements.includes(view)) {
-							break.value(
-								switch(CVCenter.cvWidgets[key].class,
-									CVWidgetMS, {
-										if(CVCenter.cvWidgets[key].editor.msEditor.isNil or:{
-											CVCenter.cvWidgets[key].editor.msEditor.isClosed }
-										) {
-											CVWidgetMSEditor(CVCenter.cvWidgets[key], 2)
-										} {
-											CVCenter.cvWidgets[key].editor.msEditor.front(2)
-										}
-									},
-									CVWidget2D, { #[lo, hi].do({ |slot|
-										if(CVCenter.cvWidgets[key].editor[slot].isNil or:{
-											CVCenter.cvWidgets[key].editor[slot].isClosed }
-										) {
-											CVWidgetEditor(CVCenter.cvWidgets[key], 2, slot)
-										} {
-											CVCenter.cvWidgets[key].editor[slot].front(2)
-										}
-									})},
-									{
-										if(CVCenter.cvWidgets[key].editor.isNil or:{
-											CVCenter.cvWidgets[key].editor.isClosed }
-										) {
-											CVWidgetEditor(CVCenter.cvWidgets[key], 2)
-										} {
-											CVCenter.cvWidgets[key].editor.front(2)
-										}
-									}
-								)
-							)
-						}
-					})
-				};
-				true;
-			}";
-			this.shortcuts.put(
-				\o,
-				(func: scFunc, keyCode: KeyDownActions.keyCodes[$o])
-			);
-			scFunc =
-			"// open a CVWidget(MS)Editor and focus its Actions tab
-			{ |view|
-				block { |break|
-					CVCenter.all.keys.do({ |key|
-						if(CVCenter.cvWidgets[key].focusElements.includes(view)) {
-							break.value(
-								switch(CVCenter.cvWidgets[key].class,
-									CVWidgetMS, {
-										if(CVCenter.cvWidgets[key].editor.msEditor.isNil or:{
-											CVCenter.cvWidgets[key].editor.msEditor.isClosed }
-										) {
-											CVWidgetMSEditor(CVCenter.cvWidgets[key], 3)
-										} {
-											CVCenter.cvWidgets[key].editor.msEditor.front(3)
-										}
-									},
-									CVWidget2D, { #[lo, hi].do({ |slot|
-										if(CVCenter.cvWidgets[key].editor[slot].isNil or:{
-											CVCenter.cvWidgets[key].editor[slot].isClosed }
-										) {
-											CVWidgetEditor(CVCenter.cvWidgets[key], 3, slot)
-										} {
-											CVCenter.cvWidgets[key].editor[slot].front(3)
-										}
-									})},
-									{
-										if(CVCenter.cvWidgets[key].editor.isNil or:{
-											CVCenter.cvWidgets[key].editor.isClosed }
-										) {
-											CVWidgetEditor(CVCenter.cvWidgets[key], 3)
-										} {
-											CVCenter.cvWidgets[key].editor.front(3)
-										}
-									}
-								)
-							)
-						}
-					})
-				};
-				true;
-			}";
-			this.shortcuts.put(
-				\a,
-				(func: scFunc, keyCode: KeyDownActions.keyCodes[$a])
-			);
-			scFunc =
-			"// set focus to the view that contains the widget
-			{ CVCenter.prefPane.focus }";
-			this.shortcuts.put(
-				\esc,
-				(func: scFunc, keyCode: KeyDownActions.keyCodes[\esc])
-			);
-			scFunc =
-			"// start or stop OSC calibration
-			{ |view|
-				block { |break|
-					CVCenter.all.keys.do({ |key|
-						if(CVCenter.cvWidgets[key].focusElements.includes(view)) {
-							break.value(
-								switch(CVCenter.cvWidgets[key].class,
-									CVWidgetMS, {
-										if(
-											CVCenter.cvWidgets[key].msSize.collect(
-												CVCenter.cvWidgets[key].getCalibrate(_)
-											).select(_ == true).size == CVCenter.cvWidgets[key].msSize
-										) {
-											CVCenter.cvWidgets[key].msSize.do(
-												CVCenter.cvWidgets[key].setCalibrate(false, _)
-											)
-										} {
-											CVCenter.cvWidgets[key].msSize.do(
-												CVCenter.cvWidgets[key].setCalibrate(true, _)
-											)
-										}
-									},
-									CVWidget2D, {
-										if(
-											#[lo, hi].collect(
-												CVCenter.cvWidgets[key].getCalibrate(_)
-											).select(_ == true).size == 2
-										) {
-											#[lo, hi].do(CVCenter.cvWidgets[key].setCalibrate(false, _))
-										} {
-											#[lo, hi].do(CVCenter.cvWidgets[key].setCalibrate(true, _))
-										}
-									},
-									{
-										if(CVCenter.cvWidgets[key].getCalibrate == true) {
-											CVCenter.cvWidgets[key].setCalibrate(false)
-										} {
-											CVCenter.cvWidgets[key].setCalibrate(true)
-										}
-									}
-								)
-							)
-						}
-					})
-				};
-				true;
-			}";
-			this.shortcuts.put(
-				\c,
-				(func: scFunc, keyCode: KeyDownActions.keyCodes[$c])
-			);
-			scFunc =
-			"// reset current OSC calibration constraints and start OSC calibration
-			{ |view|
-				block { |break|
-					CVCenter.all.keys.do({ |key|
-						if(CVCenter.cvWidgets[key].focusElements.includes(view)) {
-							break.value(
-								switch(CVCenter.cvWidgets[key].class,
-									CVWidgetMS, {
-										CVCenter.cvWidgets[key].msSize.do(
-											CVCenter.cvWidgets[key].setOscInputConstraints(Point(0.0001), _);
-											CVCenter.cvWidgets[key].setCalibrate(true, _)
-										)
-									},
-									CVWidget2D, {
-										#[lo, hi].do(
-											CVCenter.cvWidgets[key].setOscInputConstraints(Point(0.0001), _);
-											CVCenter.cvWidgets[key].setCalibrate(true, _)
-										)
-									},
-									{
-										CVCenter.cvWidgets[key]
-										.setOscInputConstraints(Point(0.0001))
-										.setCalibrate(true)
-									}
-								)
-							)
-						}
-					})
-				};
-				true;
-			}";
-			this.shortcuts.put(
-				\r,
-				(func: scFunc, keyCode: KeyDownActions.keyCodes[$r])
-			);
-			scFunc =
-			"// connect or disconnect sliders
-			{ |view|
-				CVCenter.all.keys.do({ |key|
-					if(CVCenter.cvWidgets[key].focusElements.includes(view)) {
-						CVCenter.cvWidgets[key].connectGUI(CVCenter.cvWidgets[key].connectS.not, nil);
-					}
-				});
-				true;
-			}";
-			this.shortcuts.put(
-				'shift + b',
-				(
-					func: scFunc,
-					keyCode: KeyDownActions.keyCodes[$b],
-					modifierQt: KeyDownActions.modifiersQt[\shift],
-					modifierCocoa: KeyDownActions.modifiersCocoa[\shift]
-				)
-			);
-			scFunc =
-			"// connect or disconnect textfields
-			{ |view|
-				CVCenter.all.keys.do({ |key|
-					if(CVCenter.cvWidgets[key].focusElements.includes(view)) {
-						CVCenter.cvWidgets[key].connectGUI(nil, CVCenter.cvWidgets[key].connectTF.not);
-					}
-				});
-				true;
-			}";
-			this.shortcuts.put(
-				'shift + v',
-				(
-					func: scFunc,
-					keyCode: KeyDownActions.keyCodes[$v],
-					modifierQt: KeyDownActions.modifiersQt[\shift],
-					modifierCocoa: KeyDownActions.modifiersCocoa[\shift]
-				)
-			);
+			this.shortcuts = CVWidgetShortcuts.shortcuts;
 		}, {
 			this.shortcuts = prefs[\shortcuts][\cvwidget];
 		})
@@ -548,6 +184,7 @@ CVWidget {
 		this.wdgtActions ?? { this.wdgtActions = () };
 		if(action.class === String, { act = action.interpret }, { act = action });
 		switch(this.class,
+			// CVWidget2D needs a special treatment as it's really a combination of 2 CVs
 			CVWidget2D, {
 				slot ?? { Error("Please provide either 'lo' or 'hi' as third argument to addAction!").throw };
 				this.wdgtActions[slot.asSymbol] ?? { this.wdgtActions.put(slot.asSymbol, ()) };
@@ -575,6 +212,8 @@ CVWidget {
 					})
 				})
 			},
+			// both, CVWidgetKnob and CVWidgetMS, take a single function.
+			// However, the CV's value of a CVWidgetMS is an array rather than a single value
 			{
 				this.wdgtActions[name.asSymbol] ?? {
 					this.wdgtActions.put(name.asSymbol, ());
@@ -654,7 +293,8 @@ CVWidget {
 							this, \remove, name.asSymbol;
 						)
 					})
-				}
+				};
+				if (name == \setSplitValues) { cvArray = nil };
 			}
 		);
 		controller.do({ |c| c = nil });
@@ -1092,7 +732,11 @@ CVWidget {
 			{
 				wdgtControllersAndModels.cvSpec.model.value_(thisSpec).changedKeys(synchKeys);
 			}
-		)
+		);
+		// CVWidgetMS: apply split again if is already split and spec has changed
+		if (this.class == CVWidgetMS and:{ this.cvArray.notNil }) {
+			this.split;
+		}
 	}
 
 	getSpec { |slot|
@@ -1376,25 +1020,6 @@ CVWidget {
 				^midiOscEnv[thisSlot].calibConstraints;
 			}
 		)
-	}
-
-	setOSCfeedback { |cv, cmd, port, slot|
-		var constr, thisSlot, thisMidiOscEnv;
-		switch(this.class,
-			CVWidget2D, { thisSlot = slot.asSymbol },
-			CVWidgetMS, { thisSlot = slot.asInteger }
-		);
-		switch(this.class,
-			CVWidgetKnob, { thisMidiOscEnv = midiOscEnv },
-			{ thisMidiOscEnv = midiOscEnv[thisSlot] }
-		);
-		// what if more than 1 reply-address??
-		// keep an array of NetAddresses??
-		constr = Point(midiOscEnv.calibConstraints.lo, midiOscEnv.calibConstraints.hi);
-		midiOscEnv.oscReplyAddrs.do({ |addr|
-			if(addr.port != port, { addr.port_(port) });
-			addr.sendMsg(cmd, cv.input.linlin(0, 1, constr.x, constr.y));
-		})
 	}
 
 	front {
@@ -2290,18 +1915,24 @@ CVWidget {
 		midiInitFunc = { |val|
 			if(val.editor.notNil and:{ val.editor.isClosed.not }, {
 				if(MIDIClient.initialized, {
-					val.editor.midiInitBut.states_([
-						["restart MIDI", Color.black, Color.green]
-					])
+					defer {
+						val.editor.midiInitBut.states_([
+							["restart MIDI", Color.black, Color.green]
+						])
+					}
 				}, {
-					val.editor.midiInitBut.states_([
-						["init MIDI", Color.white, Color.red]
-					])
+					defer {
+						val.editor.midiInitBut.states_([
+							["init MIDI", Color.white, Color.red]
+						])
+					}
 				});
 				sourceNames = midiSources.keys.asArray.sort;
-				val.editor.midiSourceSelect.items_(
-					[val.editor.midiSourceSelect.items[0]]++sourceNames
-				);
+				defer {
+					val.editor.midiSourceSelect.items_(
+						[val.editor.midiSourceSelect.items[0]]++sourceNames
+					);
+				}
 			})
 		};
 
@@ -2318,7 +1949,7 @@ CVWidget {
 				thisEditor = guiEnv.editor;
 			});
 
-			MIDIClient.sources.do({ |source|
+			MIDIClient.externalSources.do({ |source|
 				if(midiSources.values.includes(source.uid.asInteger).not, {
 					// OSX/Linux specific tweek
 					if(source.name == source.device, {
@@ -2327,7 +1958,7 @@ CVWidget {
 						midiSources.put(
 							(source.device++":"+source.name).asSymbol, source.uid.asInteger
 						)
-					})
+					});
 				})
 			});
 
@@ -2460,7 +2091,7 @@ CVWidget {
 									if(b.enabled, {
 										b.toolTip_(
 											"Currently connected to external MIDI-controllers: %".format(
-												this.midiOscEnv.selectIndex({ |sl| sl.cc.notNil })
+												this.midiOscEnv.selectIndices({ |sl| sl.cc.notNil })
 											)
 										)
 									})
@@ -2590,6 +2221,8 @@ CVWidget {
 					if(this.class != CVWidgetMS, {
 						defer {
 							if(parent.isClosed.not, {
+								// nasty: if a setup is loaded after another setup has been loaded before setting
+								// the background color with .background_ will fail as <textView>.palette returns nil
 								guiEnv.midiSrc
 									.string_(theChanger.value.src)
 									.background_(Color.white)
@@ -2692,7 +2325,7 @@ CVWidget {
 									if(b.enabled, {
 										b.toolTip_(
 											"Currently connected to external MIDI-controllers: %".format(
-												if((tmp = this.midiOscEnv.selectIndex({ |sl| sl.cc.notNil })).size > 0, { tmp }, { "none" })
+												if((tmp = this.midiOscEnv.selectIndices({ |sl| sl.cc.notNil })).size > 0, { tmp }, { "none" })
 											)
 										)
 									})
@@ -2719,7 +2352,7 @@ CVWidget {
 						midiButTextColor, // text
 						midiButBg // background
 					]]);
-					if((tmp = this.midiOscEnv.selectIndex({ |sl| sl.cc.notNil })).size > 0, {
+					if((tmp = this.midiOscEnv.selectIndices({ |sl| sl.cc.notNil })).size > 0, {
 						if(GUI.id !== \cocoa, {
 							this.midiBut.toolTip_(
 								"Currently connected to external MIDI-controllers: %".format(tmp)
@@ -2916,14 +2549,6 @@ CVWidget {
 // 				OSCresponderNode: t, r, msg
 // 				OSCfunc: msg, time, addr // for the future
 				oscResponderAction = { |t, r, msg, addr|
-					// "msg: %\n".postf(msg);
-					// "msg[theChanger.value[3]]: %\n".postf(msg[theChanger.value[3]]);
-					this.oscReplyPort !? { addr.port_(this.oscReplyPort) };
-					midiOscEnv.oscReplyAddrs ?? { midiOscEnv.oscReplyAddrs = [] };
-					if(midiOscEnv.oscReplyAddrs.includesEqual(addr).not, {
-						midiOscEnv.oscReplyAddrs = midiOscEnv.oscReplyAddrs.add(addr);
-						midiOscEnv.oscReplyAddrs = midiOscEnv.oscReplyAddrs.asBag.contents.keys.asArray;
-					});
 					if(thisCalib, {
 						if(midiOscEnv.calibConstraints.isNil, {
 							midiOscEnv.calibConstraints = (lo: msg[theChanger.value[3]], hi: msg[theChanger.value[3]]);
@@ -3021,7 +2646,13 @@ CVWidget {
 				// if(this.class == CVWidgetMS, { msSlots[slot] = nil; msCmds[slot] = nil });
 
 				tmp = "edit OSC";
-				if(this.class == CVWidgetMS, { tmp = slot.asString++":"+tmp });
+
+				if(this.class == CVWidgetMS, {
+					tmp = slot.asString++":"+tmp;
+				});
+
+				// if(this.class == CVWidgetMS, { tmp = slot.asString++":"+tmp });
+				// "now synching oscDisplay: %[%]\n".postf(this.name, slot);
 				wcm.oscDisplay.model.value_(
 					(
 						but: [tmp, stringColor, background],
@@ -3041,6 +2672,7 @@ CVWidget {
 		var thisEditor, thisOscEditBut, p, tmp;
 		var numOscString, numOscResponders, oscButBg, oscButTextColor;
 		var msEditEnabled;
+		var msConnectionsMsg;
 
 		wcm.oscDisplay.controller ?? {
 			wcm.oscDisplay.controller = SimpleController(wcm.oscDisplay.model);
@@ -3065,24 +2697,59 @@ CVWidget {
 					if(GUI.id !== \cocoa, {
 						if(theChanger.value.but[0] == "edit OSC", {
 							if(slot.notNil, { p =  " in '"++slot++"'" }, { p = "" });
-							thisOscEditBut.toolTip_("no OSC-responder present%.\nClick to edit.".format(p));
+							defer {
+								thisOscEditBut.toolTip_("no OSC-responder present%.\nClick to edit.".format(p));
+							}
 						}, {
-							thisOscEditBut.toolTip_("Connected, listening to\n%, msg-slot %,\nusing '%' in-output mapping".format(theChanger.value.nameField, theChanger.value.index, midiOscEnv.oscMapping));
+							defer {
+								thisOscEditBut.toolTip_("Connected, listening to\n%, msg-slot %,\nusing '%' in-output mapping".format(theChanger.value.nameField, theChanger.value.index, midiOscEnv.oscMapping));
+							}
 						})
 					});
 				};
 				if(GUI.id !== \cocoa, {
 					case
-						{ this.midiOscEnv.select({ |it| it.oscResponder.notNil }).size > 0 and:{
-							this.midiOscEnv.select({ |it| it.oscResponder.notNil }).size < msSize
-						}} {
-							guiEnv.oscBut.toolTip_("partially connected - connected slots:\n"++this.midiOscEnv.selectIndex({ |it| it.oscResponder.notNil }))
-						}
-						{ this.midiOscEnv.select({ |it| it.oscResponder.notNil }).size == msSize } {
-							guiEnv.oscBut.toolTip_("all slots connected.\nClick to edit.")
+						{ this.midiOscEnv.select({ |it| it.oscResponder.notNil }).size > 0} {
+							msTooltipLines ?? { msTooltipLines = nil!this.msSize };
+
+							// a CVWidgetMS may grow or shrink
+							if(this.msSize < msTooltipLines.size) {
+								msTooltipLines = msTooltipLines[..this.msSize-1];
+							};
+							if(this.msSize > msTooltipLines.size) {
+								(msTooltipLines.size-this.msSize).do({
+									msTooltipLines = msTooltipLines.add(nil)
+								})
+							};
+
+							msConnectionsMsg = "OSC-responders:";
+
+							if(theChanger.value !== false) {
+								msTooltipLines[slot] = "%: %[%], mapping: %".format(
+									slot,
+									theChanger.value.nameField,
+									theChanger.value.index,
+									this.midiOscEnv[slot].oscMapping
+								)
+							};
+
+							if(this.midiOscEnv[slot].oscResponder.isNil and:{
+								msTooltipLines[slot].notNil
+							}) {
+								msTooltipLines[slot] = nil;
+							};
+
+							msTooltipLines.do({ |line| line !? {
+								msConnectionsMsg = msConnectionsMsg++"\n"++line;
+							}});
+
+						defer { guiEnv.oscBut.toolTip_(msConnectionsMsg) };
 						}
 						{ this.midiOscEnv.select({ |it| it.oscResponder.notNil }).size == 0 } {
-							guiEnv.toolTip_("no OSC-responders present.\nClick to edit.")
+							msTooltipLines = nil!this.msSize;
+							defer {
+								guiEnv.oscBut.toolTip_("no OSC-responders present.\nClick to edit.");
+							}
 						}
 					;
 				})
@@ -3091,7 +2758,9 @@ CVWidget {
 				if(GUI.id !== \cocoa, {
 					if(theChanger.value.but[0] == "edit OSC", {
 						if(slot.notNil, { p =  " in '"++slot++"'" }, { p = "" });
-						guiEnv.oscEditBut.toolTip_("no OSC-responder present%.\nClick to edit.".format(p));
+						defer {
+							guiEnv.oscEditBut.toolTip_("no OSC-responder present%.\nClick to edit.".format(p));
+						}
 					}, {
 						guiEnv.oscEditBut.toolTip_("Connected, listening to\n%, msg-slot %,\nusing '%' in-output mapping".format(theChanger.value.nameField, theChanger.value.index, midiOscEnv.oscMapping));
 					})
@@ -3106,10 +2775,12 @@ CVWidget {
 						// "midiOscEnv.oscResponder is nil".postln;
 						tmp = background
 					}, { tmp = Color.cyan(0.5) });
-					guiEnv.oscEditBut.states_([
-						[theChanger.value.but[0], theChanger.value.but[1], tmp]
-					]);
-					guiEnv.oscEditBut.refresh;
+					defer {
+						guiEnv.oscEditBut.states_([
+							[theChanger.value.but[0], theChanger.value.but[1], tmp]
+						]);
+						guiEnv.oscEditBut.refresh;
+					}
 				}, {
 					numOscResponders = this.midiOscEnv.select({ |it| it.oscResponder.notNil }).size;
 					numOscString = "OSC ("++numOscResponders++"/"++msSize++")";
@@ -3122,11 +2793,13 @@ CVWidget {
 						oscButBg = background;
 						oscButTextColor = stringColor;
 					});
-					this.guiEnv[\oscBut].states_([[
-						numOscString,
-						oscButTextColor, // text
-						oscButBg // background
-					]]);
+					defer {
+						this.guiEnv[\oscBut].states_([[
+							numOscString,
+							oscButTextColor, // text
+							oscButBg // background
+						]]);
+					}
 				})
 			});
 
@@ -3197,7 +2870,7 @@ CVWidget {
 								if(b.enabled, {
 									b.toolTip_(
 										"Currently connected to external OSC-controllers: %".format(
-											if((tmp = this.midiOscEnv.selectIndex({ |sl| sl.oscResponder.notNil })).size > 0, { tmp }, { "none" })
+											if((tmp = this.midiOscEnv.selectIndices({ |sl| sl.oscResponder.notNil })).size > 0, { tmp }, { "none" })
 										)
 									)
 								})
@@ -3236,7 +2909,7 @@ CVWidget {
 
 	prInitOscInputRange { |wcm, guiEnv, midiOscEnv, argWidgetCV, thisCalib, slot|
 		var thisEditor, thisOscEditBut, p, tmp;
-		var mappingsDiffer;
+		var mappingsDiffer, msTooltip;
 
 		wcm.oscInputRange.controller ?? {
 			wcm.oscInputRange.controller = SimpleController(wcm.oscInputRange.model);
@@ -3250,9 +2923,21 @@ CVWidget {
 
 			if(this.class == CVWidgetMS, {
 				thisEditor = guiEnv.editor[slot];
+				defer {
+					if(guiEnv.oscBut.toolTip != "no OSC-responders present.\nClick to edit." and:{
+						msTooltipLines.notNil and:{
+							msTooltipLines[slot].notNil
+						}
+					}) {
+						msTooltipLines[slot] = msTooltipLines[slot].split($:)[..1].join($:)++":"+this.getOscMapping(slot);
+						msTooltip = "OSC-responders:";
+						msTooltipLines.do({ |line| line !? { msTooltip = msTooltip++"\n"++line }});
+						defer { guiEnv.oscBut.toolTip_(msTooltip) };
+					}
+				};
 				guiEnv.msEditor !? {
 					thisOscEditBut = guiEnv.msEditor.oscEditBtns[slot];
-				}
+				};
 			}, {
 				thisEditor = guiEnv.editor;
 				thisOscEditBut = guiEnv.oscEditBut;
@@ -3342,13 +3027,17 @@ CVWidget {
 			if(debug, { "widget '%' (%) at slot '%' actions.model: %\n".postf(this.name, this.class, slot, theChanger) });
 
 			if(parent.isClosed.not, {
-				guiEnv.actionsBut.states_([[
-					"actions ("++theChanger.value.activeActions++"/"++theChanger.value.numActions++")",
-					Color(0.08, 0.09, 0.14),
-					Color(0.32, 0.67, 0.76),
-				]]);
+				defer {
+					guiEnv.actionsBut.states_([[
+						"actions ("++theChanger.value.activeActions++"/"++theChanger.value.numActions++")",
+						Color(0.08, 0.09, 0.14),
+						Color(0.32, 0.67, 0.76),
+					]]);
+				};
 				if(GUI.id !== \cocoa, {
-					guiEnv.actionsBut.toolTip_(""++theChanger.value.activeActions++" of "++theChanger.value.numActions++" active.\nClick to edit")
+					defer {
+						guiEnv.actionsBut.toolTip_(""++theChanger.value.activeActions++" of "++theChanger.value.numActions++" active.\nClick to edit")
+					}
 				})
 			})
 		})

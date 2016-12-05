@@ -1,0 +1,88 @@
+TITLE:: ReplaceBadValues
+summary:: replaces bad UGen signals (infinity, not-a-number, and denormals)
+categories:: UGens>Filters
+related:: Classes/CheckBadValues, Classes/MasterFX
+
+DESCRIPTION::
+This pseudo-UGen uses CheckBadValues to test a ugen signal for infinity, NaN (not a number), and denormals. If one of these is found, it replaces the bad signal with a substitute signal given.
+
+First examples:
+
+code::
+// when live coding, use shortcut ugen.zap:
+
+x = { RLPF.ar(PinkNoise.ar(0.1), \freq.kr(500), 0.2).zap }.play;
+
+// in longhand, this does:
+(
+x.free;
+x = { arg freq = 440;
+	var sig = RLPF.ar(PinkNoise.ar(0.1), freq, 0.2);
+	ReplaceBadValues.ar(sig);
+}.play;
+)
+// test
+x.set(\freq, inf);   // create bad freq value inf -> filter breaks ...
+x.set(\freq, 330);	 // and back to working
+x.set(\freq, -1.sqrt);   // same with NotANumber nan value
+x.set(\freq, 550);	 // and back
+x.free;
+::
+
+CLASSMETHODS::
+
+METHOD:: ar, kr
+argument:: in
+the input signal to replace when bad
+argument:: sub
+the substitute signal to replace it with
+argument:: id
+an optional ID to post when input changes bad/ok state
+argument:: post
+set post mode, see CheckBadValues
+
+EXAMPLES::
+
+code::
+// test filter and replacement with kr signals
+(
+x = { arg freq = 440;
+	var safeFreq = ReplaceBadValues.kr(freq.lag(0.2), 666).poll;
+    SinOsc.ar(safeFreq, 0, 0.1);
+}.play;
+)
+//
+x.set(\freq, inf);   // create bad freq value inf -> replaces with 666
+x.set(\freq, 330);	 // and goes back to input kr when that is fine again
+x.set(\freq, -1.sqrt);   // create nan value -> replaces with 666
+x.set(\freq, 550);	 // and goes back to input kr when that is fine again
+x.free;
+
+// Test filter and replace with ar signals:
+(
+x = { arg freq = 440, subVol = 0.2;
+	var sig, subSig, safeSig, secondSig;
+	// RLPF breaks when freq goes bad
+	sig = RLPF.ar(PinkNoise.ar([1, 1] * 0.1), freq, 0.2);
+	// substitute with silence (default)
+	subSig = 0;
+	// or substitute with a signal
+	subSig = [Impulse.ar(5), Dust.ar(8)] * subVol;
+	// Replace bad sig here
+	safeSig = ReplaceBadValues.ar(sig, subSig);
+	// create a second signal to test when mixing
+	secondSig = Ringz.ar(Dust.ar(3), [440, 666], 1) * 0.03;
+
+	// goes into an IIR filter - this never recovers from a bad number
+	CombL.ar(safeSig + secondSig, 0.02, [0.02, 0.03], 1);
+}.play;
+)
+
+x.set(\freq, -1.sqrt);  // nan -> blows filter math -> replaces signal
+x.set(\freq, 666);     // recovers fine, and CombL never sees bad signal
+x.set(\freq, 1/0); 		// blows filter math -> nan -> replaces signal
+x.set(\freq, 0.02);		// very low frequency - weird output, but no nan
+x.set(\freq, 500);
+
+x.free;
+::

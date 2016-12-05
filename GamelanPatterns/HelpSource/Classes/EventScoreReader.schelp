@@ -1,0 +1,76 @@
+TITLE:: EventScoreReader
+summary:: Intermediate class for conversion from notation strings to events
+categories:: Extensions>Virtual Gamelan
+related:: Classes/StringConverter, Classes/KendhanganReader, Classes/EventScoreReader, Reference/VGNotationStrings
+
+DESCRIPTION::
+Subclass of StringConverter
+
+
+CLASSMETHODS::
+
+METHOD:: getScoreFromEvent
+(describe method here)
+
+ARGUMENT:: event
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: convert
+(describe method here)
+
+ARGUMENT:: str
+(describe argument here)
+
+ARGUMENT:: addScore
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: unconvert
+(describe method here)
+
+ARGUMENT:: list
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: isGeneric
+(describe method here)
+
+ARGUMENT:: event
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: tagAnythingGoes
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: genericEvent
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: addScoreToEvent
+(describe method here)
+
+ARGUMENT:: event
+(describe argument here)
+
+ARGUMENT:: score
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+
+INSTANCEMETHODS::
+
+
+EXAMPLES::
+
+code::
+(some example code)
+::

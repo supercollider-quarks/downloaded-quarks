@@ -1,9 +1,9 @@
 
 Updater {
 
-	var <>model,<>updateFunc;
+	var <>model, <>updateFunc;
 
-	*new { arg model,updateFunc;
+	*new { arg model, updateFunc;
 		^super.new.model_(model).updateFunc_(updateFunc).init
 	}
 	init {
@@ -17,7 +17,7 @@ Updater {
 		model.removeDependant(this);
 	}
 	removeOnClose { arg layout;
-		NotificationCenter.registerOneShot(this.findWindow(layout),\didClose,this,{
+		NotificationCenter.registerOneShot(this.findWindow(layout), \didClose, this, {
 			this.remove;
 		})
 	}
@@ -25,17 +25,17 @@ Updater {
 		var windowClass;
 		windowClass = Window.implClass;
 		loop {
-			if(layout.class === windowClass,{
+			if(layout.class === windowClass, {
 				^layout
 			});
-			if(layout.respondsTo('findWindow'),{ // SCTopView and children
+			if(layout.respondsTo('findWindow'), { // SCTopView and children
 				^layout.findWindow
 			});
-			if(layout.respondsTo('window'),{ // PageLayout
+			if(layout.respondsTo('window'), { // PageLayout
 				^layout.window
 			});
 			layout = layout.parent
-		}		
+		}
 	}
 }
 

@@ -275,7 +275,7 @@ setArgs: {
 	var	args, soloargs, polyargs, lib, desc;
 	((lib = SynthDescLib.all[~lib ? \global]).notNil
 		and: { (desc = lib[~instrument.asSymbol]).notNil }).if({
-		~hasGate = desc.hasGate;
+		~hasGate ?? { ~hasGate = desc.hasGate };
 		~msgFunc = desc.msgFunc;
 		}, {
 			~msgFunc = {
@@ -518,6 +518,7 @@ midiNoteToFreq: #{ |notenum|
 	~mode.notNil.if({ ~mode.asMode.cpsFunc.value(notenum) },
 		{ notenum.midicps });
 },
+sustain: { ~length.value },
 
 prepNote: #{
 	var i, args, argval, thisEvent = currentEnvironment;
@@ -538,7 +539,14 @@ prepNote: #{
 		~length = ~length * currentEnvironment.delta / ~dur;
 	};
 
-	~args = ~args ?? { [~note.tryPerform(\args)].tryPerform(\flatten, 1) } ?? { [] };
+	if(~args.isNil) {
+		~args = ~note.tryPerform(\args);
+		if(~args.isNil or: { ~args.isNumber }) {
+			~args = [];
+		} {
+			~args = ~args.flatten(1);
+		};
+	};
 	i = 0;	// args should be key value pairs, but might be an array of velocities
 	// drop pairs that are not \symbol, value
 	{ i < ~args.size }.while({
@@ -558,6 +566,10 @@ prepNote: #{
 		};
 		~voicer.setArgsInEvent(currentEnvironment);
 	};
+	~sendBass.();
+},
+sendBass: {
+	var thisEvent = currentEnvironment;
 	~bassID.notNil.if({
 		~note ?? { ~note = SequenceNote(~freq, ~dur, ~length[0], ~gate[0]) };
 		Library.put(~bassID, ~note);
@@ -572,30 +584,34 @@ play: #{
 	clock = ~clock,
 	voicer = ~voicer,
 	bundle, releaseGate;
-	~prepNote.value;
-	~finish.value;	// user-definable
-	(~debug == true).if({
-		"\n".debug;
-		["voicerNote event", ~clock.beats, ~clock.tempo].debug;
-		currentEnvironment.collect({ |value| value.isFunction.not.if(value, nil) }).postcs;
-	});
-	releaseGate = (~releaseGate ? 0).asArray;
-	~nodes.do({ |node, i|
-		var	freq = ~newFreq.wrapAt(i), length = ~length.wrapAt(i);
-		Func(\schedEventBundleArray).doAction(lag, ~timingOffset, node.server,
-			node.server.makeBundle(false, {
-				node.trigger(freq, ~gate.wrapAt(i), ~args.wrapAt(i), node.server.latency);
-		}));
-		(length.notNil and: { length != inf }).if({
-			// can't use schedEventBundle
-			// because you must not release the VoicerNode
-			// until the proper time comes
-			thisThread.clock.sched(length + timingOffset, {
-				voicer.releaseNode(node, freq, releaseGate.wrapAt(i),
-					lag + (node.server.latency ? 0));
+	if((currentEnvironment.tryPerform(\isRest) ? false).not) {
+		~prepNote.value;
+		~finish.value;	// user-definable
+		(~debug == true).if({
+			"\n".debug;
+			["voicerNote event", ~clock.beats, ~clock.tempo].debug;
+			currentEnvironment.collect({ |value| value.isFunction.not.if(value, nil) }).postcs;
+		});
+		releaseGate = (~releaseGate ? 0).asArray;
+		~nodes.do({ |node, i|
+			var	freq = ~newFreq.wrapAt(i), length = ~length.wrapAt(i);
+			Func(\schedEventBundleArray).doAction(lag, ~timingOffset, node.server,
+				node.server.makeBundle(false, {
+					node.trigger(freq, ~gate.wrapAt(i), ~args.wrapAt(i), node.server.latency, length);
+			}));
+			(length.notNil and: { length != inf }).if({
+				// can't use schedEventBundle
+				// because you must not release the VoicerNode
+				// until the proper time comes
+				thisThread.clock.sched(length + timingOffset, {
+					voicer.releaseNode(node, freq, releaseGate.wrapAt(i),
+						lag + (node.server.latency ? 0));
+				});
 			});
 		});
-	});
+	} {
+		~delta ?? { ~delta = ~dur ?? { ~note.dur } };
+	};
 },
 // for live midi input -- assumes midi note has been put into ~note
 releaseNote: #{
@@ -620,13 +636,13 @@ keysToPropagate: #[\voicer, \midi, \mode, \timingOffset, \argKeys, \immediateOSC
 ProtoEvent(\voicerNote).v.copy.putAll((
 	addAction: \addToTail,
 	play: #{
-		var	synthLib;
+		var	synthLib, argsFromDesc, i;
 		// cribbed from Event.default
 		if (~msgFunc.isNil) {
 			synthLib = ~synthLib ?? { SynthDescLib.global };
 			~desc = synthLib.synthDescs[~instrument];
 			if (~desc.notNil) {
-				~hasGate = ~desc.hasGate;
+				~hasGate ?? { ~hasGate = ~desc.hasGate };
 				~msgFunc = ~desc.msgFunc;
 			}{
 				~hasGate = ~hasGate ? true;
@@ -637,32 +653,44 @@ ProtoEvent(\voicerNote).v.copy.putAll((
 		};	// end crib
 		~prepNote.value;
 		~finish.value;	// user-definable
+		argsFromDesc = ~msgFunc.valueEnvir;
+		i = argsFromDesc.indexOf(\freq);  // playOneNote replaces \freq
+		// this is all a really awful hack; redesign later?
+		if(i.notNil) {
+			argsFromDesc.removeAt(i); argsFromDesc.removeAt(i);
+		};
+		if(~args.isNumber) { ~args = [] };
+		if(argsFromDesc.size > 0) {
+			~args = (~args ++ argsFromDesc).flop.asArray;
+		} {
+			~args = [~args];
+		};
 		~lag ?? { ~lag = 0 };
-		(~freq.isSymbol.not and: { ~desc.notNil }).if({
-			(~freq.size > 0).if({
+		(currentEnvironment.isRest.not and: { ~desc.notNil }).if({
+			(~newFreq.size > 0).if({
 				(~gate.size == 0).if({ ~gate = [~gate] });
 				(~length.size == 0).if({ ~length = [~length] });
-				~freq.do({ |freq, i|
-					~playOneNote.value(freq, ~gate.wrapAt(i), ~length.wrapAt(i));
+				~newFreq.do({ |freq, i|
+					~playOneNote.value(freq, ~gate.wrapAt(i), ~length.wrapAt(i), ~args.wrapAt(i));
 				});
 				}, {
-					~playOneNote.value(~freq, ~gate, ~length)
+					~playOneNote.value(~newFreq, ~gate, ~length, ~args[0])
 			});
 		});
 	},
 
-	playOneNote: #{ |freq, gate, length|
+	playOneNote: #{ |freq, gate, length, args|
 		var	synth, server, groupbus;
 		server = ~server ? ~target.server;
 		synth = Synth.basicNew(~instrument, server);
 		// if groupbus is not nil, then ~target is a MixerChannel
 		(groupbus = ~target.tryPerform(\groupBusInfo)).notNil.if({
 			Func(\schedEventBundle).doAction(~lag, ~timingOffset, server, synth.newMsg(groupbus[0],
-				~args ++ [\outbus, groupbus[1], \out, groupbus[1],
+				args ++ [\outbus, groupbus[1], \out, groupbus[1],
 					\freq, freq, \gate, gate], ~addAction));
 			}, {
 				Func(\schedEventBundle).doAction(~lag, ~timingOffset, server, synth.newMsg(~target,
-					~args ++ [\outbus, ~out, \out, ~out, \freq, freq, \gate, gate], ~addAction));
+					args ++ [\outbus, ~out, \out, ~out, \freq, freq, \gate, gate], ~addAction));
 		});
 		~hasGate.if({
 			Func(\schedEventBundleArray).doAction(~lag + length, ~timingOffset, synth.server,
@@ -683,12 +711,17 @@ ProtoEvent(\voicerNote).v.copy.putAll((
 		thisThread.beats.debug("\nchord trigger event"); currentEnvironment.debug;
 	});
 	~preAction.value;	// maybe some kind of cleanup?
+	shouldPlay = ~top.isKindOf(Event).not or: { ~top.isRest.not };
 	~getTopNoteNum.value;
 	// nil is legit if there is no topnote pattern
-	shouldPlay = if(~topNoteNum.size > 0) {
-		~topNoteNum.every({ |num| num.isNumber or: { num.isNil } })
-	} {
-		~topNoteNum.isNumber or: { ~topNoteNum.isNil }
+	shouldPlay = shouldPlay and: {
+		currentEnvironment.isRest.not and: {
+			if(~topNoteNum.size > 0) {
+				~topNoteNum.every({ |num| num.isNumber or: { num.isNil } })
+			} {
+				~topNoteNum.isNumber or: { ~topNoteNum.isNil }
+			}
+		}
 	};
 	if(shouldPlay) {
 		(~midi ? false).if({
@@ -705,6 +738,7 @@ ProtoEvent(\voicerNote).v.copy.putAll((
 	};
 },
 getTopNoteNum: {
+	~top = ~top.dereference;  // `nil is permitted now
 	~topNoteNum = ~top.tryPerform(\at, \freq)
 	?? { ~top.tryPerform(\at, \note).tryPerform(\freq) };
 },

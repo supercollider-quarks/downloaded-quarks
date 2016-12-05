@@ -1,0 +1,5 @@
+(
+	\name: "CommonTestsGUI",
+	\summary: "Unit tests for GUI classes in common",
+	\dependencies: ["UnitTesting"]
+)

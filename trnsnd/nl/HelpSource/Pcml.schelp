@@ -1,0 +1,81 @@
+title:: Pcml
+summary:: pattern coupled map lattice
+categories:: transnd>pattern
+
+description::
+implements coupled map lattice where f(x) is the logistic equation whose variable is r :
+
+x_{n+1}(i) = (1 - g) f(x_{n}(i)) + {g \over 2} (f(x_{n}(i-1)) + f(x_{n}(i+1)))
+
+
+CLASSMETHODS::
+
+METHOD:: new
+
+argument:: list
+a list of initial values of x in the lattice
+
+argument:: r
+equation variable [1.0, 2.0]
+
+argument:: g
+coupling strength [0.0, 1.0]
+
+argument:: repeats
+stream length
+
+INSTANCEMETHODS::
+private:: r, g, f, evolve, embedInStream
+
+
+EXAMPLES::
+
+code::
+s.boot;
+
+// as degree, patterns transmit spatially
+p = Pcml(Array.fill(10, { 0.1.rand }), 1.8, 0.3, inf);
+Pbind(\degree, (p * 12).trunc, \dur, 0.125, \amp, 0.01, \pan, Array.series(10, -1, 2/10)).play;
+
+// change r
+p = Pcml(Array.fill(10, { 1.0.rand }), Pseries(1.2, 0.8/500, 500), 0.1, inf);
+Pbind(\degree, (p * 12).trunc, \dur, 0.125, \amp, 0.01, \pan, Array.series(10, -1, 2/10)).play;
+
+// change g
+p = Pcml(Array.fill(10, { 0.1.rand }), 2.0, Pseries(0, 1/500, 500), inf);
+Pbind(\degree, (p * 12).trunc, \dur, 0.125, \amp, 0.01, \pan, Array.series(10, -1, 2/10)).play;
+
+// sound synthesis
+(
+s.waitForBoot {
+	SynthDef(\test_s, {| freq, amp, sustain, pan |
+		var sig, env;
+		env = EnvGen.kr(Env.sine, 1, amp, 0, sustain, 2);
+		sig = FSinOsc.ar(freq, 0, env);
+		sig = Pan2.ar(sig, pan);
+		Out.ar(0, sig);
+	}).add;
+	SynthDef(\test_p, {| freq, amp, sustain, pan |
+		var sig, env;
+		env = EnvGen.kr(Env.perc, 1, amp, 0, sustain, 2);
+		sig = FSinOsc.ar(freq, 0, env);
+		sig = Pan2.ar(sig, pan);
+		Out.ar(0, sig);
+	}).add;
+}
+)
+p = Pcml(Array.fill(200, { 0.1.rand }), 1.895, 0.1, inf);
+Pbind(\instrument, \test_s, \degree, (p * 24).trunc, \strum, 0.001, \octave, 6, \dur, 0.1, \amp, 0.001, \pan, Array.series(200, -1, 2/200)).play;
+
+p = Pcml(Array.fill(200, { 0.1.rand }), 1.75, 0.3, inf);
+Pbind(\instrument, \test_p, \degree, (p * 24).trunc, \strum, 0.001, \octave, 6, \dur, 0.1, \amp, 0.001, \pan, Array.series(200, -1, 2/200)).play;
+
+p = Pcml(Array.fill(200, { 0.1.rand }), 1.85, 0.3, inf);
+Pbind(\instrument, \test_s, \degree, (p * 24).trunc, \strum, 0.0005, \octave, 6, \dur, 0.1, \amp, 0.001, \pan, Array.series(200, -1, 2/200)).play;
+
+p = Pcml(Array.fill(200, { 1.0.rand }), 1.5, 0.1, inf);
+Pbind(\instrument, \test_p, \degree, (p * 24).trunc, \strum, 0.001, \octave, 6, \dur, 0.1, \legato, 0.3, \amp, 0.002, \pan, Array.series(200, -1, 2/200)).play;
+
+p = Pcml(Array.fill(200, { 1.0.rand }), Pseries(1.5, 0.5/1000, 1000), 0.153, inf);
+Pbind(\instrument, \test_p, \degree, (p * 24).trunc, \strum, 0.001, \octave, 6, \dur, 0.1, \legato, 0.3, \amp, 0.002, \pan, Array.series(200, -1, 2/200)).play;
+::

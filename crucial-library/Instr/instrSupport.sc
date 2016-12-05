@@ -54,13 +54,13 @@
 
 + Function {
 	asInstr {
-		^Instr("f" ++ this.hash,this)
+		^Instr("f" ++ this.hash, this)
 	}
 	asInterfaceDef {
-		^InterfaceDef("f" ++ this.hash,this)
+		^InterfaceDef("f" ++ this.hash, this)
 	}
 	iplay { arg ...args;
-		Patch(this,args).play
+		Patch(this, args).play
 	}
 }
 
@@ -79,7 +79,7 @@
 	*at { arg name;
 		var search;
 		search = Instr.objectAt(name);
-		if(search.isNil,{ ^nil });
+		if(search.isNil, { ^nil });
 		^search.asSynthDef
 	}
 }
@@ -91,23 +91,23 @@
 	rate { ^\noncontrol }
 
 	*findKeyForSpec { arg spec;
-		var matching,exact;
+		var matching, exact;
 		// find the exact spec object
 		exact = Spec.specs.findKeyForValue(spec);
-		if(exact.notNil,{ ^exact });
+		if(exact.notNil, { ^exact });
 
 		matching = [];
-		Spec.specs.keysValuesDo({ |k,v|
-			if(v == spec,{
+		Spec.specs.keysValuesDo({ |k, v|
+			if(v == spec, {
 				matching = matching.add(k);
 			})
 		});
 		// if there is precisely one, then it is most probably what you are looking for
-		if(matching.size == 1,{ ^matching[0] });
+		if(matching.size == 1, { ^matching[0] });
 		// many matched
 		^nil
 	}
-	mapToSpec { arg v,spec;
+	mapToSpec { arg v, spec;
 		^v
 	}
 	background { ^Color.white }
@@ -117,13 +117,13 @@
 + ControlSpec 	{
 
 	defaultControl { arg val;
-		^KrNumberEditor.new(this.constrain(val ? this.default),this);
+		^KrNumberEditor.new(this.constrain(val ? this.default), this);
 	}
 
 	rate { ^\control }
 
 	optimalRange { arg stdDev=0.3;
-		var linMinVal,linMaxVal,linDefault,toSpec;
+		var linMinVal, linMaxVal, linDefault, toSpec;
 		toSpec = this.copy;
 		linDefault = this.unmap(this.default);
 		linMinVal = (linDefault - stdDev).max(0.0);
@@ -132,10 +132,10 @@
 		toSpec.maxval = this.map(linMaxVal);
 		^toSpec
 	}
-	mapToSpec { arg v,spec;
-		if(spec.isKindOf(ControlSpec) or: {spec.isKindOf(HasItemSpec) and: {spec.itemSpec.isKindOf(ControlSpec)}},{
-			^spec.map( this.unmap(v).clip(0.0,1.0) )
-		},{
+	mapToSpec { arg v, spec;
+		if(spec.isKindOf(ControlSpec) or: {spec.isKindOf(HasItemSpec) and: {spec.itemSpec.isKindOf(ControlSpec)}}, {
+			^spec.map( this.unmap(v).clip(0.0, 1.0) )
+		}, {
 			^v
 		})
 	}
@@ -147,7 +147,7 @@
 + NonControlSpec {
 	color { ^Color.yellow(alpha:0.3) }
 }
-	
+
 + AudioSpec {
 	color { ^Color(0.17647058823529, 0.89803921568627, 0.027450980392157) }
 }
@@ -161,25 +161,25 @@
 + ListPattern {
 
 	spec {
-		var firstItemClass,firstItemSpec;
-		if(list.first.respondsTo(\spec),{
+		var firstItemClass, firstItemSpec;
+		if(list.first.respondsTo(\spec), {
 			firstItemSpec = list.first.spec;
-			if(list.every({ |item| item.tryPerform(\spec) == firstItemSpec }),{
+			if(list.every({ |item| item.tryPerform(\spec) == firstItemSpec }), {
 				// an array of Pbinds etc.
-				if(firstItemSpec.isKindOf(EventStreamSpec),{ ^firstItemSpec });
+				if(firstItemSpec.isKindOf(EventStreamSpec), { ^firstItemSpec });
 				// a stream of my items
 				^StreamSpec(firstItemSpec)
 			});
 		});
 		// something with spec unknowable
 		firstItemClass = list.first.class;
-		if(list.every({ |item| item.class == firstItemClass }),{
+		if(list.every({ |item| item.class == firstItemClass }), {
 			// this is dodgy
-			if(list.first.isNumber,{
-				if(firstItemClass.isKindOf(Integer),{
-					^StreamSpec(StaticIntegerSpec(list.minItem,list.maxItem))
+			if(list.first.isNumber, {
+				if(firstItemClass.isKindOf(Integer), {
+					^StreamSpec(StaticIntegerSpec(list.minItem, list.maxItem))
 				});
-				^StreamSpec(StaticSpec(list.minItem,list.maxItem))
+				^StreamSpec(StaticSpec(list.minItem, list.maxItem))
 			});
 		});
 		("unable to determine spec of" + this.asCompileString).warn;
@@ -245,10 +245,10 @@
 }
 + BufferProxy {
 	spec {
-		var def,me;
+		var def, me;
 		def = \bufferProxy.asSpec;
-		me = BufferProxySpec(size,numChannels,sampleRate);
-		if(me == def,{ ^def });
+		me = BufferProxySpec(size, numChannels, sampleRate);
+		if(me == def, { ^def });
 		^me
 	}
 }
@@ -257,7 +257,7 @@
 		// beatsizek
 		//var sum;
 		//sum = numChannels - 1; // assumes no quad samples
-		//if(beatsizek.notNil,{ sum = sum + 2 });
+		//if(beatsizek.notNil, { sum = sum + 2 });
 		//stream << sum;
 		^2
 	}
@@ -282,17 +282,17 @@
 }
 
 + UGen {
-	onTrig { |func,value=0.0|
-		if(this.rate != \control,{
+	onTrig { |func, value=0.0|
+		if(this.rate != \control, {
 			Error("UGen:onTrig only possible with a control rate signal." + this.rate).throw;
 		});
-		^InstrSynthDef.buildSynthDef.onTrig(this,func,value)
+		^InstrSynthDef.buildSynthDef.onTrig(this, func, value)
 	}
-	onPoll { |func,trig=10|
-		if(trig.isNumber,{
+	onPoll { |func, trig=10|
+		if(trig.isNumber, {
 			trig = Impulse.kr(trig);
 		});
-		^trig.onTrig({ arg time,value; func.value(value) },this)
+		^trig.onTrig({ arg time, value; func.value(value) }, this)
 	}
 }
 

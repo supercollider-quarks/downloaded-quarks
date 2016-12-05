@@ -4,7 +4,7 @@ categories:: Libraries>JITLib
 related:: Classes/ProxyChain, Classes/Ndef, Classes/MasterFX
 
 DESCRIPTION::
-A Gui class for ProxyChain. For more example uses, see link::ProxyChain::.
+A Gui class for ProxyChain. For more example uses, see link::Classes/ProxyChain::.
 
 code::
 		// prepare for making a proxy chain
@@ -38,6 +38,10 @@ s.boot;
 ::
 
 CLASSMETHODS::
+METHOD:: new 
+create a gui for the proxyChain given, with space for <numItems> parameters; 
+parents and bounds for gui placement, makeSkip flag; 
+and options to create extra buttons on left side.
 
 METHOD:: new
 make a new ProxyCHainGui.
@@ -62,10 +66,10 @@ g = c.gui(20,
 	[ \riseComb5, \slotCtl ], 		// off (0) by default.
 	[],
 		// extras:
-		// e.g. an editor with more space for controls
+		// e.g. open an extra NdefGui with more space for controls
 	[\phatEdit, \extra, { c.gui(40) } ],
 	
-		// or maybe bigger buttons play, end buttons
+		// or maybe bigger buttons for play and end 
 	[\play, \extra, { c.playN } ],	 
 	[\end, \extra, { c.end } ],
 	
@@ -74,40 +78,23 @@ g = c.gui(20,
 )
 ::
 
-ARGUMENT:: chain
-the proxychain to show 
-
-ARGUMENT:: numItems
-the number of param sliders to prepare.
-
-ARGUMENT:: parent
-the parent to put it into
-
-ARGUMENT:: bounds
-bounds within which to display it. 
-
 INSTANCEMETHODS::
 
 METHOD:: chain
 the proxychain 
 
-METHOD:: buttonSpecs
-the specs for the buttons to make
-
 METHOD:: butZone
 the CompositeView where the buttons live
+
 METHOD:: editGui
 the NdefGui built into the view
 
-METHOD:: buttons, guiFuncs, namedButtons
 
-strong:: usual JITGui methods ::
+METHOD:: buttons
+all left-hand buttons for turning nodes on and off
 
-METHOD:: setDefaults
-METHOD:: accepts
-METHOD:: getState
-METHOD:: checkUpdate
-METHOD:: makeViews
-METHOD:: makeEditGui
+METHOD:: namedButtons
+all left-hand buttons which turn nodes on and off
 
-
+private:: accepts, checkUpdate, getState, buttonSpecs
+private:: setDefaults, makeEditGui, makeViews

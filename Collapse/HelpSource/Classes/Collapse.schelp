@@ -1,0 +1,113 @@
+TITLE:: Collapse
+summary:: A class for collapsing multiple function calls into a single one.
+categories:: Function
+related:: Classes/Function
+
+DESCRIPTION::
+The Collapse class is useful for deferring actions to a certain clock
+or scheduling them while reducing system load to a minimum. The Collapse
+takes a function to be deferred, a delta time span and a clock
+to defer to. An action is deferred by calling the defer method with
+arbitrary arguments. The function's value method is called with these
+arguments after the schedule delay. When defer is called before the
+function was executed, the function is deferred again by the schedule delay
+and the pending call is cancelled. The new arguments overwrite the previous
+(pending) arguments.
+
+note:: This class was originally written by Hanns Holger Rutz (contact@sciss.de) ::
+
+
+CLASSMETHODS::
+
+METHOD:: new
+Creates a new Collapse.
+
+ARGUMENT:: func
+the function to execute when deferring; nil is allowed
+
+ARGUMENT:: delta
+The amount of time to defer in seconds, defaults to 0.0. The first execution of the collapse will occur after code::delta::, and subsequent executions are guaranteed to have code::delta:: seconds in between.
+
+ARGUMENT:: clock
+The clock to execute the function within, defaults to AppClock
+
+
+INSTANCEMETHODS::
+
+METHOD:: instantaneous
+Similiarly to defer, this sets the function
+args and schedules the collapse if it hadn't been
+started. Unlike defer, the scheduling delay is
+not reset.
+
+ARGUMENT::  ... args
+zero or more arguments which are passed to the function upon execution
+
+METHOD:: cancel
+Cancel future executions of the function.
+
+METHOD:: value
+Schedule execute the function with the arguments code::args::.
+
+ARGUMENT::  ... args
+zero or more arguments which are passed to the function upon execution
+
+METHOD:: defer
+(Re)schedules the function for execution
+with the given list of arguments.
+
+ARGUMENT::  ... args
+Zero or more arguments which are passed to the function upon execution.
+
+METHOD:: reschedule
+Resets the scheduling delay to the original delta.
+If the collapse was not yet scheduled, this method will do it.
+The cancel status is cleared.
+
+
+METHOD:: listDefer
+(Re)schedules the function for execution
+with the arguments provided as an array.
+
+ARGUMENT:: args
+an array of zero or more arguments which are passed to the function upon execution.
+
+
+METHOD:: listInstantaneous
+Similiarly to defer, this sets the function
+args and schedules the collapse if it hadn't been
+started. Unlike defer, the scheduling delay is
+not reset.
+
+ARGUMENT:: args
+an array of zero or more arguments which are passed to the function upon
+
+
+EXAMPLES::
+
+code::
+(
+~collapseDelta = 0.5; // only update the value every 05
+
+~setValue = Collapse({
+	|val|
+	~collapsedValue.value = val;
+}, ~collapseDelta);
+
+View(bounds:300@300).front.layout_(
+	VLayout(
+		~slider = Slider(bounds:300@40),
+		~nowValue = NumberBox(bounds:200@60).value_(0),
+		~collapsedValue = NumberBox(bounds:200@60).value_(0),
+		nil
+	)
+);
+
+~slider.action = {
+	|v|
+	~nowValue.value = v.value * 100;
+	~setValue.(v.value * 100);
+}
+)
+
+::

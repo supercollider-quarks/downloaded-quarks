@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title></title>
+<meta name="Generator" content="Cocoa HTML Writer">
+<meta name="CocoaVersion" content="949.35">
+<style type="text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco; color: #bf0000}
+p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco; color: #bf0000; min-height: 12.0px}
+p.p3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco; color: #000000}
+p.p4 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco; color: #000000; min-height: 12.0px}
+span.s1 {color: #0000bf}
+span.s2 {color: #007300}
+span.s3 {color: #bf0000}
+span.Apple-tab-span {white-space:pre}
+</style>
+</head>
+<body>
+<p class="p1">/*</p>
+<p class="p1">VGMulTree<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>easy to use multiplication tree for synth parameters</p>
+<p class="p2"><br></p>
+<p class="p1">*new(specs, branches, baseSpecs)</p>
+<p class="p2"><span class="Apple-tab-span">	</span></p>
+<p class="p1"><span class="Apple-tab-span">	</span>specs is a dictionary of local spec values (e.g. freqRatio, ringRatio, ampRatio)</p>
+<p class="p1"><span class="Apple-tab-span">	</span>branches is a dictionary of more VGMulTrees</p>
+<p class="p1"><span class="Apple-tab-span">	</span>baseSpecs is a repository of reference values (can be nil)</p>
+<p class="p2"><span class="Apple-tab-span">	</span></p>
+<p class="p2"><br></p>
+<p class="p2"><br></p>
+<p class="p1">*/</p>
+<p class="p3">(</p>
+<p class="p3">a = <span class="s1">VGMulTree</span>.newFromDict((</p>
+<p class="p3"><span class="Apple-tab-span">	</span>argNames: [<span class="s2">\freq</span>, <span class="s2">\amp</span>],</p>
+<p class="p3"><span class="Apple-tab-span">	</span>specs: [0.9, 0.9],<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span>relSpecs: [1, 1],<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span>baseSpecs: [440, 0.5]</p>
+<p class="p3">));</p>
+<p class="p3">)</p>
+<p class="p4"><br></p>
+<p class="p3">(</p>
+<p class="p4"><br></p>
+<p class="p3">a = <span class="s1">VGMulTree</span>.newFromDict((</p>
+<p class="p3"><span class="Apple-tab-span">	</span>argNames: [<span class="s2">\freq</span>, <span class="s2">\amp</span>],</p>
+<p class="p3"><span class="Apple-tab-span">	</span>specs: [0.9, 0.9] ,<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span>branches: (<span class="Apple-tab-span">	</span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>boing: (<span class="Apple-tab-span">	</span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>specs: [1, 1] * 1.2,<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>branches:<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>(</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>\1: (</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>specs: [1, 1],<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>relSpecs: [[1, 1], [1, 1] * 1.3],<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>baseSpecs: [[440, 870], [0.3, 0.2]]),<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>\2: (</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>specs: [1, 1],<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>relSpecs: [[1, 1], [1, 1] * 1.3],<span class="Apple-converted-space"> </span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>baseSpecs: [[660], [0.1]])</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>)</p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>)</p>
+<p class="p3"><span class="Apple-tab-span">	</span>)</p>
+<p class="p3">));</p>
+<p class="p3">)</p>
+<p class="p3">a.mulBus.values</p>
+<p class="p3">a.branches</p>
+<p class="p4"><br></p>
+<p class="p3">a.nodeAt();</p>
+<p class="p3">a.nodeAt( <span class="s2">\boing</span>);</p>
+<p class="p3">a.nodeAt(<span class="s2">\boing</span>, \1).baseValues;</p>
+<p class="p3">a.nodeAt(<span class="s2">\boing</span>, \2).baseValues;</p>
+<p class="p4"><br></p>
+<p class="p3">a.calcAt(<span class="s2">\boing</span>, \2);</p>
+<p class="p3">a.calcAtLeaf(<span class="s2">\boing</span>, \2);</p>
+<p class="p3">a.calcAtLeaf(<span class="s2">\boing</span>, \1);</p>
+<p class="p4"><br></p>
+<p class="p3">a.collectNodes([<span class="s2">\boing</span>, \2]).collect({ <span class="s1">|node|</span> node.mulBus.values });</p>
+<p class="p4"><br></p>
+<p class="p3">a.nodeAt(<span class="s2">\boing</span>).set(<span class="s2">\freq</span>, 1.5);</p>
+<p class="p4"><br></p>
+<p class="p3">a.nodeAt(<span class="s2">\boing</span>);</p>
+<p class="p4"><br></p>
+<p class="p3">a.collectNodes([<span class="s2">\boing</span>, \2])</p>
+<p class="p3">a.collectNodes([<span class="s2">\boing</span>, \1])</p>
+<p class="p3">a.bussesFor([<span class="s2">\boing</span>], [<span class="s2">\ebus</span>, <span class="s2">\ibus</span>], <span class="s1">false</span>);</p>
+<p class="p3">a.bussesFor([<span class="s2">\boing</span>], [<span class="s2">\ebus</span>, <span class="s2">\ibus</span>]); <span class="s3">// should fail</span></p>
+<p class="p3">a.bussesFor([<span class="s2">\boing</span>, \2], [<span class="s2">\ebus</span>, <span class="s2">\ibus</span>]); <span class="s3">// should fail</span></p>
+<p class="p3">a.bussesFor([<span class="s2">\boing</span>, \2], [<span class="s2">\ebus</span>, <span class="s2">\ibus</span>, <span class="s2">\sbus</span>, <span class="s2">\pbus</span>, <span class="s2">\bbus</span>]); <span class="s3">// OK</span></p>
+<p class="p3">a.bussesFor([<span class="s2">\boing</span>, \1], [<span class="s2">\ebus</span>, <span class="s2">\ibus</span>, <span class="s2">\sbus</span>, <span class="s2">\pbus</span>], <span class="s1">false</span>); <span class="s3">// OK</span></p>
+<p class="p4"><br></p>
+<p class="p4"><br></p>
+<p class="p3">a.deepDo { <span class="s1">|x|</span> x.postln };</p>
+</body>
+</html>

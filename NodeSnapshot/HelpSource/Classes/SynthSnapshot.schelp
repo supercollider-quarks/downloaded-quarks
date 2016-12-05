@@ -1,0 +1,70 @@
+TITLE:: SynthSnapshot
+summary:: A snapshot of the state of a synth on the server
+categories:: Server
+related:: Classes/TreeSnapshot, Classes/TreeSnapshotView, Classes/Server, Classes/Group
+
+DESCRIPTION::
+A link::Classes/SynthSnapshot:: describes a link::Classes/Synth:: on the server.
+
+WARNING::
+	SynthSnapshot metadata is built using information from SynthDescLib, looked-up via name of the synth reported by the server. If the registered SynthDef differs from the one running on the server, this may be incorrect.
+::
+
+
+INSTANCEMETHODS::
+
+METHOD:: asSynth
+returns:: A link::Classes/Synth:: representing the synth described by this snapshot. It does not create the synth on the server, nor does it guarantee it is still runnung on the server.
+
+METHOD:: outputs
+returns:: An link::Classes/Array:: of link::Classes/IODesc::'s representing the outputs of the synth. These are only present if a link::Classes/SynthDesc:: can be found for the synth.
+
+METHOD:: outBusses
+returns:: An link::Classes/Array:: of link::Classes/Bus::'s representing the busses being output to by the synth. These are only present if a link::Classes/SynthDesc:: can be found for the synth.
+
+METHOD:: desc
+returns:: A link::Classes/SynthDesc:: for the synth, if one can be found.
+
+METHOD:: defName
+returns:: The name of the link::Classes/SynthDef::, as reported by the server.
+
+METHOD:: controls
+returns:: An link::Classes/Dictionary:: mapping link::NamedControl:: names to values of those controls at the time of the snapshot.
+
+
+EXAMPLES::
+
+code::
+fork {
+	SynthDef(\outputTest, { |out, freq| var sig = SinOsc.ar(freq, 0, 0.1); Out.ar(out, sig) }).add;
+	~synths = 10.collect {
+		|i|
+		Synth(\outputTest, [
+			\out, [0, 1, 2, 3].choose,
+			\freq, 400.rand
+		]);
+	};
+
+	1.wait;
+
+	TreeSnapshot.get({
+		|snap|
+		var playing = snap.root.children[0].children.select {
+			|node|
+			node.isKindOf(SynthSnapshot) && (node.outputs[0].startingChannel == 0)
+		};
+		"% synths are playing to output 0: %".format(playing.size, playing.collect(_.nodeId)).postln;
+
+		"Synth freq's are: ".postln;
+		playing.do {
+			|node|
+			if (node.isKindOf(SynthSnapshot)) {
+				"   node %: % ".format(node.nodeId, node.controls[\freq]).postln;
+			}
+		}
+	});
+
+	~synths.do(_.free);
+}
+::
+

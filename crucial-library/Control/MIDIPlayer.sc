@@ -4,17 +4,17 @@
 
 MIDIPlayer : SynthlessPlayer { // InterfacePlayer, Control
 
-	var <>value=0.0,<>spec;
+	var <>value=0.0, <>spec;
 	var resp;
 
-	topMakePatchOut { arg group,bundle;
+	topMakePatchOut { arg group, bundle;
 		patchOut = UpdatingScalarPatchOut(this);
 	}
 	synthArg { ^this.poll }
-	addToSynthDef {  arg synthDef,name;
+	addToSynthDef {  arg synthDef, name;
 		// the value doesn't matter, its a placeholder,
 		// we are going to pass in a real one during actual play
-		synthDef.addKr(name,this.synthArg ? 0);
+		synthDef.addKr(name, this.synthArg ? 0);
 	}
 	instrArgFromControl { arg control;
 		^control
@@ -35,7 +35,7 @@ MIDIPlayer : SynthlessPlayer { // InterfacePlayer, Control
 	}
 	freeToBundle { arg bundle;
 		super.freeToBundle(bundle);
-		bundle.addMessage(this,\removeResponders);
+		bundle.addMessage(this, \removeResponders);
 	}
 	cmdPeriod { this.free; CmdPeriod.remove(this); }
 	rate { ^\control }
@@ -43,7 +43,7 @@ MIDIPlayer : SynthlessPlayer { // InterfacePlayer, Control
 
 // abstract class
 MIDIHoldsNotes : MIDIPlayer {
-	var off,heldNotes;
+	var off, heldNotes;
 	removeResponders {
 		resp.remove;
 		off.remove;
@@ -58,12 +58,12 @@ MIDIGatePlayer : MIDIHoldsNotes {
 	}
 	storeArgs { ^[spec] }
 	initResponders {
-		resp = NoteOnResponder({ arg note,veloc;
+		resp = NoteOnResponder({ arg note, veloc;
 			heldNotes = heldNotes.add(note); value = spec.map(veloc / 127.0); this.changed;
 		});
-		off = NoteOffResponder({ arg note,veloc;
+		off = NoteOffResponder({ arg note, veloc;
 			heldNotes.remove(note);
-			if(heldNotes.isEmpty,{
+			if(heldNotes.isEmpty, {
 				value = 0.0; this.changed;
 			});
 		});
@@ -74,14 +74,14 @@ MIDIGatePlayer : MIDIHoldsNotes {
 MIDIFreqPlayer : MIDIHoldsNotes {
 	*new { arg init=440.0; ^super.new.value_(init) }
 	initResponders {
-		resp = NoteOnResponder({ arg note,veloc;
+		resp = NoteOnResponder({ arg note, veloc;
 				heldNotes = heldNotes.add(note);
 				value = note.midicps;
 				this.changed
 			});
-		off = NoteOffResponder({ arg note,veloc;
+		off = NoteOffResponder({ arg note, veloc;
 				heldNotes.remove(note);
-				if(heldNotes.notEmpty,{
+				if(heldNotes.notEmpty, {
 					value = heldNotes.last.midicps;
 					this.changed;
 				});
@@ -90,7 +90,7 @@ MIDIFreqPlayer : MIDIHoldsNotes {
 }
 /*
 	as a midi responder
-		2,3,4 note chord function
+		2, 3, 4 note chord function
 			functions for each note
 */
 
@@ -98,12 +98,12 @@ CCPlayer : MIDIPlayer {
 
 	var <>num;
 
-	*new { arg num=1,spec=\linear;
+	*new { arg num=1, spec=\linear;
 		^super.new.num_(num).spec_(spec = spec.asSpec).value_(spec.default)
 	}
-	storeArgs { ^[num,spec] }
+	storeArgs { ^[num, spec] }
 	initResponders {
-		resp = CCResponder(num,{ arg val; value = spec.map(val / 127.0); this.changed });
+		resp = CCResponder({ arg val; value = spec.map(val / 127.0); this.changed }, num:num);
 	}
 }
 
@@ -111,16 +111,16 @@ CCPlayer : MIDIPlayer {
 CatchingCCPlayer : MIDIPlayer {
 	// for knobs: waits for you to find the position before it 'catches'
 
-	var <>num,>lastRawVal;
+	var <>num, >lastRawVal;
 
-	*new { arg num=1,spec=\linear;
+	*new { arg num=1, spec=\linear;
 		^super.new.num_(num).spec_(spec = spec.asSpec).value_(spec.default)
 	}
-	storeArgs { ^[num,spec] }
+	storeArgs { ^[num, spec] }
 	initResponders {
 		lastRawVal = spec.unmap(value) * 127.0;
-		resp = CCResponder(num,{ arg val;
-				if((val - lastRawVal).abs < 10,{
+		resp = CCResponder(num, { arg val;
+				if((val - lastRawVal).abs < 10, {
 					lastRawVal = val;
 					value = spec.map(val / 127.0);
 					this.changed;
@@ -131,7 +131,5 @@ CatchingCCPlayer : MIDIPlayer {
 **/
 
 
-// MIDINotePlayer(spec,scale)
+// MIDINotePlayer(spec, scale)
 // MIDIVelocityPlayer(spec)
-
-

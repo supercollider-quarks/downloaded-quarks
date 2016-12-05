@@ -1,0 +1,523 @@
+TITLE:: BP
+summary:: A "bound process" (process prototype bound to musical data)
+categories:: Libraries>ChuckLib>Objects
+related:: Classes/PR
+
+DESCRIPTION::
+The process prototype link::Classes/PR:: defines functionality without any musical data. When you bind musical material to a process prototype, you have a emphasis::bound process:: (BP).
+
+NOTE:: See link::Classes/BP#Chuck support:: and link::Classes/BP#Scheduling:: for important background information. These sections are, in some ways, more important than the method documentation, but they are forced to appear at the bottom. ::
+
+PR's cannot be played. BP's can.
+
+code::
+PR(\simplePbind) => BP(\pbind1);
+
+BP(\pbind1).play(4);  // start it on the next multiple of 4 beats
+
+BP(\pbind1).stop(4);
+
+BP(\pbind1).free;  // you ought to clean up after yourself
+::
+
+subsection:: BP structure
+
+Conceptually, a BP is a pattern coupled with all the resources that the pattern needs: buses/groups (or a link::Classes/MixerChannel::), buffers, data, control synths, etc. All objects required for a musical behavior should be packaged in the BP. The BP should know how to initialize itself, and clean itself up, so that usage in performance is as simple as possible.
+
+Technically, a BP is a reference to a link::Classes/Proto::. The Proto may be given directly, or retrieved from a process PRototype link::Classes/PR:: -- code::aProtoOrPR => BP(\name)::.
+
+BP's methods use the following special items in the Proto:
+
+Definitionlist::
+## code::~asPattern:: || A function to create the pattern object to play. Mandatory. This is the most important element!
+## code::~prep:: || A function to run when the Proto is chucked in. Use this to allocate the process's resources.
+## code::~freeCleanup:: || A function to run when freeing the BP. Use this to destroy the resources.
+## code::~event:: || The event prototype that will be used during play. You can pre-populate it with fixed values. Within the code::~event::, the code::\eventKey:: entry can retrieve a parent event from chucklib's link::Classes/ProtoEvent:: collection.
+## code::~alwaysReset:: || A Boolean: true means to reset the process on every code::.play::. Default is false; set to true if you want code::~preparePlay:: to execute every time the process plays.
+## code::~preparePlay:: || A function to run before play time. Use this for temporary resources.
+## code::~stopCleanup:: || A function to run when the process stops.
+## code::~onAsStreamError:: || (Optional, rarely used.) In special cases, you might want to error handling for errors in code::~asPattern::. This may be: code::\throw:: to throw the error normally; code::\report:: to print the error report and attempt to continue; code::\warn:: to print a simple warning and attempt to continue; or a Function (receiving the error object as argument) for custom error handling.
+## code::~printStopMsg:: || (Optional, rarely used.) If the process stops by itself (because it ran out of events), often this indicates a bug in the pattern definition, so the normal behavior is to print a warning in the post window. Set this to false to suppress the warning.
+## code::~requiredKeys:: || An Array of Symbols, naming Proto variables that must be populated before play. If any is empty, a warning will be printed and the process will not play. A useful safety check, but optional.
+::
+
+Note that BP has two pairs of initializers/finalizers: code::~prep:: and code::~freeCleanup:: for the instance, and code::~preparePlay:: and code::~stopCleanup:: for play-time resources. For the latter, be sure to set code::~alwaysReset:: to true.
+
+The long syntax of code::.chuck:: makes it easy to fill in parameters in the Proto -- before code::~prep:: is called, so chuck-time parameters will be available to the Proto's initializer.
+
+code::
+PR(\prototype).chuck(BP(\name), nil, (
+	alwaysReset: true,
+	event: (eventKey: \voicerNote),
+	// ~prep can use ~soundfilePath to load a Buffer
+	soundfilePath: Platform.resourceDir +/+ "sounds/a11wlk01.wav"
+));
+::
+
+subsection:: Chuck support
+Much of BP's functionality is in its Chuck-operator code::=>:: support.
+
+Objects that can be chucked into a bound process:
+
+strong::Processes::
+
+list::
+## link::Classes/BP::
+## link::Classes/PR::
+## link::Classes/Proto::
+::
+
+These prepare the BP to receive data. 
+
+If the BP already holds a process, chucking another BP, PR or link::Classes/Proto:: will wrap the current process inside the new one, based on the adverb:
+
+list::
+## code::=>.wrap:: -- default action if no adverb. If the process is already wrapped, remove the current wrapper first. Then add the new wrapper.
+
+## code::=>.nest:: -- wrap the process, whether it's already wrapped or not.
+
+## code::=>.replace:: -- replace the current bound process with the new one.
+::
+
+It is supported to chuck fully realized BPs into other BPs. The receiving BP gets a copy of the incoming process's link::Classes/Proto::. This, for instance, is a way to save the state of a process to reuse.
+
+code::
+BP(\ch1).unwrap => BP(\saveWrapper);
+
+// or:
+
+BP(\ch1).v.child => BP(\saveChild);
+
+
+// later:
+
+BP(\saveWrapper) =>.wrap BP(\ch2);  // apply earlier wrapper to another chord process
+::
+
+strong::Quantization factors::
+
+list::
+## code::nil:: (converts to NilTimeSpec)
+
+## link::Classes/SimpleNumber:: (converts to BasicTimeSpec)
+
+## link::Classes/Array:: (converts to QuantOffsetTimeSpec)
+
+## Any TimeSpec
+::
+
+Chucking one of these into a BP defines the default quantization for that process, or for all processes if chucked into the class BP.
+
+list::
+## link::Classes/TempoClock:: -- set the clock for process. May be done only when the process is not running. You can set a default clock for all processes by chucking into the BP class.
+::
+
+strong::Material from MIDI::
+
+list::
+## link::Classes/MIDIRecBuf:: -- binds the buffer as it is. Use the adverb to determine where it should go. The process will define how it responds to different adverbs.
+
+## link::Classes/MBM:: (MIDIBufManager) -- binds the current buffer as shown in the GUI.
+::
+
+You can also index a MBM directly: MBM(0)[0] returns the first midi buffer stored in the MBM at index 0. This may then be chucked into the BP. The index may be an integer or symbolic name.
+
+strong::Support patterns::
+
+list::
+## link::Classes/Pattern::
+## link::Classes/MacRh:: or subclasses
+## link::Classes/Symbol::
+::
+
+Some processes depend on patterns for various parameters (most importantly, link::Classes/MacRh::, link::Classes/MicRh::, link::Classes/ArpegPat::, link::Classes/Func::). Use an adverb to determine which pattern you're sending in.
+
+code::
+// choose arpeggiation types at random from the list
+
+Prand([\up, \down, \random], inf) =>.arpeg BP(\ch1);
+::
+
+A Symbol may be used to retrieve a predefined pattern from the Pdefn class; if the Pdefn doesn't exist, the Symbol will be turned into a pattern that outputs itself: Pn(symbol, inf).
+
+code::
+Pdefn(\randomArpeg, Prand([\up, \down, \random], inf));  // in your setup code; then...
+
+\randomArpeg =>.arpeg BP(\ch1);
+
+// to use only one arpeggiation pattern:
+
+\down =>.arpeg BP(\ch1);	// BP receives Pn(\down, inf)
+::
+
+subsection:: Scheduling
+
+BP prefers to use TimeSpecs for scheduling; as noted above, several object types are automatically converted into TimeSpecs. link::Classes/BasicTimeSpec:: is the most commonly used and corresponds to SC's standard link::Classes/Quant:: time specifier (but BasicTimeSpec handles code::leadTime::, discussed next).
+
+Every BP has a property, link::Classes/BP#-leadTime::, which pushes the process's scheduling time earlier. This is to ensure that processes providing information to other processes can evaluate first; see link::Tutorials/A-Practical-Guide/PG_06g_Data_Sharing.html#Communicating values between separate event patterns::.
+
+In the Data Sharing pattern tutorial, code::timingOffset:: "shifts" the bass pattern's scheduling time, and it needs to be specified every time the pattern is played. In BP, simply set the leadTime once (as a property of the process), and it will take effect every time the process is played.
+
+code::
+BP(\bass).leadTime = 0.1;  // set it and forget it
+::
+
+Note that link::Classes/DelayTimeSpec:: and link::Classes/AbsoluteTimeSpec:: do not take a BP's leadTime into account. If you need to use these with leadTime, use link::Classes/DelayTimeSpecLeadTime:: and link::Classes/AbsoluteTimeSpecLeadTime:: instead.
+
+
+
+CLASSMETHODS::
+
+METHOD:: defaultLeadTime
+Get or set the default leadTime for new BPs. Normally this should be 0. The default leadTime is assigned when the BP is created. Changing the default will not affect any BPs that already exist.
+
+METHOD:: defaultClock
+Get or set the default clock. If a clock is not assigned within the process, it will revert to the default clock. Changing the default emphasis::will:: affect existing BPs.
+
+The default clock may be set by chucking: code::aClock => BP::.
+
+METHOD:: defaultQuant
+Get or set the default quant. The default is used in link::Classes/BP#-quant::, so changing the default emphasis::will:: affect existing BPs.
+
+The default quant may be set by chucking any of the objects described under "Quantization factors" about into the BP class itself: code::timeSpec => BP::.
+
+METHOD:: defaultEvent
+Get or set the default event. If a BP does not specify an event prototype (normally, it will), the default event will be applied at play time.
+
+METHOD:: useVoicerProxy
+A Boolean, determining the behavior if a BP() object is dragged into a Voicer GUI. If true, the BP will play using the proxy represented in the GUI (and, changing the voicer in the GUI will change the sound); if false, it will use the Voicer to which the proxy is pointing (and, changing the voicer in the GUI will not change the sound). Default is code::true::.
+
+METHOD:: defaultInitClock
+Largely deprecated. A Function returning a clock, applied when binding a Proto to the BP.
+
+
+private:: bindArray, bindNilTimeSpec, bindSimpleNumber, bindTempoClock
+
+
+INSTANCEMETHODS::
+
+METHOD:: play
+Begin playing the process at the time indicated by code::argQuant::, on the clock code::argClock::. If the process is being reset (or it is the first time to play it), the Proto object's code::preparePlay:: pseudo-method will be called as an initializer.
+
+ARGUMENT:: argQuant
+The quantization factor describing the onset time. See above. If not given, play time will fall back to the BP's code::quant:: or code::BP.defaultQuant::, successively. link::Classes/BP#-leadTime:: will be applied automatically, if appropriate for the timespec.
+
+ARGUMENT:: argClock
+The clock on which to play. If not given, it will fall back to the BP's code::clock:: or code::BP.defaultClock::.
+
+ARGUMENT:: doReset
+If true, call link::Classes/BP#-reset:: on the process before playing. Default is false.
+
+ARGUMENT:: notify
+If true, issue a code::changed(\play, goTime):: notification. Default is true.
+
+
+METHOD:: stop
+Stop the process at the time indicated by code::argQuant::. Also calls the associated Proto object's code::stopCleanup:: pseudo-method as a finalizer.
+
+ARGUMENT:: argQuant
+The quantization factor describing the stop time. See above. If not given, stop time will fall back to the BP's code::quant:: or code::BP.defaultQuant::, successively.
+
+
+METHOD:: stopNow
+Stop the process immediately. Normally you will not use this method directly. Link::Classes/BP#-stop:: calls this method internally.
+
+ARGUMENT:: adhoc
+A process may need to stop an old Proto object, which used to be associated with this BP but was replaced. Use with caution. This is strong::not typical usage::; it is for internal use and regular users should avoid it.
+
+ARGUMENT:: quant
+A timespec that will be passed to the "adhoc"'s stopCleanup pseudo-method. Internal use.
+
+ARGUMENT:: notify
+If true, send the code::changed(\stop, \stopped, notifyTime):: notification based on "adhoc." Default is true.
+
+ARGUMENT:: doCleanup
+If true, execute the "adhoc"'s stopCleanup action. Default is true.
+
+ARGUMENT:: notifyTime
+A clock time to pass with the code::\stop:: notification.
+
+
+METHOD:: triggerOneEvent
+At the specified code::argQuant:: time, fetch one event from the process's event stream and play it. This is useful for on-demand (rather than time-driven) sequencing.
+
+You may need to call code::BP(\name).prepareForPlay:: before trying code::triggerOneEvent::.
+
+ARGUMENT:: argQuant
+The quantization factor describing the onset time. See above. If not given, play time will fall back to the BP's code::quant:: or code::BP.defaultQuant::, successively.
+
+ARGUMENT:: argClock
+The clock to use for scheduling. If not given, it will fall back to the BP's code::clock:: or code::BP.defaultClock::.
+
+ARGUMENT:: doReset
+If true, call link::Classes/BP#-reset:: on the process before getting the event. Default is false.
+
+
+METHOD:: free
+Removes the BP instance for garbage collection. Also calls the associated Proto object's code::freeCleanup:: pseudo-method. If the process is playing, it will be stopped first.
+
+
+METHOD:: reset
+Resets the process. The current event stream will be discarded and recreated. Also calls the Proto object's code::reset:: and code::preparePlay:: pseudo-methods.
+
+
+METHOD:: resetq
+Schedules link::Classes/BP#-reset:: to be called at a time given by code::argQuant::.
+
+ARGUMENT:: argQuant
+The quantization factor describing the reset time. See above. If not given, reset time will fall back to the BP's code::quant:: or code::BP.defaultQuant::, successively.
+
+
+METHOD:: prepareForPlay
+Normally internal use; however, in specific cases (typically link::Classes/BP#-triggerOneEvent::), you may need to call it manually.
+
+ARGUMENT:: argQuant
+If the process was already playing, the old event stream player needs to be stopped. This is a timespec describing the time when that should happen.
+
+ARGUMENT:: argClock
+The clock used for scheduling the termination of the old event stream player.
+
+ARGUMENT:: doReset
+If true, call link::Classes/BP#-reset::. Default is false.
+
+
+METHOD:: isPlaying
+Playing/stopped status.
+
+returns:: Boolean, true if the process is playing.
+
+
+METHOD:: clock
+Get or set the process's clock. Typically setting the clock is done by chucking instead: code::aClock => BP(\name)::.
+
+ARGUMENT:: cl
+The new clock (normally a TempoClock).
+
+returns:: The BP's clock instance.
+
+
+METHOD:: quant
+Get or set the process's default timespec. Typically setting the timespec is done by chucking instead: code::timeSpecOrShortcut => BP(\name)::.
+
+ARGUMENT:: argQuant
+Anything that responds to code::asTimeSpec::.
+
+returns:: The current default quant.
+
+
+METHOD:: leadTime
+A number, in clock beats, for early scheduling. See link::Classes/BP#Scheduling:: above.
+
+ARGUMENT:: lat
+How early to schedule?
+
+returns:: The current leadTime (number).
+
+
+METHOD:: nextBeat
+If the process is playing, this returns the time of the next event (compatible with Thread and PauseStream's code::nextBeat:: methods).
+
+
+METHOD:: eventSchedTime
+Calculates the next scheduling time for the given timespec, taking link::Classes/BP#-leadTime:: into account. This is used internally to resolve all "quant" references; normally you will not need to use it, but you can use it to predict when something should happen.
+
+ARGUMENT:: argQuant
+The quantization factor describing the scheduling time. See above. If not given, it falls back to the BP's code::quant:: or code::BP.defaultQuant::, successively.
+
+returns:: The clock time (in absolute beats).
+
+
+METHOD:: canStream
+Test whether the process is ready to play. The normal test is to check whether all of the code::~requiredKeys:: are populated. You can override the default test by assigning a function: code::BP(name).canStream = { ... }::.
+
+returns:: Boolean: true if the process is ready; false if not.
+
+
+METHOD:: voicer
+A convenience method to set the link::Classes/Voicer::. It does two things: 1. Store the voicer object in the BP's code::~event:: under code::\voicer::. 2. Call the Proto's code::bindVoicer:: pseudo-method (so that the BP can do something upon receipt of a Voicer).
+
+This method is called whenever you chuck a link::Classes/Voicer::, link::Classes/VoicerProxy:: or link::Classes/VC::.
+
+ARGUMENT:: vc
+A link::Classes/Voicer::, link::Classes/VoicerProxy:: or link::Classes/VC::.
+
+
+METHOD:: asEventStreamPlayer
+Create and return the event stream player (really, an instance of BlockableEventStreamPlayer). Normally, you will not need to use this method directly.
+
+NOTE:: This method changes the BP's internal state. ::
+
+returns:: A BlockableEventStreamPlayer.
+
+
+METHOD:: asPattern
+Calls the Proto's code::~asPattern:: pseudo-method and returns the pattern object.
+
+returns:: A Pattern.
+
+
+METHOD:: asStream
+Gets the BP's pattern from link::Classes/BP#-asPattern:: and makes a stream from it.
+
+returns:: A Stream.
+
+subsection:: Wrapping support
+
+Protos may be nested: a BP's Proto may contain another Proto, in the code::~child:: variable. This is meant to support various kinds of hierarchical behavior. For instance, PR(\macroRh) is a chord player where the outer Proto chooses properties of the harmony, and the inner Proto chooses the specific notes and arpeggiates them according to predefined note orderings (link::Classes/ArpegPat::) and rhythms (link::Classes/MicRh::).
+
+Wrapping behavior is determined by the adverb given to the chuck operator, e.g., code::newProto =>.nest BP(\name)::.
+
+table::
+## Adverb || Method || Description
+## code::\nest:: || link::Classes/BP#-wrap:: || BP's current Proto goes into the new Proto's code::~child::. If done multiple times, the hierarchy goes several layers deep.
+## code::\wrap:: or none || link::Classes/BP#-rewrap:: || If the BP is already wrapped, replace the outer layer (but don't make the hierarchy any deeper). If not wrapped, same as code::\nest::.
+## code::\overwrite:: || link::Classes/BP#-overwrite:: || Throw away the current Proto and replace it with the new one.
+## code::\relate:: || (none) || Put the chucked Proto into the current BP as code::\subordinate::. Then this BP can do other operations on the subordinate.
+::
+
+The new Proto being chucked in may set a flag, code::~doReplay::. If true, and the BP is playing, the process will call link::Classes/BP#-replay:: to continue. If false, the BP will be stopped.
+
+code::
+PR(\arpeg1) => BP(\chord);
+PR(\macroRh) => BP(\chord);  // now it's nested
+::
+
+Note:: The simple nesting case in this example is extensively tested. Other permutations are not heavily tested and may not be reliable. ::
+
+The following methods are mainly for internal use, to support the above chuck operations.
+
+METHOD:: rewrap
+If the process is not wrapped, wrap it; if it is wrapped, strip out the old wrapper and wrap the child in the new. If you only ever use this one, the hierarchy will be at most two levels.
+
+ARGUMENT:: process
+The new Proto.
+
+ARGUMENT:: doReplay
+A Boolean: true means, if playing, keep playing; false means, stop playing.
+
+
+METHOD:: wrap
+Always wrap the current hierarchy in one more layer.
+
+ARGUMENT:: process
+The new Proto.
+
+ARGUMENT:: doReplay
+A Boolean: true means, if playing, keep playing; false means, stop playing.
+
+
+METHOD:: overwrite
+Remove the entire current hierarchy and replace it with the incoming Proto. Most likely, the hierarchy will then have a depth of 1. Always tries to replay.
+
+ARGUMENT:: process
+The new Proto.
+
+Note:: A comment in the source code says "this method is not fully supported yet." Use at your own risk. ::
+
+METHOD:: unwrap
+Remove the outer layer of the hierarchy, and set the BP's proto to (what was) the code::~child::. This method is the only way to do this; there is no corresponding chuck operation.
+
+ARGUMENT:: doReplay
+A Boolean: true means, if playing, keep playing; false means, stop playing.
+
+returns:: The Proto that was the parent, before unwrapping.
+
+
+private:: bindArpegPat
+private:: bindArray
+private:: bindBP
+private:: bindEvent
+private:: bindFact
+private:: bindFunc
+private:: bindMBM
+private:: bindMIDIBufManager
+private:: bindMIDIRecBuf
+private:: bindMRS
+private:: bindMacRh
+private:: bindMicRh
+private:: bindModalSpec
+private:: bindMode
+private:: bindNilTimeSpec
+private:: bindPR
+private:: bindPattern
+private:: bindProto
+private:: bindQuant
+private:: bindSA
+private:: bindSimpleNumber
+private:: bindSymbol
+private:: bindTempoClock
+private:: bindVC
+private:: bindVP
+private:: bindVoicer
+private:: bindVoicerProxy
+private:: clearAdapt
+private:: doesNotUnderstand
+private:: draggedIntoMTGui
+private:: draggedIntoMixerGUI
+private:: draggedIntoVoicerGUI
+private:: init
+private:: isDriven
+private:: populateAdhocVariables
+private:: prepareEvent
+private:: promoteChildEventObjects
+private:: propagateDownFunc
+private:: recalcPropagateKeys
+private:: streamCleanupFunc
+private:: replay
+private:: asMixerChannelGUI
+
+
+EXAMPLES::
+
+Following is a very basic usage of BP. The possibilities are nearly limitless; it's impractical to provide examples of everything you can do. I might add more examples later, but time doesn't permit at the moment.
+
+code::
+(
+PR(\abstractProcess).clone {
+	~event = (eventKey: \singleSynthPlayer, instrument: \bufGrainPan);
+	~prep = {
+		~chan = MixerChannel(~collIndex, s, 2, 2);
+		~buf = Buffer.read(s, ~path);
+	};
+	~freeCleanup = {
+		[~chan, ~buf].free;
+	};
+	// subpatterns for BPStream
+	// note that this refers to ~buf, but ~buf is not loaded
+	// at the time of creating the PR. So we must use Plazy
+	// to wait and evaluate ~buf.duration at play time.
+	~start = Plazy {
+		Pwhite(0, ~buf.duration - Pkey(\time), inf) * ~buf.sampleRate
+	};
+	~time = Pwhite(0.1, 0.3, inf);
+	~pan = Pwhite(0.6, 0.8, inf) * Pseq([-1, 1], inf);
+	~dur = Pwhite(1, 4, inf) * 0.125;
+	~asPattern = {
+		Pbind(
+			\bufnum, ~buf,
+			\dur, BPStream(\dur),
+			\time, BPStream(\time),  // must be first; dur depends on it
+			\start, BPStream(\start),
+			\pan, BPStream(\pan)
+		)
+	};
+} => PR(\bufPlayer);
+)
+
+BP(\buf).free;  // just in case, clear out anything already there
+(
+PR(\bufPlayer).chuck(BP(\buf), nil, (
+	path: Platform.resourceDir +/+ "sounds/a11wlk01.wav"
+));
+)
+
+MixingBoard(mixers: BP(\buf).chan);
+
+BP(\buf).play;
+
+// The Plazy trick works outside the PR definition too
+BP(\buf).start = Plazy { Pn(Pseries(~buf.duration - 0.5, -0.1, { rrand(5, 20) }), inf) * ~buf.sampleRate };
+
+BP(\buf).stop;
+BP(\buf).free;  // magically destroys the Buffer and MixerChannel
+::

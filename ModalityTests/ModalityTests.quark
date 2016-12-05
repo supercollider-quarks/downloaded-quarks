@@ -1,0 +1,11 @@
+(
+  name: "ModalityTests",
+  summary: "UnitTests for the Modality toolkit",
+  version: "1.0.0",
+  schelp: "Overview/ModalityTests",
+  dependencies: ["Modality-toolkit", "UnitTesting"],
+  license: "GPL",
+  copyright: "Modality Team",
+  url: "http://modality.bek.no",
+  organization: "Modality-team"
+)

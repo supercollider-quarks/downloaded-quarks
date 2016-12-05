@@ -118,7 +118,9 @@ PR(\melModeSeg).v.clone({
 			~intervals.add(note2 - note1)
 		});
 		(temp.size > 1).if({
-			~intervals.add(~nextNote.asFloat - temp.last);
+			if(~nextNote.asFloat.isNumber) {
+				~intervals.add(~nextNote.asFloat - temp.last);
+			};
 			~angularity = ~intervals.abs.mean / (~intervals.mean.abs.nz(1));
 		}, {
 			~angularity = 0;	// 1 note, can't be angular

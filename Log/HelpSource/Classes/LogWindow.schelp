@@ -1,0 +1,54 @@
+TITLE:: LogWindow
+summary:: A window to display Log entries
+categories:: GUI
+related:: Classes/Log, Classes/Singleton
+
+DESCRIPTION::
+LogWindow provides a simple window to display link::Classes/Log:: events. LogWindow's remember their bounds and position.
+
+CLASSMETHODS::
+
+METHOD:: new
+Usage follows link::Classes/Singleton#*new::. See examples below.
+
+ARGUMENT:: name
+Name of the LogWindow (see link::Classes/Singleton#*new::)
+
+ARGUMENT:: logArray
+A link::Classes/Symbol:: or link::Classes/Array:: of link::Classes/Symbol::'s referring to a name or names of link::Classes/Log::s.
+
+INSTANCEMETHODS::
+
+METHOD:: clear
+Clear the window.
+
+METHOD:: front
+Bring the LogWindow to front.
+
+METHOD:: close
+Disconnect and close the LogWindow.
+
+EXAMPLES::
+
+code::
+(
+LogWindow().set(\myproject).front; // use the default LogWindow
+Log(\myproject).info("Here's some info.");
+Log(\myproject).warning("Here's a warning.");
+Log(\myproject).error("Here's an error.");
+)
+
+(
+LogWindow().set([\myproject, \otherproject]).front; // coallate the output of two logs
+Log(\myproject).info("This is my project.");
+Log(\otherproject).info("This is the other project.");
+)
+
+(
+// Exceptions are logged to Log(\error) - lets watch that one too.
+LogWindow().set([\error, \myproject, \otherproject]).front;
+Log.logErrors(true);
+Log(\myproject).info("This works fine.");
+Log.infoThisDoesntWork;
+)
+::

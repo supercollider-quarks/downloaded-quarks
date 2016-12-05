@@ -9,10 +9,6 @@
 		// ^object = nil;
 	}
 
-	cvSplit {
-		^value.collect { |v, i| CV(spec.split[i]).value_(v) }
-	}
-
 }
 
 +Array {

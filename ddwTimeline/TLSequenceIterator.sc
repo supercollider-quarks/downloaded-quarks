@@ -7,6 +7,9 @@ TLSequenceIterator {
 		<>onStop,
 		<status = \idle, routine, <condition, <>index, <clock, <>shouldSync = true,
 		<>id;  // useful only when a TLSeq is forked within another TLSeq
+
+	var <>trace = false;
+
 	*new { |array, sequencer, autoSync|
 		if(array.includes(nil)) {
 			Error("TLSequenceIterator *new: array contains nil\n" ++ array.asString).throw
@@ -20,30 +23,30 @@ TLSequenceIterator {
 		if(status == \idle) {
 			condition = Condition.new;
 			status = \running;
-//"TLSeq: creating new routine".debug;
+if(trace) { "TLSeq: creating new routine".debug; };
 			routine = Routine({ |inval|
 				this.addNotifications(runningCmds);
 				now = inval;
-//"TLSeq: set index to 0".debug;
+if(trace) { "TLSeq: set index to 0".debug; };
 				index = 0;
 				this.changed(\play);
 				endStatus = block { |break|
-					while { 
-//[index, array.size].debug("checking to continue");
+					while {
+if(trace) { [index, array.size].debug("checking to continue"); };
 					index < array.size } {
-						item = array[index].asTLItem(now);
-//[index, item].debug("got item");
+						item = array[index].asTLItem(now, this);
+if(trace) { [index, item].debug("got item"); };
 						case
 							{ item.isNumber } {
-//item.debug("number");
+if(trace) { item.debug("number"); };
 								index = index + 1;
 								now = max(item, 0).yield;
 							}
 							{ item.respondsTo(\isTLCommand) } {
-//"command".debug;
+if(trace) { "command".debug; };
 								cmd = item;
 								index = index + 1;
-								if(array[index].respondsTo(\keysValuesDo)) {
+								if(array[index].isKindOf(Dictionary)) {
 									this.playCmd(cmd, array[index]);
 									index = index + 1;
 								} {
@@ -67,7 +70,7 @@ TLSequenceIterator {
 								};
 							}
 							{ item.isArray } {
-//"spawn".debug;
+if(trace) { "spawn".debug; };
 								index = index + 1;
 								cmd = this.class.new(item, sequencer)
 									.play(argClock: thisThread.clock);
@@ -84,12 +87,14 @@ TLSequenceIterator {
 					};
 					\normal  // end status
 				};
-//[index, array.size].debug("exit while");
-//thisThread.clock.beats.debug("time at exit");
-//lastCmd.env.postcs;
-//status.debug("status at exit");
+if(trace) {
+	[index, array.size].debug("exit while");
+	thisThread.clock.beats.debug("time at exit");
+	lastCmd.env.postcs;
+	status.debug("status at exit");
+};
 				if(autoSyncAtEnd) { this.fullSync(warn: false) };
-//thisThread.clock.beats.debug("time after final sync");
+if(trace) { thisThread.clock.beats.debug("time after final sync; TLSeq routine ending"); };
 				status = \idle;
 					// there may be non-syncable commands still running
 					// pass them back so that the next iterator can track them
@@ -110,10 +115,10 @@ TLSequenceIterator {
 	}
 	
 	stop { |parms|
-// parms.debug(">> TLSequenceIterator:stop");
+if(trace) {  parms.debug(">> TLSequenceIterator:stop"); };
 		parms ?? { parms = () };
 		parms[\manualStop] ?? { parms.put(\manualStop, true) };
-// parms.debug("parms after update");
+if(trace) {  parms.debug("parms after update"); };
 		activeCmds.copy.do({ |cmd|
 				// stopping non-syncable commands here messes up their status
 				//  for the next iterator
@@ -121,12 +126,12 @@ TLSequenceIterator {
 				cmd.stop(parms)
 			};
 		});
-		onStop.value(parms);
+		onStop.value(parms, this);
 		if(status != \idle) {
 			status = \idle;
 			this.changed(\done, activeCmds); //.debug("done upon stop");
 		};
-// debug("<< TLSequenceIterator:stop");
+if(trace) {  debug("<< TLSequenceIterator:stop"); };
 		if(thisThread !== routine) {
 			routine.stop;
 		} {
@@ -195,11 +200,12 @@ TLSequenceIterator {
 	
 	cmdStopped { |cmd, parms, resumeTime|
 		var	oldCmds;
-//var temp;
-//
-// cmd.debug(">> cmdStopped");
-// if(cmd.class == Proto) { cmd.listVars };
+		var temp;
 
+if(trace) {
+	cmd.debug(">> cmdStopped");
+	if(cmd.class == Proto) { cmd.listVars };
+};
 		activeCmds.remove(cmd);
 		
 			// I hope this works - the idea is that any non-syncable commands
@@ -210,26 +216,29 @@ TLSequenceIterator {
 				this.addActive(cmd);
 			});
 		};
-		
-//if(cmd.class == Proto) {
-//	cmd.env.debug("removed command");
-//	cmd.env.proto.debug;
-//} {
-//	cmd.debug("removed command");
-//};
-//temp = activeCmds.select({ |cmd| cmd.shouldSync }).size.debug("number of remaining syncable commands");
-//(activeCmds.size - temp).debug("number of non-syncable commands");
+
+if(trace) {
+	if(cmd.class == Proto) {
+		cmd.env.debug("removed command");
+		cmd.env.proto.debug;
+	} {
+		cmd.debug("removed command");
+	};
+	temp = activeCmds.select({ |cmd| cmd.shouldSync }).size.debug("number of remaining syncable commands");
+	(activeCmds.size - temp).debug("number of non-syncable commands");
+};
+
 		if(status == \fullSync and: { activeCmds.any(_.shouldSync).not }) {
 			if(resumeTime.notNil) {
-//"scheduling resume".debug;
+if(trace) { "scheduling resume".debug; };
 				clock.schedAbs(resumeTime, { this.prUnhang })
 			} { /*"resuming".debug;*/ this.prUnhang };
 		};
-//status.debug("<< cmdStopped");
+if(trace) { status.debug("<< cmdStopped"); };
 	}
 	
 	fullSync { |warn = true|
-//"setting fullSync status".debug;
+if(trace) { "setting fullSync status".debug; };
 		if(status == \running and: { activeCmds.any(_.shouldSync) }) {
 			status = \fullSync;
 			condition.hang;
@@ -240,25 +249,27 @@ TLSequenceIterator {
 	
 	cmdSync { |lastCmd|
 		var	updater;
-// "\n>> cmdSync".debug;
-// if(lastCmd.class == Proto) {
-// 	lastCmd.env.debug("removed command");
-// 	lastCmd.env.proto.debug;
-// } {
-// 	lastCmd.debug("removed command");
-// };
+if(trace) {
+	">> cmdSync".debug;
+	if(lastCmd.class == Proto) {
+		lastCmd.env.debug("last command");
+		lastCmd.env.proto.debug;
+	} {
+		lastCmd.debug("last command");
+	};
+};
 		if(lastCmd.shouldSync and: { lastCmd.tryPerform(\isRunning) ? false }) {
-// "set cmdSync status".debug;
+if(trace) { "set cmdSync status".debug; };
 			status = \cmdSync;
 			NotificationCenter.registerOneShot(lastCmd, \done, ("cmdSync" ++ this.hash).asSymbol,
 			{	|parms, resumeTime|
-// "\n\n\ngot done notification from lastCmd, resuming".debug;
+if(trace) { "got done notification from lastCmd, resuming".debug; };
 				if(resumeTime.notNil) {
 					clock.schedAbs(resumeTime, { this.prUnhang })
 				} { this.prUnhang };
 			});
 			updater = Updater(lastCmd, { |obj, what, parms, resumeTime|
-// "sync updater".debug;
+if(trace) { "cmdSync updater".debug; };
 				if(what == \done) {
 					updater.remove;
 					if(resumeTime.notNil) {
@@ -276,7 +287,7 @@ TLSequenceIterator {
 	
 	prUnhang {
 		status = \running;
-// "\n\n\nprUnhang: unhanging".debug;
+if(trace) {  "\n\n\nprUnhang: unhanging".debug; };
 		condition.unhang;
 	}
 

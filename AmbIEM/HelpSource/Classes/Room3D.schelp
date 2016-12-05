@@ -1,0 +1,54 @@
+TITLE:: Room3D
+summary:: Room simulation (early reflections)
+categories:: Libraries>AmbIEM, UGens>Multichannel>Ambisonics
+related:: Overviews/AmbIEM
+
+DESCRIPTION::
+A simple rectangular 3D room for calculating
+reflections of sound sources.
+
+CLASSMETHODS::
+
+METHOD:: new
+Returns a new instance of room, dimensions given by an array [x, y, z, depth, width, height].
+
+ARGUMENT:: room
+
+
+INSTANCEMETHODS::
+
+METHOD:: refs10polar
+returns first 10 reflections of a point source as polar coordinates in relation to a listener output format is [phi1, theta1, dist1, phi2, theta2, dist2....]
+
+ARGUMENT:: px
+
+ARGUMENT:: py
+
+ARGUMENT:: pz
+
+ARGUMENT:: lx
+
+ARGUMENT:: ly
+
+ARGUMENT:: lz
+
+METHOD:: refs10
+returns first 10 reflections of a point source; coords are px, py, pz, output format is [ x1, y1, z1, x2, y2, z2 ... x8, y8, z8] for easier use as UGen.
+
+ARGUMENT:: px
+
+ARGUMENT:: py
+
+ARGUMENT:: pz
+
+
+EXAMPLES::
+
+code::
+r = Room3D.new;
+r.room = [0,0,0,5,8,5];		// origin, depth(x), width(y), height(z)
+
+r.refs10(1, 2, 2.5).clump(3).printAll;
+
+r.refs10polar(1, 2, 2.5, 2.5, 4, 2.5).clump(3).printAll;
+::

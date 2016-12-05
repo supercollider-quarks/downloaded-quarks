@@ -1,0 +1,95 @@
+TITLE:: ARHeadtracker
+summary:: Receives OSC data from ARHeadtracker command
+categories:: Libraries>AmbIEM, External Control
+related:: Overviews/AmbIEM
+
+DESCRIPTION::
+ARHeadtracker is a class that uses a LocalClient to receive data from the ARHeadtracker command line tool via OSC (dont forget to start the tool in order to receive data...)
+
+CLASSMETHODS::
+
+METHOD:: new
+
+ARGUMENT:: port
+
+
+
+INSTANCEMETHODS::
+
+METHOD:: kr
+
+
+METHOD:: rotation
+
+
+METHOD:: client
+
+
+METHOD:: init
+
+
+METHOD:: reset
+
+
+METHOD:: rotationArray
+
+
+METHOD:: zero
+
+
+METHOD:: port
+
+
+
+EXAMPLES::
+An instance implements the kr method and delivers [elevation, atzimuth, roll]
+
+code::
+a = ARHeadtracker.new;
+
+// look straight forward to calibrate the system
+a.reset;
+
+// create the virtual room
+p = ProxySpace.push;
+
+// simple test with sinus freq controled by azimuth
+~test = { SinOsc.ar(200 + (a.kr[1] * 100), 0, 0.2) };
+~test.play;
+~test.clear;
+
+// more complex example as headtracker in a virtual environment
+VirtualRoom.revTime = 1;
+VirtualRoom.revGain = 0.1;
+VirtualRoom.hfDamping = 1;
+VirtualRoom.init;
+VirtualRoom.start;
+{ VirtualRoom.ar }.play;
+
+// position the listener in the middle of the room and assign the
+// head tracker data to the orientation of the listener
+~listener = { | x=2.5, y=4, z=2.5, o=0| [x,y,z, a.kr[1]] };
+
+v = VirtualRoom.new;
+v.listener = ~listener;
+v.room = [0, 0, 0, 5, 8, 5];
+v.refGain = 1;
+
+v.play;
+
+// adding a source to the scene (slightly right off)
+~noisy = { EnvGen.kr(Env.adsr, Impulse.kr(3)) * PinkNoise.ar(1) };
+~noisyPos = { | x=3.5, y=3, z=2.5 | [x,y,z] };
+v.addSource( ~noisy, "test1", ~noisyPos);
+v.removeSource("test1");
+
+// play and stop the virtual room
+v.play;
+v.stop;
+
+// stop the rendering engine
+VirtualRoom.stop;
+
+p.pop;
+
+::

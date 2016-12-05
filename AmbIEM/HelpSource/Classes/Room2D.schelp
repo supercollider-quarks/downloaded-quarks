@@ -1,0 +1,53 @@
+TITLE:: Room2D
+summary:: Room simulation (early reflections)
+categories:: Libraries>AmbIEM, UGens>Multichannel>Ambisonics
+related:: Overviews/AmbIEM
+
+DESCRIPTION::
+
+CLASSMETHODS::
+
+METHOD:: new
+
+ARGUMENT:: room
+
+
+
+INSTANCEMETHODS::
+
+METHOD:: refs8polar
+Returns first 8 reflections of a point source as polar coordinates in relation to a listener output format is [phi1, dist1, phi2, dist2....]
+
+ARGUMENT:: px
+
+ARGUMENT:: py
+
+ARGUMENT:: lx
+
+ARGUMENT:: ly
+
+
+METHOD:: refs8
+Returns first 8 reflections of a point source; coords are px, py,
+output format is [ x1, y1, x2, y2, ... x8, y8] for easier use as UGen.
+
+ARGUMENT:: px
+
+ARGUMENT:: py
+
+
+METHOD:: room
+
+
+
+EXAMPLES::
+
+code::
+r = Room2D.new
+r.room = [0, 0, 8, 5]
+
+a = Point(2, 3);					// point to be mirrored
+r.refs8(a.x, a.y).clump(2).printAll;
+
+r.refs8polar(a.x, a.y, 0, 0).printAll;
+::

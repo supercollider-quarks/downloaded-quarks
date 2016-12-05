@@ -1,0 +1,601 @@
+CLASS:: Matrix
+summary:: an ordered 2-dimensional array of numbers
+categories:: Linear Algebra
+related:: Classes/Spherical, Classes/Point, Classes/Polar
+
+DESCRIPTION::
+original class by sc.solar
+
+Matrices are 2-dimensional Arrays whose slots may only contain (at the moment 'real' ) numbers.
+Their shape is fully described by the number of rows and columns(cols). Each element can be
+adressed by 2 indices (row,col), where row (col) ranges between 0 and rows-1 (cols-1).
+For a lesson on matrices, read your math books from school.
+Or this reference if you like it the hard way:
+    LINK::http://www.ee.ic.ac.uk/hp/staff/dmb/matrix/intro.html#Intro::
+
+Array2D
+Matrix uses an array-of-rows–notation. This is the same concept as found in LINK::Classes/Array2D::.
+As a subclass of Array, Matrix responds to far more methods than given in
+this helpfile. Be aware of strange results when using them. This is meant to support only the basic matrix
+manipulations. Most of this is not designed for realtime action. To slow, not optimized.
+
+Suggestions, bugs, improvements to
+	sc.solar(at)studiobeige.de or
+	tboverma(at)techfak.uni-bielefeld.de
+
+
+CLASSMETHODS::
+
+METHOD:: newClear
+Create a new Matrix of shape (rows, cols) filled with zeros.
+CODE::Matrix.newClear(3,3).postln;::
+
+ARGUMENT::
+rows
+
+ARGUMENT::
+cols
+
+METHOD:: with
+Create a new Matrix whose rows are filled with the given subarrays.
+CODE::Matrix.with([[1,2,3],[4,5,6],[7,8,9]]).postln;::
+
+ARGUMENT::
+array
+
+METHOD:: withFlatArray
+Create a new Matrix from a 1-dimensional array of shape (rows , cols).
+CODE::Matrix.withFlatArray(3,3,[1,2,3,4,5,6,7,8,9]).postln;::
+
+ARGUMENT::
+rows
+
+ARGUMENT::
+cols
+
+ARGUMENT::
+array
+
+METHOD:: newIdentity
+Create a new identity matrix of shape (n,n).
+CODE::Matrix.newIdentity(3).postln;::
+
+ARGUMENT::
+n
+
+METHOD:: newDFT
+Create a new discrete Fourier transform matrix of shape (n,n).
+CODE::Matrix.newDFT(3).postln;::
+
+CODE::
+n = 51; // DFT size
+
+// Make a sinusoidal test signal (3 partials: 1st, 3rd and 10th)
+x = Matrix.withFlatArray(n, 1, n collect: { |i| sin(2pi*i/(n - 1)) + sin(6pi*i/(n - 1)) + sin(20pi*i/(n - 1)) })
+
+// Calculate Fourier transform
+y = Matrix.newDFT(n)*x
+
+// Plot spectrum
+y.flat.abs.plot(discrete: true)
+
+// Recover original signal from Fourier transform
+z = Matrix.newIDFT(n)*y
+z.flat.real.plot;
+x.flat.plot;
+::
+
+ARGUMENT::
+n
+
+METHOD:: newIDFT
+Create a new inverse discrete Foutier transform matrix of shape (n,n).
+CODE::Matrix.newIDFT(3).postln;::
+
+CODE::
+// Show discrete Fourier transform is unitary
+n = 3;
+(Matrix.newDFT(n)*Matrix.newIDFT(n)).real.postln;
+::
+
+ARGUMENT::
+n
+
+METHOD:: fill
+fill the matrix by evaluating function.
+function is passed two arguments: row, col
+
+ARGUMENT::
+rows
+
+ARGUMENT::
+cols
+
+ARGUMENT::
+function
+
+METHOD:: mul
+CODE::
+a = [[1,2],[3,4]];
+b = [[1,2],[1,2]];
+
+Matrix.mul(a,b);
+::
+
+ARGUMENT::
+ArrayA
+
+ARGUMENT::
+ArrayB
+
+
+INSTANCEMETHODS::
+
+METHOD:: rows
+RETURNS:: the number of rows
+
+METHOD:: cols
+RETURNS:: the number of columns
+
+METHOD:: shape
+RETURNS:: the number of rows and columns as array [rows, cols]
+
+METHOD:: postmln
+post the matrix as 2D representation.
+
+CODE::
+Matrix.withFlatArray(3,3,[1,2,3,4,5,6,7,8,9]).postln;
+Matrix.withFlatArray(3,3,[1,2,3,4,5,6,7,8,9]).postmln;
+::
+
+METHOD:: doRow
+evaluate function for each element of row;
+function is passed two arguments: item, col
+
+ARGUMENT::
+row
+
+ARGUMENT::
+function
+
+METHOD:: doCol
+evaluate function for each element of col;
+function is passed two arguments: item, row
+
+ARGUMENT::
+col
+
+ARGUMENT::
+function
+
+METHOD:: doMatrix
+evaluate function for each element ;
+function is passed three arguments: item, row,col;
+
+ARGUMENT::
+function
+
+
+subsection:: Changing Matrices
+
+METHOD:: put
+put a single element at (row, col)
+
+ARGUMENT::
+row
+
+ARGUMENT::
+col
+
+ARGUMENT::
+value
+
+METHOD:: putRow
+put a row of elements at (row)
+
+CODE::Matrix.newClear(3,3).putRow(0,[2,4,6]).postln::
+
+ARGUMENT::
+row
+
+ARGUMENT::
+values
+
+METHOD:: putCol
+put a column of elements at (col)
+
+CODE::Matrix.newClear(3,3).putCol(1,[2,4,6]).postln::
+
+ARGUMENT::
+col
+
+ARGUMENT::
+values
+
+METHOD:: fillRow
+fill a row by evaluating function for each element;
+function is passed two arguments: row, col.
+
+ARGUMENT::
+row
+
+ARGUMENT::
+function
+
+METHOD:: fillCol
+fill a column by evaluating function for each element;
+function is passed two arguments: row, col.
+
+ARGUMENT::
+col
+
+ARGUMENT::
+function
+
+METHOD:: exchangeRow
+exchange two rows
+
+ARGUMENT::
+rowA
+
+ARGUMENT::
+rowB
+
+METHOD:: exchangeCol
+exchange two cols
+
+ARGUMENT::
+colA
+
+ARGUMENT::
+colB
+
+
+subsection:: Return Arrays
+
+METHOD:: at
+
+ARGUMENT::
+row
+
+ARGUMENT::
+col
+
+METHOD:: get
+
+ARGUMENT::
+row
+
+ARGUMENT::
+col
+
+RETURNS:: element at (row,col)
+
+METHOD:: getRow
+
+ARGUMENT::
+row
+
+RETURNS:: an array from row
+
+METHOD:: getCol
+
+ARGUMENT::
+col
+
+RETURNS:: an array from column
+
+METHOD:: getDiagonal
+RETURNS:: an array from the diagonal elements
+
+METHOD:: asArray
+RETURNS:: an array of rows
+
+METHOD:: flat
+RETURNS:: a one slot array of all elements
+
+
+subsection:: Return Matrices
+
+METHOD:: fromRow
+
+ARGUMENT::
+row
+
+RETURNS:: a new matrix from row
+
+METHOD:: fromCol
+
+ARGUMENT::
+col
+
+RETURNS:: a new matrix from column
+
+METHOD:: addRow
+add a row (values) to the matrix and return.
+receiver is unchanged.
+
+ARGUMENT::
+values
+
+METHOD:: addCol
+add a column (values) to the matrix and return.
+receiver is unchanged.
+
+ARGUMENT::
+values
+
+METHOD:: insertRow
+insert a row (values) in matrix and return.
+receiver is unchanged.
+
+ARGUMENT::
+col
+
+ARGUMENT::
+values
+
+METHOD:: insertCol
+insert a column (values) in matrix and return.
+receiver is unchanged.
+
+ARGUMENT::
+row
+
+ARGUMENT::
+values
+
+METHOD:: removeRow
+
+ARGUMENT::
+row
+
+RETURNS:: a new matrix without row
+
+METHOD:: removeCol
+
+ARGUMENT::
+col
+
+RETURNS:: a new matrix without column
+
+METHOD:: collect
+
+ARGUMENT::
+function
+
+RETURNS:: a new matrix by evaluating function for each element.
+function is passed three arguments: item, row, col.
+
+METHOD:: sub
+
+ARGUMENT::
+row
+
+ARGUMENT::
+col
+
+RETURNS:: a submatrix that results from matrix by crossing out row and col
+
+METHOD:: flop
+RETURNS:: the transpose of matrix
+
+METHOD:: adjoint
+RETURNS:: the adjoint or adjugate of a square matrix
+
+METHOD:: inverse
+RETURNS:: the inverse of a square matrix
+
+METHOD:: gram
+RETURNS:: the gram matrix
+(the transpose of matrix multiplied with matrix)
+	T^t * T
+
+METHOD:: pseudoInverse
+RETURNS:: the pseudoInverse of a matrix
+
+METHOD:: *
+RETURNS:: the result of matrix multiplication: matrix * matrix2
+matrix.cols must equal matrix2.rows
+
+multiplication with aNumber for each element
+
+METHOD:: +
+RETURNS:: (matrix + matrix2)
+matrix must have the same shape as matrix2
+
+summation with aNumber for each element
+
+METHOD:: -
+RETURNS:: (matrix - matrix2)
+matrix must have the same shape as matrix2
+
+subtraction with aNumber for each element
+
+METHOD:: center
+
+ARGUMENT::
+mean
+
+RETURNS:: a matrix centred around the mean vector (which will be calculated for you if not supplied)
+
+
+subsection:: Return Characteristic Values
+
+METHOD:: sum
+RETURNS:: the sum of all elements
+
+METHOD:: sumRow
+
+ARGUMENT::
+row
+
+RETURNS:: the sum of all elements of desired row
+
+METHOD:: sumCol
+
+ARGUMENT::
+col
+
+RETURNS:: the sum of all elements of desired column
+
+METHOD:: sumRows
+
+ARGUMENT::
+function
+
+RETURNS:: an array giving the sum for every row
+
+METHOD:: sumCols
+
+ARGUMENT::
+function
+
+RETURNS:: an array giving the sum for every column
+
+METHOD:: grammian
+RETURNS:: the grammian of a  matrix
+(determinant of the gram matrix)
+
+METHOD:: mean
+RETURNS:: the mean array, calculated over the rows
+
+METHOD:: cov
+
+ARGUMENT::
+mean
+
+RETURNS:: the sample covariance, if rows represent observations
+
+METHOD:: covML
+
+ARGUMENT::
+mean
+
+RETURNS:: the Maximum-Likelihood covariance estimate, if rows represent observations and the distribution is assumed to be Gaussian
+
+
+subsection:: Return Characteristic Values of Square Matrices
+
+METHOD:: det
+RETURNS:: the determinant
+
+METHOD:: cofactor
+
+ARGUMENT::
+row
+
+ARGUMENT::
+col
+
+RETURNS:: the cofactor to element (row, col)
+this is the determinant of the matrix.sub(row, col) mutiplied with (-1)**(row+col)
+
+METHOD:: trace
+RETURNS:: the trace of matrix:
+(sum of the diagonal elements)
+
+METHOD:: norm
+RETURNS:: the euclidean norm of matrix
+( sqrt( tr [ A*A(T) ] ) )
+
+
+subsection:: Testing
+
+METHOD:: isSquare
+RETURNS:: true for (n x n) - matrices
+
+METHOD:: isSingular
+RETURNS:: true if determiant is zero
+
+METHOD:: isRegular
+RETURNS:: true if determiant is Non-zero
+
+METHOD:: isSymmetric
+RETURNS:: true if matrix is symmetric
+
+METHOD:: isAntiSymmetric
+RETURNS:: true if matrix is antisymmetric
+
+METHOD:: isPositive
+RETURNS:: true if matrix is strictly positive
+
+METHOD:: isNonNegative
+RETURNS:: true if matrix is  positive / non negative (zeros allowed)
+
+METHOD:: isNormal
+RETURNS:: true if matrix is  normal
+
+METHOD:: isZero
+RETURNS:: true for a zero matrix
+
+METHOD:: isIntegral
+RETURNS:: true if matrix is integral
+An Integral matrix is one whose elements are all integers.
+
+METHOD:: isIdentity
+RETURNS:: true if matrix is an identity matrix
+(the diagonal elements are all 1; the nondigonal elements are all zero)
+
+METHOD:: isDiagonal
+RETURNS:: true if matrix is diagonal
+a(i,j)=0 unless i=j.
+
+METHOD:: isOrthogonal
+RETURNS:: true if matrix is orthogonal
+(the matrix multiplied with its transpose is an identity matrix)
+
+METHOD:: isIdempotent
+RETURNS:: true if matrix is idempotent
+(the squared matrix equals itself)
+
+METHOD:: ==
+RETURNS:: true if matrix equals matrix2
+
+
+subsection:: Unary Operators: matrix.uop
+
+METHOD:: neg
+
+METHOD:: bitNot
+
+METHOD:: abs
+
+METHOD:: ceil
+
+METHOD:: floor
+
+METHOD:: frac
+
+METHOD:: sign
+
+METHOD:: squared
+
+METHOD:: cubed
+
+METHOD:: sqrt
+
+METHOD:: exp
+
+METHOD:: reciprocal
+
+RETURNS:: new matrices.
+
+
+subsection:: Binary Operators
+usage: matrix   bop aNumber
+or:    aNumber  bop matrix
+
+METHOD:: /
+
+METHOD:: div
+
+METHOD:: %
+
+METHOD:: **
+
+METHOD:: min
+
+METHOD:: max
+
+RETURNS:: new matrices

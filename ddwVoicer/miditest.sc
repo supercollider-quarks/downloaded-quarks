@@ -1,6 +1,6 @@
 
 + Instr {
-	miditest { arg channel = 0, initArgs, target, bus, ctlChannel, makeVoicerFunc;
+	miditest { arg channel = 0, initArgs, target, bus, ctlChannel, makeVoicerFunc, excludeCtls;
 		var voicer, socket, patch, synthdef, layout, argsSize, parg, i, argNames;
 		
 		var close = {
@@ -46,12 +46,13 @@
 		patch = voicer.nodes.at(0).patch;
 		synthdef = patch.asSynthDef;
 		argNames = patch.argNames ?? { this.argNames };
+		excludeCtls = excludeCtls ++ #[\freq, \gate, \out];
 
 			// now make midi controllers, but only for kr inputs
 			// we have to go to the synthdef because only it knows which are noncontrols
 		synthdef.allControlNames.do({ |cname|
 			(cname.rate == \control and:
-				{ #[\freq, \gate, \out].includes(cname.name).not }
+				{ excludeCtls.includes(cname.name).not }
 			).if({
 				i = argNames.detectIndex({ |name| name == cname.name });
 					// you might have added NamedControls in the Instr func
@@ -82,11 +83,11 @@
 		"in the console window.".postln;
 		^voicer
 	}
-	
-	miditestMono { arg channel = 0, initArgs, target, bus, ctlChannel;
+
+	miditestMono { arg channel = 0, initArgs, target, bus, ctlChannel, excludeCtls;
 		^this.miditest(channel, initArgs, target, bus, ctlChannel, { |instr, initArgs, target, bus|
 			MonoPortaVoicer(1, instr, initArgs, bus, target)
-		});
+		}, excludeCtls);
 	}
 	
 	openFile {

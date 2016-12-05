@@ -1,0 +1,265 @@
+TITLE:: GrainFactory
+summary:: mass-production of granular synthdefs
+categories:: transnd>factory
+
+DESCRIPTION::
+The class generates link::Classes/SynthDef::s optimized for granular synthesis. The generated synthdefs are ready for their use with link::Classes/Pbind::. Parameters are optimized through code::ir:: method (scalar value), and all the synth uses link::Classes/OffsetOut:: for sample accurate grain alignment. Oscillators compensate psychoacoustically with link::Classes/AmpCompA:: and envelope (hann, perc or gauss) generators run at audio-rate to meet the very short duration required by granular synthesis. See examples below.
+
+CLASSMETHODS::
+PRIVATE:: initClass
+
+METHOD:: make
+generate & add
+
+METHOD:: store
+generate & store
+
+INSTANCEMETHODS::
+PRIVATE:: buildSynthDef
+
+EXAMPLES::
+code::
+// generate
+GrainFactory.make;
+
+// check parameters
+SynthDescLib.at(\g_sine_hann_pan2).controlNames;
+
+(
+// see FSinOsc
+Pbind(
+	\type, \grain,
+	\instrument, \g_sine_hann_pan2,
+	\freq, Env([200, 4000], 8, \exp).asPseg.loop,
+	\phase, Pwhite(0, 2pi),
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// see LFGauss (gauss envelope and width modulation)
+Pbind(
+	\type, \grain,
+	\instrument, \g_sine_gauss_pan2,
+	\freq, Env([200, 4000], 8, \exp).asPseg.loop,
+	\phase, Pwhite(0, 2pi),
+	\dur, 0.01,
+	\sustain, 0.02,
+	\width, Env([0.2, 0.003, 0.2], 0.25, \exp).asPseg.loop
+).play;
+)
+(
+// see SinOscFB
+Pbind(
+	\type, \grain,
+	\instrument, \g_sinefb_hann_pan2,
+	\freq, Env([100, 1000], 8, \exp).asPseg.loop,
+	\fb, Env([0, 1.3, 0], [3, 3]).asPseg.loop,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// with randomness
+Pbind(
+	\type, \grain,
+	\instrument, \g_sinefb_hann_pan2,
+	\freq, Env([100, 1000], 8, \exp).asPseg.loop + Pexprand(10, 1000),
+	\fb, Env([0, 1.3, 0], [3, 3]).asPseg.loop,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// see PMOsc
+Pbind(
+	\type, \grain,
+	\instrument, \g_pm_hann_pan2,
+	\freq, Env([100, 1000], 8, \exp).asPseg.loop,
+	\modFreq, Pkey(\freq) * Env([4, 1.3, 4], [0.3, 0.5], \exp).asPseg.loop,
+	\modIndex, Env([0, 5, 0], [3, 1]).asPseg.loop,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// with randomness
+Pbind(
+	\type, \grain,
+	\instrument, \g_pm_hann_pan2,
+	\freq, Env([100, 1000], 8, \exp).asPseg.loop + Pexprand(10, 1000),
+	\modFreq, Pkey(\freq) * Env([4, 1.3, 4], [0.3, 0.5], \exp).asPseg.loop,
+	\modIndex, Env([0, 5, 0], [3, 1]).asPseg.loop,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// see ring1
+Pbind(
+	\type, \grain,
+	\instrument, \g_rm_hann_pan2,
+	\freq, Env([100, 1000], 8, \exp).asPseg.loop,
+	\modFreq, 800,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// see LFTri
+Pbind(
+    \type, \grain,
+    \instrument, \g_tri_hann_pan2,
+    \freq, Env([50, 1000], 8, \exp).asPseg.loop,
+    \dur, 0.01,
+    \sustain, 0.02
+).play;
+)
+(
+// see Saw
+Pbind(
+	\type, \grain,
+	\instrument, \g_saw_hann_pan2,
+	\freq, Env([200, 2000], 8, \exp).asPseg.loop,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// see VarSaw
+Pbind(
+	\type, \grain,
+	\instrument, \g_var_hann_pan2,
+	\freq, Env([200, 2000], 8, \exp).asPseg.loop,
+	\sawWidth, Env([0.01, 0.5, 0.01], [0.3, 0.5], \exp).asPseg.loop,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// with randomness
+Pbind(
+	\type, \grain,
+	\instrument, \g_var_hann_pan2,
+	\freq, Env([200, 2000], 8, \exp).asPseg.loop + Pexprand(10, 100),
+	\sawWidth, Env([0.01, 0.5, 0.01], [0.3, 0.5], \exp).asPseg.loop,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// see SyncSaw
+Pbind(
+	\type, \grain,
+	\instrument, \g_sync_hann_pan2,
+	\freq, Env([100, 1000], 8, \exp).asPseg.loop,
+	\sawFreq, Pkey(\freq) * Env([4, 1.3, 4], [0.3, 0.5], \exp).asPseg.loop,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// with randomness
+Pbind(
+	\type, \grain,
+	\instrument, \g_sync_hann_pan2,
+	\freq, Env([100, 1000], 8, \exp).asPseg.loop + Pexprand(10, 100),
+	\sawFreq, Pkey(\freq) * Env([4, 1.3, 4], [0.3, 0.5], \exp).asPseg.loop,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// see Blip
+Pbind(
+    \type, \grain,
+    \instrument, \g_blip_hann_pan2,
+    \freq, Env([100, 500], 1, \exp).asPseg.loop,
+    \numHarm, Env([100, 1], 10, \exp).asPseg.loop,
+    \dur, 0.01,
+    \sustain, 0.02
+).play;
+)
+(
+// see Blip
+Pbind(
+    \type, \grain,
+    \instrument, \g_blip_hann_pan2,
+	\freq, Env([100, 500], 1, \exp).asPseg.loop + Pexprand(10, 1000),
+    \numHarm, Env([100, 1], 10, \exp).asPseg.loop,
+    \dur, 0.01,
+    \sustain, 0.02
+).play;
+)
+(
+// see Pulse
+Pbind(
+	\type, \grain,
+	\instrument, \g_pulse_hann_pan2,
+	\freq, Env([200, 2000], 8, \exp).asPseg.loop,
+	\pulseWidth, Env([0.1, 0.5, 0.1], [0.3, 0.5], \exp).asPseg.loop,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// see Impulse
+Pbind(
+	\type, \grain,
+	\instrument, \g_impulse_hann_pan2,
+	\freq, Env([200, 2000], 8, \exp).asPseg.loop,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// see Formant
+Pbind(
+	\type, \grain,
+	\instrument, \g_formant_hann_pan2,
+	\freq, 150,
+	\bwFreq, 200,
+	\formFreq, Env([400, 2000], 2, \exp).asPseg.loop,
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// with randomness
+Pbind(
+	\type, \grain,
+	\instrument, \g_formant_hann_pan2,
+	\freq, 150,
+	\bwFreq, 200,
+	\formFreq, Env([400, 2000], 2, \exp).asPseg.loop + Pexprand(10, 1000),
+	\dur, 0.01,
+	\sustain, 0.02
+).play;
+)
+(
+// non granular use
+Pbind(
+	\type, \grain,
+	\instrument, \g_sine_perc_pan2,
+	\degree, Pseries(0, 1, 7).loop,
+	\a, 0.01,
+	\r, 0.99,
+	\dur, 0.25,
+	\sustain, 1
+).play;
+)
+(
+// semi-granular use
+Pbind(
+	\type, \grain,
+	\instrument, \g_sinefb_perc_pan2,
+	\degree, Pstutter(100, Pseries(0, 1, 7)).loop,
+	\pan, Pwhite(-1, 1),
+	\fb, Pexprand(0.01, 0.5),
+	\a, 0.03,
+	\r, 0.97,
+	\dur, 0.01,
+	\sustain, Pwhite(0.5, 1.5),
+).play;
+)
+::

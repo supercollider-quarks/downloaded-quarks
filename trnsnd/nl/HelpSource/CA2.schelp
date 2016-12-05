@@ -1,0 +1,44 @@
+title:: CA2
+summary:: ugen cellular automaton
+categories:: transnd>ugen
+
+description::
+implements 1D binary 2 neighbouring rule cellular automanton.
+interprets the binary lattice as floating-point sample values.
+no-interpolation.
+
+CLASSMETHODS::
+
+METHOD:: ar
+
+argument:: smprt
+iteration frequency
+
+argument:: smpwd
+lattice size [max 256]
+
+argument:: rule
+ca hex string rule ["00000000", "FFFFFFFF"]
+
+argument:: seed
+seeding (random if 0, otherwise translate an integer [0, 255] as binary and seeds into the lattice)
+
+argument:: trig
+retrigger (when triggered performs the above seeding)
+
+
+EXAMPLES::
+
+code::
+
+// 29 preset rules
+r = Pca.r2;
+
+// scope
+s.scope(2, 0, 64).style_(2);
+
+// unstable: so use clip
+{ var sig=CA2.ar(44100/2, MouseY.kr(8, 256), r[0], MouseX.kr(0, 255), Dust.kr(100)).clip2;[sig, Delay1.ar(sig)] }.play;
+
+{ var sig=CA2.ar(44100/2, MouseY.kr(8, 256), r[1], MouseX.kr(0, 255), Dust.kr(100)).clip2;[sig, Delay1.ar(sig)] }.play;
+::

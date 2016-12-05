@@ -14,18 +14,28 @@ var cb = { arg reply, name, args, atTime, targetStyle, target;
 	},
 
 	detail: { arg reply, name;
-		var instr;
+		var instr, args, outSpec;
 		name = name.asString;
 		instr = Instr.at(name) ?? {Instr.load(name)};
 		if(instr.isNil, {
 			Error("Instr not found" + name).throw;
 		});
+		outSpec = instr.outSpec;
+		args = instr.argNames.collect({ arg argName, i;
+							var spec = instr.specs.at(i);
+							(
+								name: argName,
+								spec: [spec.class, spec.rate] ++ spec.storeArgs,
+								default: instr.defArgAt(i) // ? spec.default
+							)
+						});
 		reply.value((
 			name: name,
 			path: instr.path,
 			code: instr.funcDef.sourceCode,
-			specs: instr.specs,
-			outSpec: instr.outSpec
+			args: args,
+			outSpec: [outSpec.class, outSpec.rate] ++ outSpec.storeArgs,
+			rate: instr.rate
 		));
 	},
 	play: { arg reply, name ... args;

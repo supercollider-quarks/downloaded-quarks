@@ -1,0 +1,5 @@
+.DS_Store
+cmake_install.cmake
+Makefile
+CMakeCache.txt
+CMakeFiles/

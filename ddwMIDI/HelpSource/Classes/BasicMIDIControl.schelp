@@ -1,0 +1,63 @@
+TITLE:: BasicMIDIControl
+summary:: Generic continuous-controller responder
+categories:: External Control>MIDI
+related:: Classes/AbstractMIDIControl, Guides/ddwMIDI_Guide
+
+DESCRIPTION::
+BasicMIDISocket installs a function to respond to continuous-controller messages. The function receives the following as arguments:
+
+list::
+## strong::value::: The controller value (0-127, except pitch-bend, which is -16384 - 16383).
+## strong::divisor::: 127 for single-byte controllers; 16384 for pitch-bend. code::(value/divisor):: should be either 0..1 for regular controls or -1..1 for pitch-bend.
+## strong::ccnum::: The controller number.
+::
+
+Channel information is not passed in, on the assumption that you're filtering the messages by device and channel according to the specification given in link::Guides/ddwMIDI_Guide#Identifying MIDI channels::. If you need a function to respond to incoming controller messages from multiple devices or channels, and the function needs to be aware of the message's source, use link::Classes/MIDIFunc:: or link::Classes/MIDIdef:: instead.
+
+
+CLASSMETHODS::
+METHOD:: new
+
+Create a new instance. Arguments are:
+
+Definitionlist::
+## chan || The messages' source. See link::Guides/ddwMIDI_Guide#Identifying MIDI channels::.
+## func || The function to handle the controller's messages. The function's arguments should be code::|value, divisor, ccnum|::.
+::
+
+Note that the argument names shown by SCIde's method completion pop-up are different. This is because teletype::*new:: is inherited from AbstractMIDIControl, which provides a generic argument template.
+
+
+INSTANCEMETHODS::
+
+METHOD:: func
+
+returns:: The function responding to the messages for this device and controller.
+
+METHOD:: active
+returns:: Boolean: code::true:: if the socket's destination exists and is active; code::false:: otherwise.
+
+METHOD:: set
+Call the function that should respond to the controller messages. Normally this method is called internally; you won't need to call it directly.
+
+ARGUMENT:: value
+The raw controller value.
+
+ARGUMENT:: divisor
+A normalization factor. Code::value / divisor:: should fall into the range 0..1 for regular controllers, and -1 .. 1 for pitch bend.
+
+ARGUMENT:: ccnum
+The controller number.
+
+COPYMETHOD:: AbstractMIDIControl -free
+COPYMETHOD:: AbstractMIDIControl -parent
+COPYMETHOD:: AbstractMIDIControl -clear
+
+PRIVATE:: init
+
+
+EXAMPLES::
+
+code::
+
+::

@@ -35,7 +35,17 @@ EQSpec1 {
 			{ \lopass } {
 				a0 = freq
 			}
-		
+
+			{ \bhipass } {
+				a0 = freq;
+				a1 = rq;
+			}
+
+			{ \blopass } {
+				a0 = freq;
+				a1 = rq;
+			}
+
 			{ \hishelf } {
 				k = k.abs;	// positive values for gain at nyquist
 				wc = pi * freq * sampleRate.reciprocal;
@@ -54,9 +64,9 @@ EQSpec1 {
 		case { type == \eq } {
 				^[\freq, freq, \rq, rq, \k, k]
 			}
-			
-			{ #[\lopass, \hipass].includes(type) } {
-				^[\freq, freq]
+
+			{ #[\lopass, \hipass, \blopass, \bhipass].includes(type) } {
+				^[\freq, freq, \rq, rq]
 			}
 			
 			{

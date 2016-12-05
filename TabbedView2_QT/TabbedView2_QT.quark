@@ -4,7 +4,7 @@
 	\summary:	"Important QT Additions for the TabbedView2 Quark",
 	\author: 		"Jost Muxfeldt",
 	\version:		1.04,  // must be a float
-	\helpdoc: 		"TabbedViewView.schelp",
+	\schelp:        "TabbedViewView",
 	isCompatible:	{ 'QtGUI'.asClass.notNil },
 	\url:           "http://www.glyph.de"
 

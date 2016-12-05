@@ -1,0 +1,178 @@
+title:: Attributes
+categories:: Events, Collections
+summary:: A set of methods for pattern matching arrays of events
+
+Attributes are not a special class, but it is a set of methods that
+are implemented by Dictionary (and its subclasses, like Event), by objects and by Arrays of Dictionaries.
+
+
+SECTION::matchAttributes
+
+dictA.matchAttributes(dictB)
+
+returns true if dictB has all key-value pairs in dictA
+
+CODE::
+// example:
+
+(degree: 4, dur: 0.1).matchAttributes((degree: 4, dur: 0.1, amp: 0.3)); // true
+(degree: 4, dur: 0.1).matchAttributes((degree: 4,  amp: 0.3)); // false
+(degree: 4).matchAttributes((degree: 4,  amp: 0.3)); // true
+
+::
+
+Other objects also respond to the matchAttributes message.
+
+
+nil.matchAttributes(a)			returns true always (nil is a passe-par-tout)
+[a, b].matchAttributes(a)		returns true if any of the members of the array return true
+[].matchAttributes(a)			returns false
+().matchAttributes(a)			like nil, returns true.
+anObject.matchAttributes(a)		returns false
+
+
+CODE::
+// example:
+(
+a = (x: 9);
+b = (x: 9, y:10);
+);
+
+
+a.matchAttributes(b); // true
+b.matchAttributes(a); // false: the key specifies more than the tested properties
+nil.matchAttributes(a); // true
+[].matchAttributes(a); // false
+[a, b].matchAttributes(a) // true (any matches)
+().matchAttributes(a); // true (generic properties)
+::
+
+If the key dictionary has a function, the function is tested for a match by evaluating it
+with the other dict's value at that key as argument. If it returns true, it counts as a match.
+
+CODE::
+a = (x: {|other| other % 3 == 0 }); // dividable by 3
+a.matchAttributes((x: 9));
+
+a = (x: {|other, event| other % 3 == 0 and: event[\zz] == 9 }); // dividable by 3, zz == 9
+a.matchAttributes((x: 9)); // false
+a.matchAttributes((x: 9, zz:9)); // true
+::
+
+SECTION::recognise a list segment
+
+In order to match a list of attributes with another list of attributes,
+the message recognise is implemented for a number of classes.
+
+listA.recognise(listB, index)
+
+returns true if, starting from index, all elements in listB have matching attributes. The list may contain any object that understands matchAttributes (which is every object, see above) if index is negative, listB is searched backwards.
+
+
+CODE::
+// example
+
+
+a = (degree: 9); b = (n: 1);
+
+
+x = [a, a, b, a];
+
+
+x.recognise([b, a, b, b]); // false
+x.recognise([a, a, b, a]); // true
+x.recognise([(), (), a, a, b, a], -1); // true
+x.recognise([(), (), a, b, a], -1); // false
+x.recognise([(), (), a, a, b, a, b], -1); // false
+
+x = [nil, a, b, a];
+
+x.recognise([(ff:5), a, b, a]); // true (nil recognises everything)
+
+x = [nil, [a, b], b];	// any of [a, b] matches.
+
+x.recognise([a, a, b]); // true ([a, b] recognises both)
+x.recognise([a, b, b]);
+x.recognise([a, b, (z:9)]); // false
+::
+
+Other objects also respond to the message recognise:
+
+CODE::
+nil.recognise([a, b]);	// true:  nil recognises everything
+(n: 1).recognise([a, b], 1) // true: a dictionary recognises a dictionary (see: matchAttributes)
+{ |list, index| list[index][\degree] > 8 }.recognise([a, b], 0);
+
+// useful for rules: an association returns whether the key is recognised.
+([a, b] -> \x).recognise([b, a, b], 1);
+
+// we can look through a list of associations to find a match:
+(
+a = (degree: 9); b = (n: 1);
+x = [
+	[a, a] -> "aa",
+	[a, b] -> "ab",
+	[b, ()] -> "b*",
+	[a, ()] -> "a*",
+	nil -> "always"
+]
+);
+x.detect { |item| item.recognise([a, a]) }; // return the first match
+x.select { |item| item.recognise([a, a]) }; // return the all matches
+
+x.select { |item| item.recognise([a, b]) };
+x.select { |item| item.recognise([a, b, b, a, a, b], -1) };
+::
+
+Note that array-recognise is not like matchAttribute a match for any item in the array,
+but a complete match of the list passed in as argument, from the given index on.
+
+
+
+
+SECTION::adding and removing attributes
+
+
+SUBSECTION::addAttribute(attr, override)
+
+add an attribute to each of the elements in the list if override is set to true, replace attributes, otherwise, avoid this. default: false.
+
+
+CODE::
+// example
+
+[(x: 77), (x: 77, y: 11), (a: 3), (degree: 4)].addAttribute((x: 100), true)
+[(x: 77), (x: 77, y: 11), (a: 3), (degree: 4)].addAttribute((x: 100), false)
+
+[(x: 77), nil, (a: 3), (degree: 4)].addAttribute((x: 100))
+[(x: 77), (), (a: 3), (degree: 4)].addAttribute((x: 100))
+[(x: 77), [(x:3),(y:4)], (a: 3), (degree: 4)].addAttribute((x: 100))
+
+[(x: 77), { 0.2.coin }, (a: 3), (degree: 4)].addAttribute((x: 100))
+
+// shorthand:
+// if the attribute is a symbol, it is added as flag to the attribute list,
+// following the scheme: (symbol: true).
+
+[(x: 77), (x: 77, y: 11), (a: 3), (degree: 4)].addAttribute(\test)
+::
+
+
+SUMSECTION::removeAttribute(attr)
+
+remove an attribute from all the elements in the list
+
+CODE::
+// example
+
+[(x: 77), (x: 77, y: 11), (a: 3), (degree: 4)].removeAttribute((x: 77))
+[(x: 77), (x: 77, y: 11), (a: 3), (degree: 4)].removeAttribute((x: 100))
+
+[(x: 77), [(x:3),(y:4)], (a: 3), (degree: 4)].removeAttribute((x: 3))
+
+
+// Examples
+(segment: \ngelik).matchAttributes((segment: \ngelik, freq:880))
+(segment: \ngelik, freq: {|x| x < 900 }).matchAttributes((segment: \ngelik, freq:880))
+(segment: \ngelik, freq: {|x| x < 900 }).matchAttributes((segment: \ngelik, freq:1080))
+::

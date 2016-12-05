@@ -2,7 +2,7 @@
 InstrSynthDef : SynthDef {
 
 	var <longName;
-	var instr,<instrName;
+	var instr, <instrName;
 	var inputs; // the inputs supplied the last time this was built
 	var outputProxies; // the output proxies those inputs created, primarily used for error reporting
 
@@ -10,35 +10,35 @@ InstrSynthDef : SynthDef {
 	// they are created in the context of the synth def and added
 	// magically/secretly.  backdoor access.
 	// this is for adding buffers, samples, inline players, subpatches, spawners etc.
-	var secretIr, secretKr,stepchildren,synthProxy;
+	var secretIr, secretKr, stepchildren, synthProxy;
 
 	var <>tempTempoKr;
 
-	var <rate,<numChannels; // known only after building
+	var <rate, <numChannels; // known only after building
 
 	*new {
 		^super.prNew
 	}
-	*build { arg instr,args,outClass = \Out;
-		^super.prNew.build(instr,args,outClass)
+	*build { arg instr, args, outClass = \Out;
+		^super.prNew.build(instr, args, outClass)
 	}
-	build { arg instr,args,outClass= \Out;
+	build { arg instr, args, outClass= \Out;
 		var stacked;
-		if(UGen.buildSynthDef.notNil,{
+		if(UGen.buildSynthDef.notNil, {
 			stacked = UGen.buildSynthDef;
 		});
 		protect {
 			this.initBuild;
-			this.buildUgenGraph(instr,args ? #[],outClass);
+			this.buildUgenGraph(instr, args ? #[], outClass);
 			this.finishBuild;
 			UGen.buildSynthDef = stacked;
 		} {
 			UGen.buildSynthDef = stacked;
 		};
-		# longName, name = InstrSynthDef.makeDefName(instr,args,outClass);
+		# longName, name = InstrSynthDef.makeDefName(instr, args, outClass);
 	}
-	buildUgenGraph { arg argInstr,args,outClass;
-		var result,fixedID="",firstName;
+	buildUgenGraph { arg argInstr, args, outClass;
+		var result, fixedID="", firstName;
 		var isScalarOut, saveControlNames;
 
 		outClass = outClass.asClass;
@@ -57,12 +57,12 @@ InstrSynthDef : SynthDef {
 
 		{
 			// create OutputProxy In InTrig Float etc.
-			outputProxies = this.buildControlsWithObjects(instr,inputs);
+			outputProxies = this.buildControlsWithObjects(instr, inputs);
 			result = instr.valueArray(outputProxies);
 
-			if(result != 0.0,{
+			if(result != 0.0, {
 				rate = result.rate;
-				numChannels = max(1,result.size);
+				numChannels = max(1, result.size);
 
 				rate.switch(
 					\audio, {
@@ -80,7 +80,7 @@ InstrSynthDef : SynthDef {
 						("InstrSynthDef: result of your Instr function was a demand rate object:"
 							+ result + this.buildErrorString).error;
 					},
-					\noncontrol,{
+					\noncontrol, {
 						("InstrSynthDef: result of your Instr function was a noncontrol rate object:"
 							+ result + this.buildErrorString).error;
 					},
@@ -112,7 +112,7 @@ InstrSynthDef : SynthDef {
 		var name, longName, firstName;
 
 		longName = [instr.dotNotation, outClass];
-		args.do { arg obj,i;
+		args.do { arg obj, i;
 			var r, shard;
 			r = obj.rate;
 			shard = if([\audio, \control].includes(r), r, { obj });
@@ -127,13 +127,13 @@ InstrSynthDef : SynthDef {
 		^[longName, name]
 	}
 	*hashEncode { arg object;
-		var fromdigits,todigits,res,x=0,digit;
+		var fromdigits, todigits, res, x=0, digit;
 		fromdigits = "-0123456789";
 		todigits = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890";
 		object.hash.asString.do { arg char;
 			x = x * fromdigits.size + fromdigits.indexOf(char);
 		};
-		if(x == 0,{
+		if(x == 0, {
 			^todigits[0]
 		});
 		res = "";
@@ -141,14 +141,14 @@ InstrSynthDef : SynthDef {
 			digit = x % todigits.size;
 			res = todigits[digit].asString ++ res;
 			x = (x / todigits.size).floor.asInteger;
-			if(x <= 0,{
+			if(x <= 0, {
 				^res
 			})
 		}
 	}
 
 	// passed to Instr function but not to synth
-	addInstrOnlyArg { arg name,value;
+	addInstrOnlyArg { arg name, value;
 		this.addNonControl(name, value);
 	}
 
@@ -161,16 +161,16 @@ InstrSynthDef : SynthDef {
 	// initialValue is used for building the synth def
 	// selector is what will be called on the object to obtain the real value
 	// when the synth is sent
-	addSecretIr { arg object,initialValue,selector;
+	addSecretIr { arg object, initialValue, selector;
 		var name;
 		name = "__secret_ir__"++(secretIr.size);
-		secretIr = secretIr.add([object,name,initialValue,selector]);
+		secretIr = secretIr.add([object, name, initialValue, selector]);
 		^Control.names([name]).ir([initialValue])
 	}
-	addSecretKr { arg object,initialValue,selector;
+	addSecretKr { arg object, initialValue, selector;
 		var name;
 		name = "__secret_kr__"++(secretIr.size);
-		secretKr = secretKr.add( [object,name,initialValue,selector]);
+		secretKr = secretKr.add( [object, name, initialValue, selector]);
 		^Control.names([name]).kr([initialValue])
 	}
 	// a player uses this to install itself into the InstrSynthDef
@@ -178,24 +178,24 @@ InstrSynthDef : SynthDef {
 	// and gets prepared and spawned when the Patch plays
 	playerIn { arg object;
 		var bus;
-		bus = this.addSecretIr(object,0,\synthArg);
+		bus = this.addSecretIr(object, 0, \synthArg);
 		^object.instrArgFromControl(bus);
 	}
 
 	secretObjects {
 		var so;
 		so = IdentitySet.new;
-		if(secretIr.notNil,{
+		if(secretIr.notNil, {
 			secretIr.do({ |list|
 				so.add( list[0] );
 			})
 		});
-		if(secretKr.notNil,{
+		if(secretKr.notNil, {
 			secretKr.do({ |list|
 				so.add( list[0] );
 			})
 		});
-		if(stepchildren.notNil,{
+		if(stepchildren.notNil, {
 			stepchildren.do({ |stepchild|
 				so.add( stepchild )
 			})
@@ -203,61 +203,61 @@ InstrSynthDef : SynthDef {
 		^so.as(Array)
 	}
 	secretDefArgs {
-		var synthArgs,size;
+		var synthArgs, size;
 		size = secretIr.size * 2 + (secretKr.size * 2);
 		if(size == 0, { ^#[] });
 		synthArgs = Array(size);
-		secretIr.do({ arg n,i;
-			var object,name,value,selector;
-			#object,name,value,selector = n;
+		secretIr.do({ arg n, i;
+			var object, name, value, selector;
+			#object, name, value, selector = n;
 			synthArgs.add(name); // secret arg name
 			synthArgs.add(object.perform(selector)); // value
 		});
-		secretKr.do({ arg n,i;
-			var object,name,value,selector;
-			#object,name,value,selector = n;
+		secretKr.do({ arg n, i;
+			var object, name, value, selector;
+			#object, name, value, selector = n;
 			synthArgs.add(name); // secret arg name
 			synthArgs.add(object.perform(selector)); // value
 		});
 		^synthArgs
 	}
 
-	buildControlsWithObjects { arg instr,objects;
-		var argNames,defargs,outputProxies;
-		objects.do({ arg obj,argi; obj.initForSynthDef(this,argi) });
+	buildControlsWithObjects { arg instr, objects;
+		var argNames, defargs, outputProxies;
+		objects.do({ arg obj, argi; obj.initForSynthDef(this, argi) });
 		argNames = instr.argNames;
-		defargs = argNames.collect({ arg name,defargi;
-			var obj,init;
+		defargs = argNames.collect({ arg name, defargi;
+			var obj, init;
 			obj = objects.at(defargi);
 			init = instr.initAt(defargi);
-			if(obj.isNil,{
+			if(obj.isNil, {
 				obj = instr.specs.at(defargi).defaultControl(init);
 			});
-			obj.addToSynthDef(this,name,init);
+			obj.addToSynthDef(this, name, init);
 			obj
 		});
 		outputProxies = this.buildControls;
 		// the objects themselves know how best to be represented in the synth graph
 		// they wrap themselves in In.kr In.ar or they add themselves directly eg (Env)
-		^outputProxies.collect({ arg outp,i;
-			defargs.at(i).instrArgFromControl(outp,i)
+		^outputProxies.collect({ arg outp, i;
+			defargs.at(i).instrArgFromControl(outp, i)
 		})
 	}
 
 	// give more information, relevant to the def function evaluated
 	checkInputs {
-		var errors,message;
+		var errors, message;
 		children.do { arg ugen;
 			var err;
 			if ((err = ugen.checkInputs).notNil) {
 				errors = errors.add([ugen, err]);
 			};
 		};
-		if(errors.notNil,{
+		if(errors.notNil, {
 			this.buildErrorString.postln;
 			errors.do({ |err|
-				var ugen,msg;
-				#ugen,msg = err;
+				var ugen, msg;
+				#ugen, msg = err;
 				("UGen" + ugen.class.asString + msg).postln;
 				ugen.dumpArgs;
 			});
@@ -280,56 +280,56 @@ InstrSynthDef : SynthDef {
 		^String.streamContents({ arg stream;
 				stream << Char.nl << "ERROR: Instr build failed; " <<< instr << Char.nl;
 				stream << "Inputs:" << Char.nl;
-				inputs.do({ |in,i|
+				inputs.do({ |in, i|
 					stream << Char.tab << instr.argNameAt(i) << ": " << in << Char.nl;
 				});
 				stream << "Args passed into Instr function:" << Char.nl;
-				outputProxies.do({ |op,i|
+				outputProxies.do({ |op, i|
 					stream << Char.tab << instr.argNameAt(i) << ": " << op << Char.nl;
 				});
-				if(secretIr.notNil or: secretKr.notNil,{
+				if(secretIr.notNil or: secretKr.notNil, {
 					stream << "Secret args passed in:" << Char.nl;
-					secretIr.do({ |op,i|
+					secretIr.do({ |op, i|
 						stream << Char.tab << op[1] << ": " << op[2] << " (" << op[0] << ":" << op[3] << ")" << Char.nl;
 					});
-					secretKr.do({ |op,i|
+					secretKr.do({ |op, i|
 						stream << Char.tab << op[1] << ": " << op[2] << " (" << op[0] << ":" << op[3] << ")" << Char.nl;
 					});
 				});
 			});
 	}
-	tempoKr { arg object,selector;
+	tempoKr { arg object, selector;
 		// first client to request will later be asked to produce the TempoBus
 		^(tempTempoKr ?? {
 			tempTempoKr = In.kr(
-				this.addSecretKr(object,1.0,selector)
+				this.addSecretKr(object, 1.0, selector)
 			)
 		})
 	}
 
-	*cacheAt { arg defName,server;
-		^Library.at(SynthDef,server ? Server.default,defName.asSymbol)
+	*cacheAt { arg defName, server;
+		^Library.at(SynthDef, server ? Server.default, defName.asSymbol)
 	}
-	*cachePut { arg def,server;
-		Library.put(SynthDef,server ? Server.default,def.name.asSymbol,def)
+	*cachePut { arg def, server;
+		Library.put(SynthDef, server ? Server.default, def.name.asSymbol, def)
 	}
-	*loadDefFileToBundle { arg def,bundle,server;
+	*loadDefFileToBundle { arg def, bundle, server;
 		var dn;
 		dn = def.name.asSymbol;
-		if(Library.at(SynthDef,server,dn).isNil,{
+		if(Library.at(SynthDef, server, dn).isNil, {
 			bundle.addPrepare(["/d_recv", def.asBytes]);
 			this.watchServer(server);
-			this.cachePut(def,server);
+			this.cachePut(def, server);
 		});
 	}
 	*watchServer { arg server;
-		if(NotificationCenter.registrationExists(server,\didQuit,this).not,{
-			NotificationCenter.register(server,\didQuit,this,{
+		if(NotificationCenter.registrationExists(server, \didQuit, this).not, {
+			NotificationCenter.register(server, \didQuit, this, {
 				if(server.isLocal and: {thisProcess.platform.isKindOf(UnixPlatform)}, {
-					if(("ps -ef|grep" + server.pid).unixCmdGetStdOut.split("\n").any(_.contains("scsynth")).not,{
+					if(("ps -ef|grep" + server.pid).unixCmdGetStdOut.split("\n").any(_.contains("scsynth")).not, {
 						this.clearCache(server);
-						NotificationCenter.notify(server,\reallyDidQuit)
-					},{
+						NotificationCenter.notify(server, \reallyDidQuit)
+					}, {
 						("Server process still found, not dead yet:" + server.pid).debug;
 					})
 				}, {
@@ -340,32 +340,32 @@ InstrSynthDef : SynthDef {
 	}
 	*clearCache { arg server;
 		"Clearing AbstractPlayer SynthDef cache".inform;
-		Library.global.removeAt(SynthDef,server ? Server.default);
+		Library.global.removeAt(SynthDef, server ? Server.default);
 	}
-	*loadCacheFromDir { arg server,dir;
+	*loadCacheFromDir { arg server, dir;
 		dir = dir ? SynthDef.synthDefDir;
 		(dir++"*").pathMatch.do({ arg p;
 			var defName;
 			defName = PathName(p).fileNameWithoutExtension;
-			Library.put(SynthDef,server,defName.asSymbol,\assumedLoaded);
+			Library.put(SynthDef, server, defName.asSymbol, \assumedLoaded);
 		})
 	}
-	*cacheRemoveAt { arg defName,server;
+	*cacheRemoveAt { arg defName, server;
 		(server ? Server.allRunningServers).do({ |s|
-			Library.global.removeAt(SynthDef,s,defName.asSymbol);
+			Library.global.removeAt(SynthDef, s, defName.asSymbol);
 		})
 	}
-	*freeDef { arg defName,server;
+	*freeDef { arg defName, server;
 		(server ? Server.allRunningServers).do({ |s|
-			s.sendMsg("/d_free",defName);
-			Library.global.removeAt(SynthDef,s,defName.asSymbol);
+			s.sendMsg("/d_free", defName);
+			Library.global.removeAt(SynthDef, s, defName.asSymbol);
 		})
 	}
 	*freeAll { arg server;
 		(server ? Server.allRunningServers).do({ |s|
-			Library.at(SynthDef,s).keys.do({ arg defName;
-				s.sendMsg("/d_free",defName);
-				Library.global.removeAt(SynthDef,s,defName.asSymbol);
+			Library.at(SynthDef, s).keys.do({ arg defName;
+				s.sendMsg("/d_free", defName);
+				Library.global.removeAt(SynthDef, s, defName.asSymbol);
 			})
 		})
 	}
@@ -373,10 +373,10 @@ InstrSynthDef : SynthDef {
 	*buildSynthDef {
 		var sd;
 		sd = UGen.buildSynthDef;
-		if(sd.isNil,{
+		if(sd.isNil, {
 			Error("Not currently inside a synth def ugenFunc; No synth def is currently being built.").throw;
 		});
-		if(sd.isKindOf(InstrSynthDef).not,{
+		if(sd.isKindOf(InstrSynthDef).not, {
 			Error("This requires an InstrSynthDef.").throw;
 		})
 		^sd
@@ -384,16 +384,16 @@ InstrSynthDef : SynthDef {
 
 	// execute the func in the client whenever triggered
 	// see Patch help
-	onTrig { |trig,func,value=0.0|
+	onTrig { |trig, func, value=0.0|
 		// triggerID is the nTh onTrig we have so far added + 9999
-		var triggerID,onTrig;
+		var triggerID, onTrig;
 		triggerID = stepchildren.select({|sc|sc.isKindOf(ClientOnTrigResponder)}).size + 9999;
-		onTrig = ClientOnTrigResponder(triggerID,func);
+		onTrig = ClientOnTrigResponder(triggerID, func);
 		stepchildren = stepchildren.add(onTrig);
-		if(trig.rate == \control,{
-			^SendTrig.kr(trig,triggerID,value)
-		},{
-			^SendTrig.ar(trig,triggerID,value)
+		if(trig.rate == \control, {
+			^SendTrig.kr(trig, triggerID, value)
+		}, {
+			^SendTrig.ar(trig, triggerID, value)
 		})
 	}
 
@@ -410,15 +410,15 @@ InstrSynthDef : SynthDef {
 
 ClientOnTrigResponder {
 
-	var <>triggerID, <>func,responder;
+	var <>triggerID, <>func, responder;
 
-	*new { |triggerID,func|
-		^super.newCopyArgs(triggerID,func)
+	*new { |triggerID, func|
+		^super.newCopyArgs(triggerID, func)
 	}
 	didSpawn { |synth|
 		var commandpath = ['/tr', synth.nodeID, triggerID];
 		responder = OSCpathResponder(synth.server.addr, commandpath,
-			{|time,responder,message| func.value(time,message[3]) });
+			{|time, responder, message| func.value(time, message[3]) });
 		responder.add;
 	}
 	stopToBundle { |b|
@@ -433,21 +433,21 @@ ClientOnTrigResponder {
 //
 /*SynthProxy  {
 
-	var events,sched,<synth;
+	var events, sched, <synth;
 
 	spawnToBundle { |b|
-		b.addMessage(this,\didSpawn)
+		b.addMessage(this, \didSpawn)
 	}
 
 	didSpawn { |synth|
 		sched = BeatSched.new;
 		// sched any events
 		events.do({ |df|
-			sched.sched(df[0],df[1])
+			sched.sched(df[0], df[1])
 		})
 	}
 	sched { |delta, function|
-		events = events.add([delta,function]);
+		events = events.add([delta, function]);
 	}
 	/ *channelOffset_ {
 		// shift the Out.ar

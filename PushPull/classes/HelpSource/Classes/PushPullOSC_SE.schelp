@@ -1,0 +1,29 @@
+TITLE:: PushPullOSC_SE
+summary:: interfacing the PushPull controller via OSC
+categories:: Control, 3DMIN
+related:: Classes/Object, Classes/PushPullOSC
+
+DESCRIPTION::
+This is the class to interface a PushPull of the student edition.
+
+NOTE::
+Documentation is mainly located in link::Classes/PushPullOSC::.
+::
+
+PushPull is an instrument prototype created as part of the 3DMIN project. It features digital and analog controls, most prominently a bellow made from cardboard. Sound synthesis combines analogue sound generation with digital sound manipulation. Moving the hand piece activates the bellow: hand movements restricted by the limitations of the bellow turn into gestures and create air flow over a microphone. Inertial sensors in the hand piece together with a thumb stick allow for continuous sound shaping, while four buttons complete the setup to trigger changes or change between synthesis engines.
+
+This class provides an interface to the hardware via OSC.
+
+CLASSMETHODS::
+
+METHOD:: new
+Creates a new PushPull_SE instance.
+
+ARGUMENT:: netAddr
+the network port at which the PushPull is accessible.
+
+INSTANCEMETHODS::
+METHOD:: isLeft
+set to true if your PushPull is a left-handed version.
+
+PRIVATE:: pr_makeResponders

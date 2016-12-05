@@ -1,0 +1,8 @@
+(
+	\name: 			"GamelanSynthesis",
+	\summary:		"A library for syntheisizing gamelan orchestra. This is part of the VirtualGamelan Quark",
+	\author: 		"Rainer Schütz, Alberto de Campo, Julian Rohrhuber",
+	\organisation:	"Art University Graz, University Cologne, University of the Arts Berlin, IMM Düsseldorf",
+	\since: 		"2007",
+	\version:		"0.1"
+)

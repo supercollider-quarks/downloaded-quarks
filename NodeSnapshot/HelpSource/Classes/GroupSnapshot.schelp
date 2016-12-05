@@ -1,0 +1,17 @@
+TITLE:: GroupSnapshot
+summary:: A snapshot of the state of a group on the server
+categories:: Server
+related:: Classes/TreeSnapshot, Classes/TreeSnapshotView, Classes/Server, Classes/Group
+
+DESCRIPTION::
+A link::Classes/GroupSnapshot:: describe a link::Classes/Group:: on the server.
+
+METHOD:: asGroup
+
+returns:: A link::Classes/Group:: representing the group described by this snapshot. It does not allocate the group, nor does it guarantee the group still exists on the server.
+
+METHOD:: numChildren
+returns:: The number of immediate children of this group.
+
+METHOD:: children
+returns:: A list of link::Classes/GroupSnapshot::'s and link::Classes/NodeSnapshot::'s

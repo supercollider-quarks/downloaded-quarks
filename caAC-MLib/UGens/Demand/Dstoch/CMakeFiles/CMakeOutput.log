@@ -1,0 +1,98 @@
+The system is: Darwin - 12.2.0 - i386
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: /usr/bin/gcc 
+Build flags: 
+Id flags: 
+
+The output was:
+0
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+
+The C compiler identification is GNU, found in "/Users/MarinusKlaassen/Library/Application Support/SuperCollider/Extensions/AC-Mlib/demand/Dstoch/CMakeFiles/CompilerIdC/a.out"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: /usr/bin/c++ 
+Build flags: 
+Id flags: 
+
+The output was:
+0
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+
+The CXX compiler identification is Clang, found in "/Users/MarinusKlaassen/Library/Application Support/SuperCollider/Extensions/AC-Mlib/demand/Dstoch/CMakeFiles/CompilerIdCXX/a.out"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: /Users/MarinusKlaassen/Library/Application Support/SuperCollider/Extensions/AC-Mlib/demand/Dstoch/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make "cmTryCompileExec718972333/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec718972333.dir/build.make CMakeFiles/cmTryCompileExec718972333.dir/build
+/usr/local/Cellar/cmake/2.8.8/bin/cmake -E cmake_progress_report "/Users/MarinusKlaassen/Library/Application Support/SuperCollider/Extensions/AC-Mlib/demand/Dstoch/CMakeFiles/CMakeTmp/CMakeFiles" 1
+Building C object CMakeFiles/cmTryCompileExec718972333.dir/testCCompiler.c.o
+/usr/bin/gcc    -o CMakeFiles/cmTryCompileExec718972333.dir/testCCompiler.c.o   -c "/Users/MarinusKlaassen/Library/Application Support/SuperCollider/Extensions/AC-Mlib/demand/Dstoch/CMakeFiles/CMakeTmp/testCCompiler.c"
+Linking C executable cmTryCompileExec718972333
+/usr/local/Cellar/cmake/2.8.8/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec718972333.dir/link.txt --verbose=1
+/usr/bin/gcc      -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTryCompileExec718972333.dir/testCCompiler.c.o  -o cmTryCompileExec718972333  
+
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: /Users/MarinusKlaassen/Library/Application Support/SuperCollider/Extensions/AC-Mlib/demand/Dstoch/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make "cmTryCompileExec3465103234/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec3465103234.dir/build.make CMakeFiles/cmTryCompileExec3465103234.dir/build
+/usr/local/Cellar/cmake/2.8.8/bin/cmake -E cmake_progress_report "/Users/MarinusKlaassen/Library/Application Support/SuperCollider/Extensions/AC-Mlib/demand/Dstoch/CMakeFiles/CMakeTmp/CMakeFiles" 1
+Building C object CMakeFiles/cmTryCompileExec3465103234.dir/CMakeCCompilerABI.c.o
+/usr/bin/gcc   -arch i386 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk   -o CMakeFiles/cmTryCompileExec3465103234.dir/CMakeCCompilerABI.c.o   -c /usr/local/Cellar/cmake/2.8.8/share/cmake/Modules/CMakeCCompilerABI.c
+Linking C executable cmTryCompileExec3465103234
+/usr/local/Cellar/cmake/2.8.8/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec3465103234.dir/link.txt --verbose=1
+/usr/bin/gcc      -arch i386 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names -v CMakeFiles/cmTryCompileExec3465103234.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec3465103234   
+Using built-in specs.
+Target: i686-apple-darwin11
+Configured with: /private/var/tmp/llvmgcc42/llvmgcc42-2336.11~67/src/configure --disable-checking --enable-werror --prefix=/Applications/Xcode.app/Contents/Developer/usr/llvm-gcc-4.2 --mandir=/share/man --enable-languages=c,objc,c++,obj-c++ --program-prefix=llvm- --program-transform-name=/^[cg][^.-]*$/s/$/-4.2/ --with-slibdir=/usr/lib --build=i686-apple-darwin11 --enable-llvm=/private/var/tmp/llvmgcc42/llvmgcc42-2336.11~67/dst-llvmCore/Developer/usr/local --program-prefix=i686-apple-darwin11- --host=x86_64-apple-darwin11 --target=i686-apple-darwin11 --with-gxx-include-dir=/usr/include/c++/4.2.1
+Thread model: posix
+gcc version 4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2336.11.00)
+ /usr/llvm-gcc-4.2/bin/../libexec/gcc/i686-apple-darwin11/4.2.1/collect2 -dynamic -arch i386 -macosx_version_min 10.8.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk -arch_multiple -weak_reference_mismatches non-weak -o /var/folders/vd/yzlrhbw141vd3m5302pzpt_r0000gn/T//ccVFiwhX.out -lcrt1.10.6.o -L/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/usr/lib -L/usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1 -L/usr/llvm-gcc-4.2/bin/../lib/gcc -L/Applications/Xcode.app/Contents/Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin11/4.2.1 -L/usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../.. -search_paths_first -headerpad_max_install_names CMakeFiles/cmTryCompileExec3465103234.dir/CMakeCCompilerABI.c.o -final_output cmTryCompileExec3465103234 -lSystem -lgcc -lSystem
+Using built-in specs.
+Target: i686-apple-darwin11
+Configured with: /private/var/tmp/llvmgcc42/llvmgcc42-2336.11~67/src/configure --disable-checking --enable-werror --prefix=/Applications/Xcode.app/Contents/Developer/usr/llvm-gcc-4.2 --mandir=/share/man --enable-languages=c,objc,c++,obj-c++ --program-prefix=llvm- --program-transform-name=/^[cg][^.-]*$/s/$/-4.2/ --with-slibdir=/usr/lib --build=i686-apple-darwin11 --enable-llvm=/private/var/tmp/llvmgcc42/llvmgcc42-2336.11~67/dst-llvmCore/Developer/usr/local --program-prefix=i686-apple-darwin11- --host=x86_64-apple-darwin11 --target=i686-apple-darwin11 --with-gxx-include-dir=/usr/include/c++/4.2.1
+Thread model: posix
+gcc version 4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2336.11.00)
+ /usr/llvm-gcc-4.2/bin/../libexec/gcc/i686-apple-darwin11/4.2.1/collect2 -dynamic -arch x86_64 -macosx_version_min 10.8.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk -arch_multiple -weak_reference_mismatches non-weak -o /var/folders/vd/yzlrhbw141vd3m5302pzpt_r0000gn/T//ccchzWRT.out -lcrt1.10.6.o -L/usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1/x86_64 -L/Applications/Xcode.app/Contents/Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin11/4.2.1/x86_64 -L/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/usr/lib -L/usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1 -L/usr/llvm-gcc-4.2/bin/../lib/gcc -L/Applications/Xcode.app/Contents/Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin11/4.2.1 -L/usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../.. -search_paths_first -headerpad_max_install_names CMakeFiles/cmTryCompileExec3465103234.dir/CMakeCCompilerABI.c.o -final_output cmTryCompileExec3465103234 -lSystem -lgcc -lSystem
+lipo -create -o cmTryCompileExec3465103234 /var/folders/vd/yzlrhbw141vd3m5302pzpt_r0000gn/T//ccVFiwhX.out /var/folders/vd/yzlrhbw141vd3m5302pzpt_r0000gn/T//ccchzWRT.out 
+
+
+Determining if the CXX compiler works passed with the following output:
+Change Dir: /Users/MarinusKlaassen/Library/Application Support/SuperCollider/Extensions/AC-Mlib/demand/Dstoch/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make "cmTryCompileExec433827610/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec433827610.dir/build.make CMakeFiles/cmTryCompileExec433827610.dir/build
+/usr/local/Cellar/cmake/2.8.8/bin/cmake -E cmake_progress_report "/Users/MarinusKlaassen/Library/Application Support/SuperCollider/Extensions/AC-Mlib/demand/Dstoch/CMakeFiles/CMakeTmp/CMakeFiles" 1
+Building CXX object CMakeFiles/cmTryCompileExec433827610.dir/testCXXCompiler.cxx.o
+/usr/bin/c++     -o CMakeFiles/cmTryCompileExec433827610.dir/testCXXCompiler.cxx.o -c "/Users/MarinusKlaassen/Library/Application Support/SuperCollider/Extensions/AC-Mlib/demand/Dstoch/CMakeFiles/CMakeTmp/testCXXCompiler.cxx"
+Linking CXX executable cmTryCompileExec433827610
+/usr/local/Cellar/cmake/2.8.8/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec433827610.dir/link.txt --verbose=1
+/usr/bin/c++       -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTryCompileExec433827610.dir/testCXXCompiler.cxx.o  -o cmTryCompileExec433827610  
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: /Users/MarinusKlaassen/Library/Application Support/SuperCollider/Extensions/AC-Mlib/demand/Dstoch/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make "cmTryCompileExec3880984384/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec3880984384.dir/build.make CMakeFiles/cmTryCompileExec3880984384.dir/build
+/usr/local/Cellar/cmake/2.8.8/bin/cmake -E cmake_progress_report "/Users/MarinusKlaassen/Library/Application Support/SuperCollider/Extensions/AC-Mlib/demand/Dstoch/CMakeFiles/CMakeTmp/CMakeFiles" 1
+Building CXX object CMakeFiles/cmTryCompileExec3880984384.dir/CMakeCXXCompilerABI.cpp.o
+/usr/bin/c++    -arch i386 -arch x86_64   -o CMakeFiles/cmTryCompileExec3880984384.dir/CMakeCXXCompilerABI.cpp.o -c /usr/local/Cellar/cmake/2.8.8/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+Linking CXX executable cmTryCompileExec3880984384
+/usr/local/Cellar/cmake/2.8.8/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec3880984384.dir/link.txt --verbose=1
+/usr/bin/c++       -arch i386 -arch x86_64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -v CMakeFiles/cmTryCompileExec3880984384.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec3880984384   
+Apple clang version 4.1 (tags/Apple/clang-421.11.65) (based on LLVM 3.1svn)
+Target: x86_64-apple-darwin12.2.0
+Thread model: posix
+ "/usr/bin/ld" -demangle -dynamic -arch i386 -macosx_version_min 10.8.0 -o /var/folders/vd/yzlrhbw141vd3m5302pzpt_r0000gn/T//FHn4wJ.out -search_paths_first -headerpad_max_install_names CMakeFiles/cmTryCompileExec3880984384.dir/CMakeCXXCompilerABI.cpp.o -arch_multiple -final_output cmTryCompileExec3880984384 -lstdc++ -lSystem /usr/bin/../lib/clang/4.1/lib/darwin/libclang_rt.eprintf.a /usr/bin/../lib/clang/4.1/lib/darwin/libclang_rt.osx.a
+ "/usr/bin/ld" -demangle -dynamic -arch x86_64 -macosx_version_min 10.8.0 -o /var/folders/vd/yzlrhbw141vd3m5302pzpt_r0000gn/T//UlMrms.out -search_paths_first -headerpad_max_install_names CMakeFiles/cmTryCompileExec3880984384.dir/CMakeCXXCompilerABI.cpp.o -arch_multiple -final_output cmTryCompileExec3880984384 -lstdc++ -lSystem /usr/bin/../lib/clang/4.1/lib/darwin/libclang_rt.osx.a
+ "/usr/bin/lipo" -create -output cmTryCompileExec3880984384 /var/folders/vd/yzlrhbw141vd3m5302pzpt_r0000gn/T//FHn4wJ.out /var/folders/vd/yzlrhbw141vd3m5302pzpt_r0000gn/T//UlMrms.out
+
+

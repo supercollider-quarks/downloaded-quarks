@@ -240,7 +240,7 @@ Republic : SimpleRepublic {
 	}
 	
 	defaultServerOptions { |config|
-		var op = SharedServerOptions.fromConfig(config);
+		var op = SharedServerOptions.fromConfig(*config);
 		var maxNumClients = (maxID + 1);
 		if(usesSeparateState) {
 			Main.versionAtLeast(3, 5).if({

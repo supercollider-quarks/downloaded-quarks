@@ -1,0 +1,206 @@
+TITLE:: MTP
+summary:: use multitouch MacBook trackpads on OSX as controllers.
+categories:: Interfaces
+related:: Classes/MultiTouchPad, Guides/OSC_communication
+
+DESCRIPTION::
+MultiTouchPad is a quark and class written by Batuhan Bozkurt which allows using multitouch enabled touchpads on current MacBook models.
+MTP is an update with some extensions by Alberto de Campo. Both are Singleton classes, so there are only class methods.
+
+note::Requires Installation of tongsengmod cmdline program
+- see:  Classes/MultiTouchPad.::
+
+Works with OSX Leopard up to El Capitan (10.11).
+
+First code example:
+code::
+(
+MTP.start.gui;
+
+// // guiWin has four keyboard shortcuts - try them:
+// start      : space
+// stop       : $.
+// m          : fullscreen
+// x          : end fullscreen
+
+MTP.resetActions;
+
+// just post for now:
+MTP.touchAction = { |id, xys|
+	"start id: % xys: %. \n".postf(id, xys.round(0.001));
+};
+
+MTP.untouchAction = { |id| " stop id: %\n".postf(id) };
+
+MTP.setAction = { |id, xys|
+	"  set id: % xys: % \n".postf(id, xys.round(0.001));
+};
+
+)
+::
+
+CLASSMETHODS::
+
+subsection:: The same as in MultiTouchPad :
+
+METHOD:: start
+METHOD:: stop
+METHOD:: touchAction, untouchAction, setAction, resetActions
+METHOD:: stopFunc
+
+METHOD:: progpath
+METHOD:: setDevice
+METHOD:: activeBlobs, fingersDict
+METHOD:: gui
+METHOD:: guiWin, guiOn
+METHOD:: device, pid, isRunning
+METHOD:: processOSC
+METHOD:: responder
+
+subsection:: New methods in MTP :
+
+METHOD:: keydownDict
+dictionary of functions to do when that key is pressed.
+code::
+// New actions for keys can be added easily:
+MTP.start.gui;
+MTP.keydownDict.put($a, { |view, key| "MTP test: key % was pressed.\n".postf(key.cs) });
+// now put MTP window in front, and press the 'A' key on the keyboard
+::
+
+METHOD:: defaultDrawFunc
+the default drawFunc used by MTPs userview.
+code::
+// see the defaultDrawFunc:
+MTP.defaultDrawFunc.cs;
+
+// only do the finger drawing part of it, with little mods:
+MTP.start.gui;
+MTP.uview.drawFunc = { |uv|
+	var bounds = uv.bounds;
+	var halfFing = MTP.fingerSize * 0.5;
+	// draw finger touchpoints and info for them
+	MTP.fingersDict.keysValuesDo { |key, fItem|
+		var x = bounds.width - halfFing * fItem[0];
+		var y = bounds.height - halfFing * fItem[1];
+		var fingSize = MTP.fingerSize * fItem[2];
+
+		// random color, fill instead of stroke
+		Pen.color = Color.rand;
+		Pen.fillOval( Rect(x, y, fingSize, fingSize));
+
+		Pen.stringCenteredIn(
+			MTP.fingerStrings[key] ? key.asString,
+			Rect.aboutPoint(x@y, 60, 30)
+		);
+	};
+
+};
+::
+
+METHOD:: killAll
+kill all instances of tongsengmod
+METHOD:: uview
+the userview used for MTP finger display
+METHOD:: refresh
+refresh guiWin
+METHOD:: maximize
+maximize guiWin so one can safely play without touching any other windows
+METHOD:: minimize
+minimize guiWin, to smallRect
+METHOD:: smallRect
+bounds to use for minimizing - will be retained when set by rezising.
+
+
+METHOD:: infoText
+get general text to display on guiWin
+METHOD:: extraText
+get and set extra text to display on guiWin
+
+METHOD:: fingerCol
+get and set color to display fingers with
+METHOD:: fingerSize
+get and set size to display fingers with
+METHOD:: fingerStrings
+dict of strings to diplay around each finger
+
+private:: prStart
+
+
+
+INSTANCEMETHODS::
+
+EXAMPLES::
+
+code::
+(
+// a dict for all mtp things
+~mtp = ~mtp ? ();
+
+// a synthdef to play
+SynthDef(\noyz, { |out, amp = 0.1, pan, gate = 1, freq = 261, reso = 10|
+	var freq2 = (freq * (5 ** LFDNoise3.kr(ExpRand(1, 30), amp * 0.3))).clip(50, 15000);
+	var snd = BPF.ar(GrayNoise.ar + Dust.ar(30, 20), freq2 * [1, 1.9], 1/reso);
+	var env = EnvGen.kr(Env.asr(0.01, 1, 0.05), gate, doneAction: 2);
+
+	Out.ar(out,
+		Pan2.ar(
+			((snd * (env * amp.min(1) * reso.sqrt * 0.5)).softclip * 0.2).sum
+			* AmpComp.kr(freq, exp: 0.2).min(2),
+			pan + (LFNoise2.kr(10 * amp) * Line.kr(0, 1, 1));
+		)
+	);
+}).add;
+);
+
+/*	// tests for the synthdef
+z = Synth(\noyz, [\freq, exprand(300, 5000), \pan, 1.0.rand2].postln);
+z.release;
+*/
+(
+// an ndef and a voicer to use - requires JITLibExtensions quark:
+Ndef(\noyz).clear.ar(2);
+~mtp.vc = NPVoicer(Ndef(\noyz));
+~mtp.vc.prime(\noyz); // tell the voicer which synthdef
+~mtp.vc.play(vol: 0.25);
+);
+/* // tests by hand:
+~mtp.vc.put(12, [\freq, 3000, \amp, 0.5]);
+Ndef(\noyz).release;
+*/
+
+// now play this from MTP:
+(
+s.latency = nil; // fast server response
+
+// make a guiWin
+MTP.gui;
+
+// clear the current actions:
+MTP.resetActions;
+
+// now set them
+MTP.touchAction = {|curID, xys|
+	"start curID: % xys: %. \n	".postf(curID, xys.round(0.001));
+	~mtp.vc.put(curID, [
+		\freq, (xys[0]).linexp(0, 1, 30, 3000),
+		\reso, xys[1].linexp(0, 1, 5, 100),
+		\amp, xys[2].squared,
+		\pan, 1.0.rand2,
+	].round(0.001));
+};
+
+MTP.untouchAction = {|curID| ~mtp.vc.release(curID) };
+
+MTP.setAction = { |curID, xys|
+	//	"   set curID: % xys: % \n	".postf(curID, xys.round(0.001));
+	~mtp.vc.setAt(curID, *[
+		\freq, (xys[0]).linexp(0, 1, 100, 10000),
+		\reso, xys[1].linexp(0, 1, 5, 100),
+		\amp, xys[2].squared
+	]);
+};
+);
+
+)
+::

@@ -1,0 +1,187 @@
+TITLE:: MP3
+summary:: Read an MP3 file or stream, or write an MP3 file (can also read Ogg)
+categories:: Libraries>MP3
+
+DESCRIPTION::
+
+This class is a wrapper for the *nix command-line tools curl and lame, making it easy to access MP3 files and MP3 (shoutcast/icecast) internet streams. This implies two caveats:
+
+list::
+## It will work on Mac OSX, Linux, and other unix-like systems, but is extremely unlikely to work on Windows.
+## You must have curl and lame installed on your system. curl is a generic tool for internet downloading, and is available on most systems. lame is a tool commonly used for MP3 encoding/decoding.
+::
+
+To tell this class where your system's lame and curl programs are, you can check/set the class variables (you could add a line to your startup file to set them):
+
+code::
+MP3.lamepath;
+MP3.curlpath;
+
+// To check that there's a file at the expected path
+File.exists(MP3.lamepath)
+File.exists(MP3.curlpath)
+::
+
+For file writing, the class tells lame to expect 16-bit raw audio data at 44.1 kHz, so this is what you must output - see the example below. (The reason for writing as raw data is that the "fifo" trick excludes the possibility of the fileseeking which is required for writing soundfile headers.)
+
+Ogg format files can be read (despite the name of the class!) as long as you have the oggdec command-line tool installed. To tell the class that it should expect an ogg file rather than an MP3, set the constructor's "format" argument (the third argument) to \ogg.
+
+CLASSMETHODS::
+
+METHOD:: new
+
+Create an audio stream from an MP3 file.
+
+ARGUMENT:: path
+A path or URL to the MP3 data.
+
+ARGUMENT:: mode
+One of code:: \readfile :: to read from a file, or code:: \readurl :: to read from a URL, or code:: \writefile :: to write to a file. The default is code:: \readfile ::.
+
+ARGUMENT:: format
+Set this to code:: \ogg :: if you're reading an OGG file rather than an MP3.
+
+METHOD:: lamepath
+The path to the lame executable.
+
+METHOD:: curlpath
+The path to the curl executable.
+
+METHOD:: readToBuffer
+
+Load a static buffer from an MP3 file into a Buffer, without streaming.
+
+ARGUMENT:: server
+The server on which to allocate the buffer.
+
+ARGUMENT:: path
+The path of the MP3 file (no URLs here).
+
+ARGUMENT:: startFrame
+The first frame of the soundfile to read. The default is 0, which is the beginning of the file.
+
+ARGUMENT:: numFrames
+The number of frames to read. The default is -1, which will read the whole file.
+
+ARGUMENT:: action
+A Function to be evaluated once the file has been read and this Buffer's instance variables have been updated. The function will be passed this Buffer as an argument.
+
+ARGUMENT:: bufnum
+An explicitly specified buffer number. Generally this is not needed.
+
+ARGUMENT:: lameopts
+Additional comand-line options to pass into the lame executable.
+
+INSTANCEMETHODS::
+
+METHOD:: start
+Begin queueing up the MP3 data, i.e. before you start your SC DiskIn/DiskOut synth.
+
+ARGUMENT:: lameopts
+Additional comand-line options to pass into the lame executable.
+
+METHOD:: fifo
+The path to stream into a Buffer.
+
+METHOD:: playing
+Is the MP3 currently (still) playing? i.e. it is true if you have started the MP3 and not yet stopped it. This flag will revert back to false if the MP3 file finishes, even if you haven't called the .stop method.
+
+METHOD:: stop
+Stop queueing.
+
+METHOD:: restart
+Stop, and then immediately start.
+
+METHOD:: finish
+Stop and clean up the stream file.
+
+
+
+EXAMPLES::
+
+code::
+// Let's read in an internet radio stream and warp it a bit.
+// First we need a synthdef:
+s.boot;
+(
+SynthDef("help_mp3_01", { |bufnum = 0|
+    var son, wibble;
+    son = DiskIn.ar(2, bufnum);
+    wibble = LFPar.kr(0.1).range(0.5, 2.0);
+    son = PitchShift.ar(son, pitchRatio: wibble);
+    Out.ar(0, son);
+}).load(s);
+)
+
+// Now let's create the MP3 object and cue it into a Buffer.
+
+// Choose one of these two:
+// (a) a stream URL - note the use of the second argument to indicate a remote stream
+m = MP3("http://icecast.commedia.org.uk:8000/resonance.mp3", \readurl);
+// (b) a local file
+m = MP3("/Users/dan/Music/SqueezeTheTrigger(Version1).mp3");
+m = MP3("/Users/danstowell/Music/ManiAyer.mp3");
+
+m.start;
+// Now you can use it almost like any other file, by reading from m.fifo
+b = Buffer.cueSoundFile(s, m.fifo, 0, 2);
+x = Synth("help_mp3_01", [\bufnum, b.bufnum], addAction:\addToTail);
+m.playing;
+// You can stop and restart the piping (with a bit of a delay) - note what happens
+m.stop;
+m.playing;
+m.start;
+m.playing;
+// Please remember to tidy up after yourself:
+x.free;
+b.close; b.free;
+m.finish;
+
+/////////////////////////////////////////////////////
+
+// Reading into a buffer is possible, but you *must* specify the number of (uncompressed) frames to read.
+m = MP3("http://icecast.commedia.org.uk:8000/resonance.mp3", \readurl);
+m.start;
+b= Buffer.read(s, m.fifo, 0, 50000);
+// After a second or two, should be able to play a snatch of the stream
+b.play;
+
+// Please remember to tidy up after yourself:
+b.close; b.free;
+m.finish;
+
+/////////////////////////////////////////////////////
+
+// Alternatively, a method is provided for reading a local MP3 file more easily (won't work on streams)
+s.boot;
+b = MP3.readToBuffer(s, "/Users/dan/Music/SqueezeTheTrigger(Version1).mp3")
+b.play;
+
+b.free;
+
+/////////////////////////////////////////////////////
+
+// Writing an MP3 file using DiskOut. See the DiskOut helpfile for more on this.
+(
+SynthDef("help_mp3_02", { |bufnum = 0|
+    var son;
+    son = SinOsc.ar(SinOsc.ar(Line.kr(1, 100, 10, doneAction:2)).range(220, 550)) * 0.1;
+    son = son.dup;
+    Out.ar(0, son);
+    DiskOut.ar(bufnum, son);
+}).load(s);
+)
+// Create an MP3 object for writing
+m = MP3("recordings/mp3test.mp3", \writefile);
+m.start;
+// allocate a disk i/o buffer
+b = Buffer.alloc(s, 65536, 2);
+// Start writing
+b.write(m.fifo, "raw", "int16", 0, 0, true);
+
+x = Synth("help_mp3_02", [\bufnum, b.bufnum], addAction:\addToTail);
+
+// once the writing has stopped, tidy up
+b.close; b.free;
+m.finish;
+::

@@ -1,0 +1,16 @@
+(
+	name: 		"TuningLib",
+	summary:		"A set of tools to calculate and manage tunings,including DissonanceCurves",
+	author: 		"Charles Celeste Hutchins, Jascha Narveson",
+
+	version:		0.13.3, // must be a float
+	organization: 	"University of Birmingham",
+	country: 		"UK",
+	since: 		"2009",
+	helpdoc: "Help/TuningLib.html",
+	url:           "http://www.berkeleynoise.com/celesteh/podcast/?page_id=61",
+    schelp: "TuningLib",
+    dependencies: ["MathLib"],
+    license: "GPL",
+    copyright: "Jascha Narveson and Charles Hutchins 2009-2016"
+)

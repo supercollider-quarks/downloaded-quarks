@@ -1,0 +1,56 @@
+TITLE:: Resonator1D
+SUMMARY:: describes the physical properties of a linear one-dimensional resonator with stiffness and loss
+CATEGORIES:: Physical Modelling, Sound Synthesis
+RELATED:: Classes/ResonatorNetwork, Classes/Resonator2D
+
+DESCRIPTION::
+CODE::Resonator1D:: desribes a one-dimensional resonator. If CODE::gamma:: is zero and CODE::kappa:: is non-zero it describes a thin, linear bar with frequency dependent and independent loss. If CODE::gamma:: is non-zero and CODE::kappa:: is zero or relatively small it describes a stiff, linear string with frequency dependent and independent loss.
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new instance of CODE::Resonator1D::.
+
+ARGUMENT:: gamma
+A LINK::Classes/SimpleNumber:: denoting the spatially scaled wavespeed.
+WARNING::
+Note that it is generally not adviced to use very small, non-zero values for CODE::gamma:: as the smaller the value for CODE::gamma::, the larger the number of modes will be. As a consequence, the calculation time might increase significantly and in the worst case either Python or SuperCollider will choke on the amount of data it needs to process resulting in no modal data at all. A zero value for CODE::gamma:: is perfectly fine though, provided that CODE::kappa:: is non-zero and relatively large (e.g. CODE::kappa > 2::).
+::
+
+ARGUMENT:: kappa
+A LINK::Classes/SimpleNumber:: denoting a spatially scaled stiffness parameter.
+
+ARGUMENT:: b1
+A LINK::Classes/SimpleNumber:: denoting a frequency independent damping constant.
+
+ARGUMENT:: b2
+A LINK::Classes/SimpleNumber:: denoting a frequency dependent damping constant.
+
+ARGUMENT:: boundaryCond
+A LINK::Classes/Symbol:: denoting a valid 1D boundary condition.
+
+returns:: A new instance of CODE::Resonator1D::.
+
+METHOD:: validBoundaryConds
+Get an overview of all valid 1D boundary condition combinations.
+
+returns::An immutable LINK::Classes/Array:: of valid 1D boundary conditions.
+
+INSTANCEMETHODS::
+
+METHOD:: jsonString
+Generate a json representation of a CODE::Resonator1D:: object instance.
+
+returns:: A LINK::Classes/String:: representing the resonator object in json format.
+
+PRIVATE:: boundaryCond
+
+EXAMPLES::
+
+CODE::
+// create a new instance of Resonator1D with given physical parameters and print the corresponding json representation
+(
+var resonatorDesc = Resonator1D(200,1,0.698698,0.001515,\bothClamped);
+resonatorDesc.jsonString
+)
+::

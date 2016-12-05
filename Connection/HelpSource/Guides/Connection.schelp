@@ -1,0 +1,358 @@
+title:: Connection overview
+summary:: An overview of the Connection quark
+related:: Classes/Connection
+categories:: Control
+
+section::Description
+Connection provides a more convient, expressive, and powerful way of connecting and synchronizing objects, values, and UI views in SuperCollider.
+It is built on top of (and is compatible with) the existing link::Classes/Object#addDependant::, link::Classes/Object#removeDependant:: link::Classes/Object#changed:: etc. patterns, but provides greatly expanded functionality.
+
+warning::
+The Connection quark is under active development. Most API's, object names, etc. are subject to change or removal.
+Please send feedback, bug reports, feature ideas to Scott Carver <scott@artificia.org>.
+::
+
+section::Introduction
+SuperCollider has a built-in notification pattern that allows any object to be notified if another object changes:
+code::
+(
+~notifier = Object();
+~recipient = { "I've been notified!".postln };
+~notifier.addDependant(~recipient);
+~notifier.changed(\foo, "bar");
+~notifier.removeDependant(~recipient);
+)
+::
+
+Any dependant of ~notifier receives a call to it's code::update:: method with the arguments code::(object, changed ...args)::.
+In this example, code::~notifier.changed(\foo, "bar"):: results in code::~recipient.update(~notifier, \foo, "bar")::. The "changed" argument is usally used to express EMPHASIS::what:: changed about the object, and the argument after is usually the new value or a description of that change.
+
+This pattern is simple and powerful, but has pitfalls. When connecting up more complex objects - for example, a UI View with multiple sliders and fields - this pattern requires an extensive amount of bookkeeping. You must keep track of:
+numberedlist::
+## Every object you've STRONG::added a dependant to::.
+## Every object you've STRONG::added as a dependant::.
+## STRONG::Which:: objects you've added as dependants to which other objects.
+::
+And, it becomes verbose as you begin to deal with multiple signals from multiple objects.
+Often this takes the form of a proliferation of inline functions that simply forward updates with minor changes:
+code::
+object.addDependant({
+	|obj, change, val|
+	if (change==\value) { this.onValueChanged(val) }
+})
+::
+This is a dangerous anti-pattern: once you've added an untracked function using "this", you have effectively leaked the "this" object until you call code::object.release:: to clear it's dependants (and - if others are listening to code::object::, you'll disconnect them too!).
+If you fail to disconnect STRONG::all:: of your object → dependant connections, you risk creating memory leaks or continuing to send updates to objects that are no longer in use.
+
+
+section::The Connection class
+The core of the Connection quark is the link::Classes/Connection:: class, which encapsulates the connection between one object and one dependant:
+code::
+(
+~notifier = Object();
+~recipient = { "I've been notified!".postln };
+~connection = Connection(~notifier, ~recipient);
+~notifier.changed(\foo, "bar");
+~connection.disconnect();
+)
+::
+Once you have created a Connection, you can manipulate that connection generically, without needing to store or care about the specific objects it connects. It handles code::addDependant:: / code::removeDependant:: calls, and is guaranteed not to leak memory after it's disconnected and is not reachable.
+This means significantly less bookkeeping for more complex sets of connections.
+
+The canonical way to create connections is with the code::connectTo:: method - this is preferred over creating Connections directly.
+code::
+(
+~sliders = 20.collect { Slider() };
+~view = View(bounds:600@200).layout_(HLayout(*~sliders)).front;
+~connections = ~sliders.collect({
+	|slider, i|
+	slider.action = { |v| v.changed(\value) };
+	slider.connectTo({
+		|slider|
+		"Slider % changed: %".format(i, slider.value).postln;
+	})
+});
+~view.onClose = { ~connections.do(_.disconnect) };
+)
+::
+
+The Connection quark provides several conveniences that make the above example even more expressive:
+code::
+(
+~sliders = 20.collect { Slider() };
+~numbers = 20.collect { NumberBox().fixedWidth_(30) };
+~view = View(bounds:600@200).layout_(GridLayout.rows(~sliders, ~numbers)).front;
+~connections = ConnectionList.newFrom(
+	~sliders.collect {
+		|slider, i|
+		slider.signal(\value).connectTo(~numbers[i].valueSlot);
+	}
+);
+~view.onClose = { ~connections.disconnect };
+)
+::
+
+list::
+## link::Classes/ConnectionList:: provides a link::Classes/List::-derived class that contains Connections, and applies common Connection methods to all items in the list.
+## The code::signal:: method extension provides an object that re-broadcasts only changes of a certain type (i.e. code::slider.changed(\value)::). It can be used with any object.
+## The code::object.connectTo(dependant):: method provides a shorthand for code::Connection(object, dependant)::. It should always be used over Connection itself, since it allows for objects to subclass to provide special behavior when connecting.
+## Connecting to code::object.valueSlot:: calls the code::value_:: setter for an object, with the first value argument of the update. It's the equivalent of connecting to: code::{ |obj, changed, value| dependant.value = value; }::
+## The code::slider.action:: that broadcasts changes for the slider from the first example is automatically added as soon as we connect to a signal of that Slider.
+## Finally, View:valueSlot (and EMPHASIS::all:: View slots) are smart enough to {}.defer when setting View properties.
+::
+
+section::Slots
+The code::valueSlot:: method above is a specific case of the more general code::methodSlot::, which allows you to forward updates to a specific method of an object.
+This functionality is provided by code::Classes/MethodSlot::, which you generally create via code::object.methodSlot("methodName")::.
+code::
+(
+~object = Object();
+~dependant = (
+	scored: 	{ |self, points| "Points scored: %".format(points).postln },
+	touchdown: 	{ "Touchdown!".postln },
+	fieldGoal:	{ "Field Goal!".postln },
+);
+~connections = ConnectionList.makeWith {
+	~object.signal(\scored)		.connectTo(~dependant.methodSlot("scored(value)"));
+	~object.signal(\touchdown)	.connectTo(~dependant.methodSlot("touchdown"));
+	~object.signal(\fieldGoal)	.connectTo(~dependant.methodSlot("fieldGoal"));
+};
+~object.changed(\touchdown);
+~object.changed(\scored, 6);
+~object.changed(\fieldGoal);
+~object.changed(\scored, 3);
+~connections.disconnect();
+)
+::
+The code::methodSlot:: method can specify both a method name and the order of the arguments passed. Specifying a string argument in code::methodSlot:: is exactly equivalent to inserting that string into a function the following form (under the hood, the quark does exactly this):
+code::
+{
+	|recipient, object, changed ...args|
+	var value=args[0];
+	recipient.{{methodSlot_argument}}
+}
+::
+
+Also in the above, code::ConnectionList:makeWith:: assembles a ConnectionList from all connections that are created during the execution of that function.
+
+Synths and Groups have slot methods for their arguments, making it easy to map values to Synth parameters:
+code::
+(
+~sliders = [
+	~amp 	= Slider(),
+	~freq 	= Slider(),
+	~delay 	= Slider(),
+	~decay	= Slider()
+];
+~view = View(bounds:600@200).layout_(HLayout(*~sliders)).front;
+
+s.waitForBoot {
+	SynthDef(\connDemo, {
+		|amp=1, freq=1, delay=0.2, decay=1, filterFreq=8000|
+		Out.ar(0, 1 * amp * CombC.ar(LPF.ar(Impulse.ar(freq), filterFreq), 1, delay, decay*4))
+	}).add;
+	s.sync;
+	~synth = Synth(\connDemo);
+	~connections = ConnectionList.makeWith {
+		~amp.signal(\value).connectTo(~synth.argSlot(\amp));
+		~freq.signal(\value).connectTo(~synth.argSlot(\freq));
+		~delay.signal(\value).connectTo(~synth.argSlot(\delay));
+		~decay.signal(\value).connectTo(~synth.argSlot(\decay));
+	};
+	~view.onClose = { ~connections.disconnect; ~synth.free; }
+};
+)
+::
+
+
+section::Control values
+	Of course, our sliders only range from 0..1. And, we lose their values if we close the View. The link::Classes/NumericControlValue:: class, which provides a model for a numeric value, broadcasts updates when it changes, and can be connected to other objects that are interested in it's value. This class is almost identical in functionality to the CV class from the Conductor quark.
+code::
+(
+~controls = [
+	~amp 	= NumericControlValue(spec:ControlSpec(0, 1, default:1)),
+	~freq 	= NumericControlValue(spec:ControlSpec(1, 20, default:1)),
+	~delay 	= NumericControlValue(spec:ControlSpec(0.05, 2, default:0.3)),
+	~decay	= NumericControlValue(spec:ControlSpec(1, 8, default:5)),
+	~filterFreq = NumericControlValue(spec:ControlSpec(2000, 10000, default:8000)),
+];
+
+~view = View(bounds:600@200).layout_(GridLayout.rows(
+	~sliders = 5.collect { Slider() },
+	~numbers = 5.collect { NumberBox() }
+)).front;
+
+~view.onClose = { ~synth.free; ~connections.disconnect };
+
+~connections = ConnectionList.makeWith {
+	~controls.connectEach(~sliders, \value, "value_(object.input)");
+	~controls.connectEach(~numbers, \value, "value_(object.value)");
+	~sliders.connectEach(~controls, \value, "input_(value)");
+	~numbers.connectEach(~controls, \value, "value_(value)");
+};
+
+s.waitForBoot {
+	s.makeBundle(nil, {
+		~synth = Synth(\connDemo);
+		~connections.addAll(
+			~controls.connectEach([
+				~synth.argSlot(\amp),
+				~synth.argSlot(\freq),
+				~synth.argSlot(\delay),
+				~synth.argSlot(\decay),
+				~synth.argSlot(\filterFreq),
+			]);
+		);
+	})
+}
+)
+::
+
+We can use link::Classes/Collection#connectEach:: to connect arrays of objects. It's shorthand for e.g.:
+code::
+~controls.do {
+	|control, i|
+	control.signal(\value).connectTo(~sliders[i].methodSlot("value_(object.input)"))
+}
+::
+
+We could have been more succinct when connecting code::~synth:: arguments by using code::argsSlots::, which returns a collection of slots for a argument list of names.
+code::
+~controls.connectEach(~synth.argSlots(\amp, \freq, \delay, \decay, \filterFreq));
+::
+
+NOTE::
+While Connection has some convenient methods for operating on collections of objects or methods, it is not an "automatic gui creation" library - there are much better tools for this.
+Instead, it attempts to provide semantically clear operations that can be composed in obvious ways to achieve what you want. In general, individual lines of code using Connection classes and methods
+express obvious relationships between objects, with little-to-no "magic" or behind-the-scenes inference of intent.
+::
+
+section::Connection modifiers
+Connection has modifier methods that allow you to express useful ways of handling or modifying updates between objects.
+)
+
+subsection:: filter
+Filter will only allow updates through that match either a specified code::\key::, or for which a function returns true:
+code::
+(
+~object = Object();
+~reporter = { |...args| "Message recieved: %".format(args).postln };
+
+~object.connectTo(~reporter).filter(\allowed);
+~object.connectTo(~reporter).filter({
+	|obj, changed, value|
+	(changed == \value) and: { value > 100 };
+});
+
+~object.changed(\allowed, "This update will arrive.");
+~object.changed(\notallowed, "This update will not.");
+~object.changed(\value, 10);
+~object.changed(\value, 101);
+)
+::
+
+subsection:: transform
+Transform will use a provided function to modify the values being passed in an update.
+The result of the function must be of the form: code::[object, changed, args]::, where code::args:: is an array.
+Returning code::nil:: will not forward the update, effectively filtering it.
+code::
+(
+~object = Object();
+~reporter = { |...args| "Message recieved: %".format(args).postln };
+
+~object.connectTo(~reporter).transform({
+	|object, changed, value|
+	switch(changed,
+		\multiply, {
+			[object, changed, [value * value]]
+		},
+		\add, {
+			[object, changed, [value + value]]
+		},
+		nil
+	);
+});
+
+~object.changed(\multiply, 9);
+~object.changed(\add, 8);
+~object.changed(\skipped, "Transform returns nil, so this is not forwarded.");
+)
+::
+
+subsection:: defer
+The equivalent to link::Classes/Function#defer:: - will defer updates for a specified amount of time, and/or to a different thread.
+code::
+(
+~object = Object();
+~reporter = { |...args| "Message recieved: %".format(args).postln };
+~object.connectTo(~reporter).defer(3);
+~object.changed(\thisWillArriveInThreeSeconds);
+)
+::
+
+subsection:: collapse
+This will collapse updates over a specified interval, effectively rate-limiting and ensuring only one update
+(the most recent) is applied for a period of time.
+
+code::
+(
+~object = Object();
+~reporter = { |...args| "Update recieved at time %".format(thisThread.seconds).postln };
+~object.connectTo(~reporter).collapse(1);
+fork {
+	10.do {
+		~object.changed(\onePerSecond);
+		0.25.wait;
+	}
+}
+)
+::
+
+subsection:: oneShot
+This will disconnect or free a connection after it is fired. Note that disconnected connections can be
+reconnected (they will again auto-disconnect the next time they are fired). Free'd connections will
+free resources and cannot be reconnected. Freeing one-shot connections is an effective way to avoid
+holding on to these connections yourself.
+code::
+(
+~object = Object();
+~reporter = { |...args| "Message recieved: %".format(args).postln };
+
+~autoDisconnecter = ~object.connectTo(~reporter).oneShot;
+~object.changed(\thisIsTheOne);
+~object.changed(\itsTooLate);
+~autoDisconnecter.connect;
+~object.changed(\oneMoreChance);
+
+~autoFree = ~object.connectTo(~reporter).oneShot(true);
+~object.changed(\afterThisWereFree);
+~object.changed(\resourcesAreNowFreed);
+)
+::
+
+
+section:: Debugging
+Updates happening to connected objects can be traced using link::Classes/Connection#trace::.
+Traces of connected items are shown with "⋯⋯". Traces of disconnected items are shown with "⋰⋰".
+code::
+(
+~sliders = 10.collect { Slider () };
+~window = View(bounds:400@200).layout_(HLayout(*~sliders)).front;
+
+~connections = ConnectionList.makeWith {
+	~sliders.do {
+		|slider, i|
+		slider.signal(\value).connectTo(
+			~sliders.wrapAt(i + 1).valueSlot
+		).defer(0.25);
+	}
+};
+
+~connections[0].disconnect(); // first slider is disconnected
+
+~connections.trace(true);
+
+~window.onClose = { ~connections.trace(false); ~connections.disconnect; }
+)
+::
+

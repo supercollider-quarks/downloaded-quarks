@@ -1,0 +1,9 @@
+(
+  name: "Unit-Lib",
+  summary: "The Unit Library is a system that provides high level abstractions on top of the SuperCollider language.",
+  version: "0.1.0",
+  schelp: "Unit Library",
+  dependencies: ["https://github.com/miguel-negrao/PopUpTreeMenu.git","VectorSpace", "wslib"],
+  license: "GPL3",
+  copyright: "Miguel Negrão, Wouter Snoei 2006-2015"
+)

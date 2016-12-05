@@ -1,0 +1,26 @@
+class:: CutPan1
+summary:: CutMixer panning algorithm
+categories:: Libraries>BBCut
+related:: Overviews/BBCut
+
+description::
+
+CutPan1 is intended to be used in the panfunc parameter of link:: Classes/CutMixer ::. It pans repeats in each block in an arithmetic sequence starting from 0. The pan is automatically clipped if it goes outside of the range [-1, 1].
+
+classmethods::
+
+method:: new
+
+argument:: directfunc
+A function, called every block, that determines the direction to change the pan. If nil, defaults to a function that randomly returns -1 or 1.
+
+argument:: outrate
+The common difference of the arithmetic sequence. Defaults to 0.2. This can also be a function, in which case it is called every repeat.
+
+examples::
+
+code::
+~buf = BBCutBuffer(Platform.resourceDir +/+ "sounds/break.aiff", 8);
+
+BBCut2(CutGroup([CutBuf3(~buf, 0.3), CutMixer(0, 1, 1, CutPan1(nil, 0.2))]), BBCutProc11()).play(2.5);
+::

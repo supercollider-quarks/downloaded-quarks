@@ -5,9 +5,10 @@ related:: Classes/Influx, Reference/MetaControl
 
 DESCRIPTION::
 InfluxBase is the base class for the Influx family.
-  It passes on incoming values under the same name
+  It passes on incoming values under the same name,
+  (puts them into outValDict - maybe remove this step?),
   and spreads them as they are to multiple destinations
-  by means named actions.
+  by means of the named actions in its action, a MFunc.
 
 InfluxMix can accept influences from multiple sources
   and decides on param values based on the influences.

@@ -1,7 +1,7 @@
 TITLE:: ProxyMeter
 summary:: easy metering of audio proxy levels
 categories:: Libraries>JITLib
-related:: Classes/Ndef, Classes/NodeProxy, Classes/ProxySpace, Classes/PrePostUV, Classes/PrePostView 
+related:: Classes/Ndef, Classes/NodeProxy, Classes/ProxySpace, Classes/PrePostView
 
 DESCRIPTION::
 ProxyMeter measures the peak levels of proxies (e.g. those showing on a proxymixer),
@@ -34,6 +34,16 @@ m = ProxyMixer(p, 8);
 )
 	// show pre- and post volume amps on the sliders
 ProxyMeter.addMixer(m);
+
+	// see CLIPPING WARNING - CAREFUL, THIS IS LOUD!
+	// when level of ~x exceeds +-1, this would create
+	// digital clipping when s.volume.volume is full on.
+	// so turn down master for safety
+s.volume.volume = -12;
+	// now watch nodeproxy level going up to +2 go red:
+~x = { SinOsc.ar(0.13).abs * BrownNoise.ar * 2 };
+	// when when post-monitor level also exceeds 1, deep red:
+~x.vol_(0.7);
 
 	// where the proxy meter instances live
 ProxyMeter.all;
@@ -70,7 +80,7 @@ the proxyGuis for which metering is active
 METHOD:: showingKrs
 the flag whether to show meter proxies as krs or not. Set with showKrs, hideKrs.
 
-METHOD:: new 
+METHOD:: new
 make a new ProxyMeter for the proxy given
 
 private:: skipjack, initClass, cmdPeriod, makeSkipJack
@@ -108,7 +118,7 @@ the last measured pre- and post volume amp of the ar proxy.
 METHOD:: space
 the proxyspace that the ar proxy lives in.
 
-METHOD:: resp 
+METHOD:: resp
 the OSCresponder for this ProxyMeter
 
 METHOD:: remove

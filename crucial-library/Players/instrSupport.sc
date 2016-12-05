@@ -10,14 +10,14 @@
 	patchOut { ^ObjectPatchOut(this) }
 	connectToPatchIn {}
 
-	prepareToBundle { arg  group,bundle;
+	prepareToBundle { arg  group, bundle;
 		this.makePatchOut
 	}
-	prepareForPlay { arg group,private,bus;
+	prepareForPlay { arg group, private, bus;
 		var bundle;
 		bundle = AbstractPlayer.bundleClass.new;
 		group = group.asGroup;
-		this.prepareToBundle(group,bundle);
+		this.prepareToBundle(group, bundle);
 		bundle.send(group.server)
 	}
 
@@ -25,8 +25,8 @@
 	spawnOnToBundle {}
 	loadDefFileToBundle {}
 
-	addToSynthDef {  arg instrSynthDef,name;
-		instrSynthDef.addInstrOnlyArg(name,this.synthArg);
+	addToSynthDef {  arg instrSynthDef, name;
+		instrSynthDef.addInstrOnlyArg(name, this.synthArg);
 	}
 
 	synthArg { ^this }
@@ -58,21 +58,21 @@
 }
 
 + Bus {
-	prepareToBundle { arg group,bundle;
-		if(index.isNil,{
-			bundle.addMessage(this,\alloc)
+	prepareToBundle { arg group, bundle;
+		if(index.isNil, {
+			bundle.addMessage(this, \alloc)
 		})
 	}
 	addToSynthDef { arg synthDef, name;
 		// my index is not modulatable
 		// actual index to be determined at play time
-		synthDef.addIr(name,0)
+		synthDef.addIr(name, 0)
 	}
 	instrArgFromControl { arg control;
-		if(rate == \audio,{
-			^In.ar(control,numChannels)
-		},{
-			^In.kr(control,numChannels)
+		if(rate == \audio, {
+			^In.ar(control, numChannels)
+		}, {
+			^In.kr(control, numChannels)
 		})
 	}
 	synthArg {
@@ -81,7 +81,7 @@
 }
 
 + SynthDef {
-	prepareToBundle { arg group,bundle;
+	prepareToBundle { arg group, bundle;
 		bundle.addPrepare(["/d_recv", this.asBytes]);
 	}
 	printOn { |stream|
@@ -91,8 +91,8 @@
 
 + Pattern {
 	rate { ^\stream }
-	addToSynthDef {  arg synthDef,name;
-		synthDef.addIr(name,this.synthArg);
+	addToSynthDef {  arg synthDef, name;
+		synthDef.addIr(name, this.synthArg);
 	}
 	// no idea until the pattern starts, so
 	// give some answer to build the synth def with
@@ -101,8 +101,8 @@
 }
 + Stream {
 	rate { ^\stream }
-	addToSynthDef {  arg synthDef,name;
-		synthDef.addIr(name,this.synthArg);
+	addToSynthDef {  arg synthDef, name;
+		synthDef.addIr(name, this.synthArg);
 	}
 	// no idea until the pattern starts, so
 	// give some answer to build the synth def with
@@ -120,17 +120,17 @@
 + ControlSpec {
 	canAccept { arg thing;
 		var thingSpec;
-		^if(thing.isNumber,{
-			thing.inclusivelyBetween(clipLo,clipHi)
-		},{
+		^if(thing.isNumber, {
+			thing.inclusivelyBetween(clipLo, clipHi)
+		}, {
 			thingSpec = thing.tryPerform(\spec);
-			if(thingSpec.isNil,{ ^false });
+			if(thingSpec.isNil, { ^false });
 			if(thingSpec.class !== this.class, { ^false });
-			if(thingSpec == this,{ ^true });
+			if(thingSpec == this, { ^true });
 			// if thingSpec is within my bounds
 			// TODO check if my minval is greater than my maxval
 			if(thingSpec.minval >= this.minval and:
-				{thingSpec.maxval <= this.maxval},{
+				{thingSpec.maxval <= this.maxval}, {
 					^true
 			});
 			^false
@@ -141,8 +141,8 @@
 + Symbol {
 	// support symbols ir tr ar kr to create inputs on synth def by rate
 	// other symbols are assumed to really be an input to an Instr arg
-	// which does mean you can't have a dropdown with options 'ir' 'tr' 'ar' kr' 
-	addToSynthDef { arg synthDef,name,defArg;
+	// which does mean you can't have a dropdown with options 'ir' 'tr' 'ar' kr'
+	addToSynthDef { arg synthDef, name, defArg;
 		case { (this == \ir) }
 		{
 			synthDef.addIr(name, defArg);
@@ -160,10 +160,10 @@
 			synthDef.addKr(name, defArg);
 		}
 		{ // default
-			synthDef.addInstrOnlyArg(name,this)
+			synthDef.addInstrOnlyArg(name, this)
 		}
 	}
 	instrArgFromControl { arg control; ^control }
 }
 
-		
+

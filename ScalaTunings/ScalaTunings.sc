@@ -1,29 +1,38 @@
 ScalaTunings {
-	*initClass {
-		var archiveFolder;
+	*at { |tuningName|
+		var tuning;
 
-		Class.initClassTree(Tuning);
+		tuning = Tuning.at( tuningName );
 
-		archiveFolder = PathName(ScalaTunings.filenameSymbol.asString).pathOnly +/+ "archive";
+		if( tuning.isNil ) {
+			var scalaFileName = PathName( ScalaTunings.filenameSymbol.asString ).pathOnly +/+ "archive" +/+ "%.scl".format( tuningName );
+			^Tuning.fromScalaFile( tuningName, scalaFileName )
+		};
 
-		PathName(archiveFolder).files.do {|i|
-			File.use(i.fullPath, "r", {|f|
-				var name = i.fileNameWithoutExtension;
-				var tuning = Tuning.fromScala( f.readAllString );
-				Tuning.all.put( name.asSymbol, tuning )
-			})
-		}
+		^Tuning.at( tuningName );
 	}
 }
 
 +Tuning {
+	*fromScalaFile { | tuningName, path |
+		if( File.exists( path ).not ) {
+			"% does not exist".format( path ).throw;
+		};
+
+		File.use ( path, "r", { |file|
+			var tuning = Tuning.fromScala( file.readAllString );
+			Tuning.all.put( tuningName.asSymbol, tuning )
+		});
+		^Tuning.at( tuningName );
+	}
+
 	*fromScala { |aString|
 		var lines, name, size, pitches, octaveRatio;
 
 		lines = aString.split($\n);
 		lines = lines.collect( _.stripWhiteSpace );
 		lines = lines.reject( _.beginsWith("!") );
-		lines = lines.reject { |i| i.size == 0 };
+		lines = [lines[0]] ++ lines[1..].reject { |i| i.size == 0 };
 
 		name = lines[0];
 		size = lines[1].asInteger;

@@ -15,7 +15,7 @@
 	Buffer.allocConsecutive(numbufs, server, numFrames, 1, { |buf, i|
 		var	base = (i + lowMidi) * 12,
 			numharm = (20000 / base.midicps).asInteger;
-		buf.sine1Msg(spectrumFunc.(numharm));
+		buf.sine1Msg(spectrumFunc.(numharm, base, i));
 	});
 } => Func(\makeWavetables);
 
@@ -105,13 +105,21 @@ PR(\abstractProcess).v.clone({
 	};
 }) => PR(\patternTop);
 
-{ |pat, n|
+{ |pat, n, tries(10)|
 	// I had used Penvir, but reject{} is an open function anyway so... use vars
-	var i = 0, prev = nil ! n;
+	var i = 0, prev = nil ! n, failedCount = 0, bool;
 	pat.reject { |item|
 		// slightly tricky: if 'includes' is true, we DON'T want to update prev
 		// true or: {} short-circuits the function
-		prev.includes(item) or: { prev[i] = item; i = (i+1) % n; false }
+		bool = failedCount < tries and: { prev.includes(item) };
+		if(bool) {
+			failedCount = failedCount + 1;
+		} {
+			failedCount = 0;
+			prev[i] = item;
+			i = (i+1) % n;
+		};
+		bool
 	}
 } => Func(\patRejectLastN).subType_(\patternHelpers);
 

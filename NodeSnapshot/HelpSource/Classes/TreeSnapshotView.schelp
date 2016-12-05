@@ -1,0 +1,70 @@
+TITLE:: TreeSnapshotView
+summary:: A GUI for a TreeSnapshot
+categories:: Server
+related:: Classes/TreeSnapshot, Classes/TreeSnapshotView, Classes/Server, Classes/Group, Classes/Singleton
+
+DESCRIPTION::
+This shows a simple GUI for a given link::Classes/TreeSnapshot::. The tree can be periodically updated. SynthSnapshot views are interactive, and can be used to free synths, change controls, and dump debug traces.
+
+link::Classes/TreeSnapshotView:: is a link::Classes/Singleton::, so global instances can be referenced using the constructor: CODE::TreeSnapshotView().front; TreeSnapshotView.close();:: See the link::Classes/Singleton:: help file for more details.
+
+NOTE:: TreeSnapshotView uses the M+ font series: http://mplus-fonts.osdn.jp/mplus-outline-fonts/index-en.html
+
+It will work without these installed, but layout and affordances may be incorrect.
+::
+
+METHOD:: view
+returns:: The top-level link::Classes/View:: object (may be nil if it has not been constructed yet)
+
+METHOD:: front
+Bring link::Classes/TreeSnapshotView:: to the front. Construct a view if it has not yet been created.
+
+METHOD:: update
+Update a TreeSnapshotView with a link::Classes/TreeSnapshot::
+
+ARGUMENT:: newSnapshot
+A link::Classes/TreeSnapshot::
+
+METHOD:: autoUpdate
+Turn on/off automatic updating of the view.
+
+ARGUMENT:: up
+link::Classes/Boolean::, to turn autoupdate on or off.
+
+ARGUMENT:: server
+A link::Classes/Server:: or link::Classes/Group:: to snapshot.
+
+
+EXAMPLES::
+Create a defalt auto-updating TreeSnapshotView for the default server:
+code::
+(
+TreeSnapshotView().front.autoUpdate();
+)
+::
+
+TreeSnapshotView's will auto-update synths and groups. Note that the controls of synths can be edited . Clicking on a Group header will hide/show children of that group.
+code::
+(
+fork {
+	~group = Group();
+
+	2.wait;
+
+	SynthDef(\buzz, {
+		|out = 0, freq = 300, amp = 0.1, filter = 1.7|
+		var sig = LFSaw.ar(freq * [1, 3, 5], 0, amp * [1, 0.5, 0.25]).sum;
+		sig = LPF.ar(sig, freq * filter);
+		Out.ar(out, sig);
+	}).add;
+
+	[50, 53, 58, 46, 60].midicps.do {
+		|f, i|
+		Synth(\buzz, [
+			\out: 0, \freq, f, \filter: (i / 2) + 1
+		], target:~group);
+		2.wait;
+	};
+}
+)
+::

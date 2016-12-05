@@ -132,6 +132,7 @@ PR(\abstractTLCommand).clone({
 		~quant ?? { ~quant = 0 };
 		~schedTime = ~quant.nextTimeOnGrid(thisThread.clock);
 		msg = ~node.newMsg(~target, ~args, ~addAction ? \addToHead);
+		if(~postOSC ? false) { msg.debug("synth command sending") };
 		if(~newDef) {
 			msg = [\d_recv, ~synthdef.asBytes, msg];
 		};
@@ -180,6 +181,7 @@ PR(\abstractTLCommand).clone({
 			} {
 				msg = ~node.freeMsg;
 			};
+			if(~postOSC ? false) { msg.debug("synth command sending") };
 			if(~latency != 0) {
 				~server.sendBundle(~latency, msg);
 			} {
@@ -194,7 +196,7 @@ PR(\abstractTLCommand).clone({
 		if(obj == ~node and: { msg == \n_end }) {
 			~node.removeDependant(currentEnvironment);
 			~privateNodeEndAction.value;
-			~stop.value;
+			~stop.value((nodeEnded: obj));
 		};
 //// debug
 //		if(obj == ~node and: { msg == \n_go }) {
@@ -225,23 +227,36 @@ PR(\synthCmd).clone {
 	//currentEnvironment.listVars;
 			~mixer.stopAuto(~controlName).watch(~controlName);
 			~superFire.(parms);
-			~mixer.autoSynths.put(~controlName, ~node);
+			~mixer.controls[~controlName].autoSynth = ~node;
+			// ~mixer.autoSynths.put(~controlName, ~node);
 		};
 	};
 	~done = { |parms|
-//~controlName.debug("stopped watching");
-		if(~node === ~mixer.autoSynths[~controlName]) {
-			~mixer.stopWatching(~controlName);
-			~mixer.autoSynths.put(~controlName, nil);
-		};
+		// ~controlName.debug("stopped watching");
+		~mixer.stopWatching(~controlName, 1);
+		// if(~node === ~mixer.autoSynths[~controlName]) {
+		// 	~mixer.controls[~controlName].autoSynth = nil;
+		// 	// ~mixer.autoSynths.put(~controlName, nil);
+		// };
 		~superDone.(parms);
 	};
 	~privateNodeEndAction = {
 		// make sure client knows the real final value from the synth
-		var	mctl;
-		try {
+		var	mctl, mixer, name, mySynth;
+		tryNoTrace {
+			mixer = ~mixer;
+			name = ~controlName;
 			mctl = ~mixer.controls[~controlName];
-			mctl.bus.get({ |value| try { mctl.value = value } });
+			mySynth = ~node;
+			mctl.bus.get({ |value| tryNoTrace {
+				// this test: if a new autoSynth is running (not mine!),
+				// then do NOT set the value because that will stop the new synth
+				if(mctl.autoSynth.isNil or: { mctl.autoSynth === mySynth }) {
+					// magic stuff happens in setControl
+					// which doesn't happen in mctl.set()
+					mixer.setControl(name, value);
+				}
+			} });
 		};
 	};
 } => PR(\mixerAutoSynthCmd);
@@ -254,23 +269,30 @@ PR(\mixerAutoSynthCmd).clone {
 			~target = ~target ?? { ~server.asTarget };
 			~outName ?? { ~outName = parms.tryPerform(\at, \outName) ? \out };
 			~outName.envirPut(~gc.index);
-			~gc.stopAuto.watch;	// should replace existing automation
+			~gc.stopAuto.watch(1);	// should replace existing automation
 			~superFire.(parms);
 			~gc.autoSynth = ~node;
 		};
 	};
 	~done = { |parms|
-//~controlName.debug("stopped watching");
-		if(~node === ~gc.autoSynth) {
-			~gc.stopWatching;
-			~gc.autoSynth = nil;
-		};
+		//~controlName.debug("stopped watching");
+		// var testNode = parms.tryPerform(\at, \nodeEnded) ?? { ~gc.autoSynth };
+		// if(~node === testNode) {
+		// 	~gc.autoSynth = nil;
+		// };
+		~gc.stopWatching(1);
 		~superDone.(parms);
 	};
 	~privateNodeEndAction = {
 		// make sure client knows the real final value from the synth
-		var	gc = ~gc;
-		try { gc.bus.get({ |value| try { gc.value = value } }) };
+		var	gc = ~gc, mySynth = ~node;
+		tryNoTrace { gc.bus.get({ |value|
+			tryNoTrace {
+				if(gc.autoSynth.isNil or: { gc.autoSynth === mySynth }) {
+					gc.value = value
+				};
+			}
+		}) };
 	};
 } => PR(\gcAutoSynthCmd);
 
@@ -386,10 +408,12 @@ PR(\abstractTLCommand).clone({
 PR(\abstractTLCommand).clone({
 	~quant = NilTimeSpec.new;
 	~fire = { |parms|
-//		~setParms.(parms);
+		var goTime;
+		//		~setParms.(parms);
 		~name = ~name.asArray;
 		~bps = Array(~name.size);
 		~name.do({ |name|
+				// name.debug("bpCmd trying");
 			if(BP.exists(name).not or: { BP(name).isPlaying }) {
 				if(parms.tryPerform(\at, \playWarning) != false) {
 					"BP(%) is already playing, or doesn't exist; ignored"
@@ -402,19 +426,26 @@ PR(\abstractTLCommand).clone({
 //				};
 					// user hook to manipulate BP before play
 				~prepareBP.(BP(name));
-// name.debug("bpcmd - playing");
-// [thisThread.clock.beats, thisThread.clock.baseBarBeat, BP(name).eventSchedTime(~quant)].debug("now, basebar, go time");
-// ~quant.dump;
-				/*thisThread*/ BP(name).clock.schedAbs(BP(name).eventSchedTime(~quant), e {
+				~goTime = goTime = BP(name).eventSchedTime(~quant);
+				if(goTime.notNil) {
+					// name.debug("bpcmd - playing");
+					// [thisThread.clock.beats, thisThread.clock.baseBarBeat, goTime].debug("now, basebar, go time");
+					// ~quant.dump;
+					/*thisThread*/ BP(name).clock.schedAbs(goTime, e {
 						// if not running, cmd was stopped before BP fired
 						// so skip the .play
-					if(~isRunning) {
-//[~name, thisThread.clock.beats].debug("playing bps now");
-						BP(name).play(NilTimeSpec.new, nil, doReset: ~doReset ? false);
-					} {
-						BP(name).removeDependant(currentEnvironment);
-					};
-				});
+						if(~isRunning) {
+							// [~name, thisThread.clock.beats].debug("playing bps now");
+							BP(name).play(NilTimeSpec.new, nil, doReset: ~doReset ? false);
+						} {
+							BP(name).removeDependant(currentEnvironment);
+						};
+					});
+				} {
+					"Couldn't play BP(%): eventSchedTime failed; now = %, next quant = %"
+						.format(name.asCompileString, BP(name).clock.beats, ~quant.nextTimeOnGrid(BP(name).clock))
+						.warn;
+				};
 			};
 		});
 		if(~waitForStop == nil) {
@@ -950,6 +981,10 @@ Proto({
 		~status = \countingOff;
 		clock.schedAbs(~quant.nextTimeOnGrid(clock), ~countOffRoutine = Routine({
 			currentEnvironment.changed(\countoff, \init);
+			clock.setMeterAtBeat(~countOffBeats, clock.beats);
+			if(~sections[~currentSection][\tempo].notNil) {
+				clock.tempo = ~sections[~currentSection][\tempo];
+			};
 			// count off first
 			~countOffBeats.do({ |count|
 				currentEnvironment.changed(\countoff, count + 1);
@@ -994,7 +1029,12 @@ Proto({
 	
 	~doReset = {
 		(BP.keys - ~doNotReset.as(IdentitySet)).do({ |name|
-			BP(name).reset;
+			if(BP(name).v.tryPerform(\at, \alwaysReset) != true) {
+				try { BP(name).reset } { |err|
+					"\n\nError thrown while resetting BP(%):".format(name.asCompileString).warn;
+					err.reportError;
+				};
+			};
 		});
 	};
 	

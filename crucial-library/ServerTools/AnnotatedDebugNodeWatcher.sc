@@ -1,12 +1,12 @@
 
 
 Annotations {
-	
-	classvar weakRefs,annotations;
+
+	classvar weakRefs, annotations;
 	var weakRef;
-	
+
 	*put { arg things ... notes;
-		^this.prAnnotate(things,notes)
+		^this.prAnnotate(things, notes)
 	}
 	*at { arg thing;
 		var noteses;
@@ -21,16 +21,16 @@ Annotations {
 	}
 	// remove strong reference, replace by description
 	*unregister { arg object;
-		weakRefs.put(object.hash,object.asString + "[removed]")
+		weakRefs.put(object.hash, object.asString + "[removed]")
 	}
 
 	*find { arg ... clauses;
 		var found = [];
-		annotations.keysValuesDo { arg hash,noteses;
+		annotations.keysValuesDo { arg hash, noteses;
 			var thing;
 			thing = weakRefs[hash];
-			if(thing.notNil,{
-				if(clauses.every(_.value(thing)),{
+			if(thing.notNil, {
+				if(clauses.every(_.value(thing)), {
 					noteses.do { arg notes;
 						found = found.add( this.unpackNotes(notes) )
 					}
@@ -39,37 +39,37 @@ Annotations {
 		};
 		^found
 	}
-	*findBus { arg index,rate;
-		^this.find({arg b;b.isKindOf(Bus)},{arg b;b.index == index},{arg b; b.rate == rate})
+	*findBus { arg index, rate;
+		^this.find({arg b;b.isKindOf(Bus)}, {arg b;b.index == index}, {arg b; b.rate == rate})
 	}
 	*findNode { arg nodeID;
-		^this.find({arg n;n.isKindOf(Node)},{ arg n; n.nodeID == nodeID })
+		^this.find({arg n;n.isKindOf(Node)}, { arg n; n.nodeID == nodeID })
 	}
-	*guiFindNode { arg nodeID,layout;
+	*guiFindNode { arg nodeID, layout;
 		this.findNode(nodeID).do { arg notes;
 			notes.do({ arg n;
-				if(n.isString,{
+				if(n.isString, {
 					n.gui(layout);
-				},{
-					InspButton(n,layout)
+				}, {
+					InspButton(n, layout)
 				})
 			});
 			layout.startRow;
 		}
 	}
-	*guiFindBus { arg index,rate,layout;
-		this.findBus(index,rate).do { arg notes;
+	*guiFindBus { arg index, rate, layout;
+		this.findBus(index, rate).do { arg notes;
 			notes.do({ arg n;
-				if(n.isString,{
+				if(n.isString, {
 					n.gui(layout);
-				},{
-					InspButton(n,layout)
+				}, {
+					InspButton(n, layout)
 				})
 			});
 			layout.startRow;
 		}
 	}
-		
+
 	*prAnnotate { arg thing, notes;
 		var hash;
 		notes = this.packNotes(notes ? []);
@@ -80,7 +80,7 @@ Annotations {
 	// any registered objects will be stored as weak references
 	*packNotes { arg notes;
 		^notes.collect({ arg n; weakRefs.at(n.hash) ? n })
-	}		
+	}
 	*unpackNotes { arg notes;
 		^notes.collect(_.dereference)
 	}
@@ -94,7 +94,7 @@ Annotations {
 	dereference {
 		^weakRefs[weakRef]
 	}
-}				
+}
 
 
 AnnotatedDebugNodeWatcher : DebugNodeWatcher {
@@ -102,14 +102,14 @@ AnnotatedDebugNodeWatcher : DebugNodeWatcher {
 	getAnnotation { arg server, nodeID;
 		var a;
 		a = Annotations.findNode(nodeID);
-		if(a.notNil,{ ^"("++a++")" },{ ^"" });
+		if(a.notNil, { ^"("++a++")" }, { ^"" });
 	}
 
 	doPost { arg action, nodeID, groupID, prevID, nextID;
 		Post << (server.name.asString + ":" +
 		action + nodeID + this.getAnnotation(server, nodeID) + Char.nl
-		+ "         " + "group:" + groupID + this.getAnnotation(server,groupID)
-		/*+ "[" + prevID + this.getAnnotation(server,prevID) + "<->" + nextID + this.getAnnotation(server,nextID) + "]"*/
+		+ "         " + "group:" + groupID + this.getAnnotation(server, groupID)
+		/*+ "[" + prevID + this.getAnnotation(server, prevID) + "<->" + nextID + this.getAnnotation(server, nextID) + "]"*/
 		) << Char.nl
 	}
 

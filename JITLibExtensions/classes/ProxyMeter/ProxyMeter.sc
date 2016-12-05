@@ -75,6 +75,7 @@ ProxyMeter {
 		skipjack.stop;
 		skipjack = SkipJack({
 			this.checkGuiObjects;
+			this.checkChangedGuis;
 			this.checkAll;
 			all.do(_.sendPoll);
 		}, 0.03, false, 'ProxyMeter');
@@ -88,15 +89,33 @@ ProxyMeter {
 		// add new Meters for new proxies;
 		proxyGuis.do { |gui|
 			var proxy = gui.object;
+			var ppv = prePostViews[gui];
 			if (proxy.notNil and: { proxy.bus.notNil }) {
-				this.checkAdd(proxy);
-				this.checkAddPrePost(proxy, prePostViews[gui]);
+				if (proxy.rate != \audio) {
+					// check and sync orphaned ppvs
+					ppv.setAmps(0,0);
+				} {
+					this.checkAdd(proxy);
+					this.checkAddPrePost(proxy, prePostViews[gui]);
+				}
 			}
 		};
 	}
 
+	*checkChangedGuis {
+		all.do { |meter|
+			meter.views.do { |ppv|
+				var gui = ProxyMeter.prePostViews.findKeyForValue(ppv);
+				if (gui.notNil and: { gui.object != meter.arProxy }) {
+					meter.views.remove(ppv);
+				}
+			}
+		}
+	}
+
 	*checkAll {
-		var currProxies = proxyGuis.collect(_.object);
+		var currProxies = proxyGuis.collect(_.object)
+		.select { |px| px.isNil or: {px.rate != \audio } };
 		var toRemove = all.select { |meter|
 			meter.views.isEmpty or:
 			{ currProxies.includes(meter.arProxy).not }
@@ -125,8 +144,7 @@ ProxyMeter {
 
 	*new { |proxy, view|
 		if (proxy.isKindOf(NodeProxy).not) {
-		//	"ProxyMeter: can only use NodeProxies; % is not.\n".postf(proxy);
-			^this;
+			^nil;
 		} {
 			this.checkSkip;
 			^super.new.init(proxy);
@@ -175,7 +193,9 @@ ProxyMeter {
 			var vols = msg.copyToEnd(3);
 			var preVol = vols[0];
 			var postVol = if (arProxy.monitor.isPlaying, arProxy.vol, 0) * preVol;
-			defer { views.do { |ppv| ppv.setAmps(preVol, postVol) } };
+			defer {
+				views.do { |ppv| ppv.setAmps(preVol, postVol) };
+			}
 		} ).add;
 	}
 

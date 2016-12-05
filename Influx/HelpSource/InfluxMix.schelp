@@ -1,14 +1,16 @@
 TITLE:: InfluxMix
 summary:: merge influences from several sources into one set of control values.
 categories:: MetaKontrol
-related:: Classes/Influx, Classes/KtlLoop
+related:: Classes/Influx, Classes/IMdef
 
 DESCRIPTION::
 
-InfluxMerge receives influence values for named control parameters from an unlimited number of named sources, and merges them into one set of output param values. Within an InfluxMerge each named source has its own trust factor. This can be used to have multiple control sources (e.g. human interfaces) influence the same process simultaneously.
+InfluxMix receives influence values for named control parameters from an unlimited number of named sources, and merges them into one set of output param values. Within an InfluxMix each named source has its own trust factor. This can be used to have multiple control sources (e.g. human interfaces) influence the same process simultaneously.
 
 code::
 a = InfluxMix();
+// or named variant:
+a = IMdef(\a);
 
 a.influence(\srcA, \x, 0.5, \y, 0.1).outValDict;
 a.influence(\srcB, \x, -0.3, \y, 0.2).outValDict;
@@ -112,5 +114,3 @@ METHOD:: damping
 get and set the a damping factor for mergeFunc. the default mergeFunc uses this as an exponent for scaling by numOfValues ** damping. Here, damping 0 is full linear sum, damping 0.5 means scale sum by numOfValues.sqrt, and damping 1 is linear average.
 
 private:: checkTrusts
-
-

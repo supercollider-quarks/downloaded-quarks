@@ -59,18 +59,25 @@ NNdef : Ndef {
 
 + FPSignal {
 
-	enKr { |lag = 0.1, key, spec|
+	enKr { |lag = 0.1, key, spec, debug = false|
 
 		var controlName = key ?? { NNdef.nextControl() };
 		var thisUdef = NNdef.buildCurrentNNdefKey;
 		NNdef.buildControls = NNdef.buildControls.addI(controlName);
 		if(spec.notNil){
+			spec = spec.asSpec;
 			NNdef(thisUdef).addSpec(controlName, spec);
 			this.collect{ |v| IO{ NNdef(thisUdef).setUni(controlName, v) } }.enOut2;
 			NNdef(thisUdef).setUni(controlName, this.now);
+			if(debug) {
+				this.collect( spec.map(_) ).enDebug(controlName.asString)
+			}
 		}{
 			this.collect{ |v| IO{ NNdef(thisUdef).set(controlName, v) } }.enOut2;
 			NNdef(thisUdef).set(controlName, this.now);
+			if(debug) {
+				this.enDebug(controlName.asString)
+			}
 		};
 		^controlName.kr(this.now, lag)
 	}
@@ -80,25 +87,35 @@ NNdef : Ndef {
 
 + EventSource {
 
-	enKr { |lag = 0.1, initialValue=0, key, spec|
+	enKr { |lag = 0.1, initialValue=0, key, spec, debug = false|
 
 		var controlName = key ?? { NNdef.nextControl() };
 		var thisUdef = NNdef.buildCurrentNNdefKey;
 		NNdef.buildControls = NNdef.buildControls.addI(controlName);
 		if(spec.notNil){
+			spec = spec.asSpec;
 			NNdef(thisUdef).addSpec(controlName, spec);
 			this.collect{ |v| IO{ NNdef(thisUdef).setUni(controlName, v) } }.enOut;
+			if(debug) {
+				this.collect( spec.map(_) ).enDebug(controlName.asString)
+			}
 		}{
 			this.collect{ |v| IO{ NNdef(thisUdef).set(controlName, v) } }.enOut;
+			if(debug) {
+				this.enDebug(controlName.asString)
+			}
 		};
 		^controlName.kr(initialValue, lag)
 	}
 
-	enTr { |initialValue=0, key|
+	enTr { |initialValue=0, key, debug = false|
 
 		var controlName = key ?? { NNdef.nextControl() };
 		var thisUdef = NNdef.buildCurrentNNdefKey;
 		this.collect{ |v| IO{ NNdef(thisUdef).set(controlName, v); NNdef(thisUdef).unset(controlName) } }.enOut;
+		if(debug) {
+			this.enDebug(controlName.asString)
+		}
 		^controlName.tr(initialValue)
 	}
 

@@ -1,0 +1,42 @@
+TITLE:: IMdef
+summary:: a named InfluxMix
+categories:: Control
+related:: Classes/Influx, Classes/InfluxMix
+
+DESCRIPTION::
+a named variant of InfluxMix, creation and lookup by name with
+IMdef(<name>), like OSCdef, Ndef, Tdef, etc. Other named influx variants are IMdef and Idef.
+
+For detailed examples, see link::Classes/Influx:: and link::Classes/InfluxMix::.
+
+code::
+x = IMdef(\x, 4, 8);
+x.dump;
+::
+
+CLASSMETHODS::
+
+METHOD:: at
+argument:: key
+get IMdef with name <key>.
+
+METHOD:: new
+create or lookup new IMdef by name. If IMdef exists, other args are ignored.
+argument:: key
+argument:: inNames
+number or list of inNames
+argument:: outNames
+number or list of inNames
+argument:: inValDict
+
+
+METHOD:: all
+all IMdefs by name
+private:: initClass
+
+
+INSTANCEMETHODS::
+
+METHOD:: key
+get the key of this IMdef
+private:: prAdd, storeArgs

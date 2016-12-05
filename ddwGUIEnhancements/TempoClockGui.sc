@@ -95,29 +95,34 @@ TempoClockGui : ObjectGui {
 		this.update;	// set initial display value
 		namev.string_(name);
 
-		updater.isNil.if({
-			updater = Routine.new({ 	// routine to update every beat
-				var	waitTime;
-				{ model.isRunning }.while({
-					this.updateCounter;
-					if(metro.notNil and: { metro.synth.notNil }) {
-						currentServer.listSendBundle(latency, [
-							#[error, -1],	// prevent node not found when metro stops
-							metro.synth.setMsg(\t_trig, metroLevel)
-						]);
-					};
-					if((waitTime = min(1, model.nextBar - model.beats)) == 0) {
-						min(1, model.beatsPerBar).wait
-					} {
-						waitTime.wait;
-					};
-				});
+		if(updater.isNil) { this.startAliveThread };
+	}
+
+	startAliveThread {
+		updater.stop;  // maybe an old one exists, if clock's meter changed
+		updater = Routine.new({ 	// routine to update every beat
+			var	waitTime;
+			{ model.isRunning }.while({
+				this.updateCounter;
+				if(metro.notNil and: { metro.synth.notNil }) {
+					currentServer.listSendBundle(latency, [
+						#[error, -1],	// prevent node not found when metro stops
+						metro.synth.setMsg(\t_trig, metroLevel)
+					]);
+				};
+				if((waitTime = min(1, model.nextBar - model.beats)) == 0) {
+					min(1, model.beatsPerBar).wait
+				} {
+					waitTime.wait;
+				};
 			});
 				// start it running on the next beat
 			model.schedAbs(model.elapsedBeats.ceil, updater);
 		});
+		// start it running on the next beat
+		model.schedAbs(model.nextTimeOnGrid(1), updater);
 	}
-	
+
 	makeCounter {
 		var	font = GUI.font.new("Helvetica", 24).boldVariant;
 		bars = GUI.numberBox.new(mainFlow, Rect.new(0, 0, numwidth, numheight))
@@ -136,6 +141,10 @@ TempoClockGui : ObjectGui {
 		}, {
 			switch(changer)
 				{ \tempo } { tempoEditor.value_(model.tempo*60).changed }
+				{ \meter } {
+					// this may look dodgy, but it will stop any pre-existing alive threads
+					this.startAliveThread
+				}
 				{ \stop } { this.remove }
 				{ this.updateCounter }
 		});

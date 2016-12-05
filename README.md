@@ -1,15 +1,17 @@
 ## Download all quarks
 
-Quarks are packages of [SuperCollider](https://github.com/supercollider/supercollider) code containing classes, extension methods, documentation and server UGen plugins. The Quarks class manages downloading these packages and installing or uninstalling them.
+Quarks are packages of [SuperCollider](https://github.com/supercollider/supercollider) code containing classes, extension methods, documentation and server UGen plugins.
 
-The recommended way to use Quarks is to make sure that you have git installed and then to use the Quarks interface.
+The Quarks class manages downloading these packages and installing or uninstalling them.  It does this by cloning quarks into a folder called 'downloaded-quarks' and then adding invididual Quarks to the include paths of sclang.
+
+The recommended way to use Quarks is to make sure that you have git installed and then to use the Quarks interface inside supercollider.
 
 Installing git is quite simple:
 
 http://git-scm.com/
 
 
-As an alternative, this repository collects all of the community contributed Super Collider Quarks and allows them all to be downloaded.
+As an alternative, this repository collects all of the community contributed Super Collider Quarks and allows them all to be downloaded at once.  It replaces the folder called `downloaded-quarks` in your Extensions folder.
 
 
 ## Download and Install all quarks
@@ -30,7 +32,7 @@ Unpack it and move it to your `Platform.userAppSupportDir`:
 
     # Windows
     C:\Users\<USERNAME>\AppData\Local\SuperCollider\downloaded-quarks
-    
+
 Restart SuperCollider if its running. The Quarks interface will now see these Quarks as already downloaded and allow you to browse and install them.
 
 
@@ -56,7 +58,7 @@ The releases here should be against stable SuperCollider releases.  Users that w
 In terminal run the python script:
 
 ```shell
-    python update.py
+python update.py
 ```
 
 This will clone, update and/or checkout tags as needed. If a repository URL changes then it will remove the previous folder and clone the new one in its place.

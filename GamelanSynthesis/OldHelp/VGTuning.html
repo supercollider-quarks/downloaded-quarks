@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title></title>
+<meta name="Generator" content="Cocoa HTML Writer">
+<meta name="CocoaVersion" content="949.35">
+<style type="text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+p.p3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco; min-height: 12.0px}
+p.p4 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco; color: #961e1e}
+p.p5 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco}
+p.p6 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco; color: #001db9}
+p.p7 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco; color: #426f0e}
+span.s1 {font: 18.0px Helvetica; color: #0023b6}
+span.s2 {font: 9.0px Monaco}
+span.s3 {color: #0023b6}
+span.s4 {color: #0014bc}
+span.s5 {color: #001db9}
+span.s6 {color: #000000}
+span.s7 {color: #426f0e}
+span.Apple-tab-span {white-space:pre}
+</style>
+</head>
+<body>
+<p class="p1"><span class="s1"><b>VGTuning</b></span><span class="s2"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span><b>a class for keeing the tuning of gamelan sounds,</b></p>
+<p class="p1"><b><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>an retuning them while playing .<span class="Apple-converted-space"> </span></b></p>
+<p class="p2"><br></p>
+<p class="p1"><span class="s3">VGTuning</span> is part of the vgg library by Julian Rohrhuber, Alberto de Campo, Rainer Schuetz, 2007/8.</p>
+<p class="p2"><span class="Apple-converted-space"> </span></p>
+<p class="p1"><b>For rendering to sound see </b><span class="s4"><b>VGSound</b></span><b>,</b></p>
+<p class="p1"><b><span class="Apple-tab-span">	</span>rendering by synthesis see </b><span class="s5"><b>VGSynth</b></span><b>,</b></p>
+<p class="p1"><b><span class="Apple-tab-span">	</span>for sample-based playback, see </b><span class="s5"><b>VGSamp</b></span><b>,<span class="Apple-converted-space"> </span></b></p>
+<p class="p1"><b><span class="Apple-tab-span">	</span>and for network output e.g. to </b><span class="s5"><b>PureData</b></span><b>, see </b><span class="s5"><b>VGPD</b></span><b> - (needs rework atm).</b></p>
+<p class="p3"><br></p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// VGTuning assumes there is a folder next to the 'vgg' folder called 'vgg_synthData',<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// which contains some info files, and a collection of samples from the KUG gamelan.</p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// These info files are:<span class="Apple-converted-space"> </span></p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// a<span class="Apple-converted-space">  </span>list of all the sonator names to be used</p>
+<p class="p4"><span class="s5">VGTuning</span><span class="s6">.sonatorListFilename; </span>// "sonatorNames_gamKUG.txt";</p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// analysis data for all the sonators containing data for partial synthesis,</p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// done by Franz Zotter</p>
+<p class="p4"><span class="s5">VGTuning</span><span class="s6">.synthDataFilename; </span>// "synthData_gamKUG.txt";</p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// optionally, a file with amplitude compensation ('ampComp')<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// and perceived root frequency data for all sonators.<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// this file is usually made by listening and writing up the results.</p>
+<p class="p4"><span class="s5">VGTuning</span><span class="s6">.balanceFilename; </span>// "balanceData_gamKUG.txt";</p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>//<span class="Apple-tab-span">	</span>Because the samples taken from the KUG gamelan are not complete, some substitutions</p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>//<span class="Apple-tab-span">	</span>have to be made. To make these transparent, they are done in a special function:</p>
+<p class="p3"><br></p>
+<p class="p5"><span class="s5">VGTuning</span>.synthDataFixFunc;</p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// this function is automatically loaded from a path when VGTuning initialises.</p>
+<p class="p5"><span class="s5">VGTuning</span>.synthDataFixFuncFilename;</p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// initialising VGTuning<span class="Apple-converted-space">  </span>requires the server to be booted:<span class="Apple-converted-space"> </span></p>
+<p class="p5">s.boot;<span class="Apple-converted-space"> </span></p>
+<p class="p6">VGTuning<span class="s6">.init;<span class="Apple-converted-space"> </span></span></p>
+<p class="p3"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// this creates spaces prepared for two preloaded tunings;<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>// these keep notename and rawname (a file ID) for all the sonators in the gamelan.</p>
+<p class="p5"><span class="s5">VGTuning</span>.tunings;</p>
+<p class="p7"><span class="s5">VGTuning</span><span class="s6">.tunings[</span>\neutral<span class="s6">][</span>\Kendhang<span class="s6">];</span></p>
+<p class="p6">VGTuning<span class="s6">.pelog;</span></p>
+<p class="p5"><span class="s5">VGTuning</span>.slendro[<span class="s7">\PekingA</span>].keys</p>
+<p class="p5"><span class="s5">VGTuning</span>.pelog[<span class="s7">\Kenong</span>];</p>
+<p class="p3"><br></p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>//<span class="Apple-tab-span">	</span>VGTuning prepares a large nuber of control busses for all the partials of every note<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>//<span class="Apple-tab-span">	</span>of every instrument. These are only used for pelog and slendro instruments;<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s6"><span class="Apple-tab-span">	</span></span>//<span class="Apple-tab-span">	</span>neutral instruments are assumed not to be retuned.</p>
+<p class="p5"><span class="s5">VGTuning</span>.mulTrees;</p>
+<p class="p3"><br></p>
+<p class="p1">// continue with VGTuningGui and VGSound.</p>
+</body>
+</html>

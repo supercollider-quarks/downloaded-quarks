@@ -10,8 +10,9 @@ ModalSpec {
 		<>stepsPerOctave,	// what's top of scale?
 		<>root,			// semitones above midinote 0
 		<>tuning = 0,		// cpsFunc adds this to output frequency
-		<cpsFunc;		// a function or Tuning object to convert note numbers to cps
-	
+		<cpsFunc,		// a function or Tuning object to convert note numbers to cps
+		<>octaveOffset = 0;
+
 	var	<degToKey, <keyToDeg;	// conversion dictionaries
 	
 	*new { arg scale, stepsPerOctave, root, tuning, cpsFunc;
@@ -30,6 +31,7 @@ ModalSpec {
 			// for qtr tones, set stepsPerOctave = 24 and use your own frequency conversion
 			// if you need fractional keys, you will need to customize this class
 		var	temp;
+		octaveOffset = (root trunc: stepsPerOctave) div: stepsPerOctave;
 		root = (root ? 0) % stepsPerOctave;
 		keyToDeg = IdentityDictionary.new;
 		temp = 0;		// i scans thru keys, temp thru degrees
@@ -69,7 +71,7 @@ ModalSpec {
 	prMap { arg key;
 		^keyToDeg[(key-root) % stepsPerOctave]
 				?? { keyToDeg[(key-root).asInteger % stepsPerOctave] }
-			+ (((key-root) / stepsPerOctave).trunc * scale.size);
+			+ ((((key-root) / stepsPerOctave).trunc - octaveOffset) * scale.size);
 	}
 	
 		// map degree to key - 0 = root, 0.5 = root + halfway between steps 0 & 1
@@ -85,7 +87,7 @@ ModalSpec {
 		}, {
 			degToKey[degree.asInteger % scale.size] + (num * num.fuzzygcd(1).reciprocal)
 		}))
-			+ ((degree / scale.size).trunc * stepsPerOctave)
+			+ (((degree / scale.size).trunc + octaveOffset) * stepsPerOctave)
 			+ root // + tuning;
 	}
 	

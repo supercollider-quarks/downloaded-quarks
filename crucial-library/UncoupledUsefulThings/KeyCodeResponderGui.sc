@@ -2,7 +2,7 @@
 KeyCodeResponderGui : ObjectGui {
 
 	guiBody { |f|
-		model.dict.keysValuesDo({ |k,v|
+		model.dict.keysValuesDo({ |k, v|
 			f.startRow;
 			k.asAscii.gui(f);
 			v.gui(f);

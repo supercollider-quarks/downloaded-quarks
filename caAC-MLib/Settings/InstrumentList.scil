@@ -1,0 +1,22 @@
+var o, p;
+o = [
+	Dictionary.prNew,  Array.prNew(32),  Array.prNew(4),  Array.prNew(4)
+];
+p = [
+	// Dictionary
+	0, [ array: o[1],  size: 2 ],  
+	// Array
+	1, [ nil,  nil,  nil,  nil,  
+		'Percussive',  o[2],  'order',  o[3],  
+		nil,  nil,  nil,  nil,  
+		nil,  nil,  nil,  nil,  
+		nil,  nil,  nil,  nil,  
+		nil,  nil,  nil,  nil,  
+		nil,  nil,  nil,  nil,  
+		nil,  nil,  nil,  nil ],  
+	// Array
+	2, [ 'SineBleep',  'Hihat',  'KickSynth',  'Snare' ],  
+	// Array
+	3, [ 'Percussive',  'Lead',  'Bass',  'FX' ]
+];
+prUnarchive(o,p);

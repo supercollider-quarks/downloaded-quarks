@@ -1,0 +1,23 @@
+{
+  "name": "crucial-library",
+  "version": "4.1.4",
+  "homepage": "https://github.com/crucialfelix/crucial-library",
+  "authors": [
+    "Chris Sattinger <crucialfelix@gmail.com>"
+  ],
+  "description": "SuperCollider quark for music composition; includes Patch, Instr, Sample and schedulingn tools",
+  "keywords": [
+    "supercollider",
+    "quark",
+    "music",
+    "livecoding"
+  ],
+  "license": "GPL",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

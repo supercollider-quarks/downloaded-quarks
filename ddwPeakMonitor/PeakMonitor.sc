@@ -51,8 +51,8 @@ PeakMonitor {
 					[\n_set, synth.nodeID, \t_trig, 1]);
 			}.loop
 		}).play(SystemClock);
-		
-		this.gui(layout);
+
+		{ this.gui(layout) }.defer;
 	}
 	
 	freq_ { arg f;

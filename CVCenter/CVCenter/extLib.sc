@@ -168,21 +168,21 @@
 
 }
 
-+Collection {
++SequenceableCollection {
 
-	selectIndexAs { |function, class|
+	selectIndicesAs { |function, class|
 		var res = class.new(this.size);
 		this.do { |elem, i| if(function.value(elem, i), { res = res.add(i) }) };
 		^res;
 	}
 
-	selectIndex { |function|
-		^this.selectIndexAs(function, this.species);
+	selectIndices { |function|
+		^this.selectIndicesAs(function, this.species);
 	}
 
 	differenceIndex { |that|
 		var diffCol = this.copy.removeAll(that);
-		^this.selectIndexAs({ |elem, i| diffCol.includes(elem) }, Array);
+		^this.selectIndicesAs({ |elem, i| diffCol.includes(elem) }, Array);
 	}
 
 }
@@ -218,7 +218,7 @@
 
 	flipKeys { |...oldNewPairs|
 		oldNewPairs.pairsDo({ |o, n|
-			if(this.at(o).notNil and:{ o !== n }, {
+			if(o !== n, {
 				this.put(n, this.at(o));
 				this.removeAt(o);
 			})

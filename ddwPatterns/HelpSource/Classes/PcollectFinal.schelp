@@ -1,0 +1,158 @@
+TITLE:: PcollectFinal
+summary:: Apply a function to each output value, and a separate function to the last value.
+categories:: Streams-Patterns-Events>Patterns>Filter
+related:: Classes/Pcollect
+
+DESCRIPTION::
+
+Very much like link::Classes/Pcollect::, with one difference:
+
+list::
+## link::Classes/Pcollect:: retrieves values from the source pattern one at a time, and applies the same function to every value.
+## PcollectFinal applies one function to every value emphasis::except the last one::. A separate function is applied to the final value.
+::
+
+This is useful for embedding phrase patterns in a longer stream, where you want the final note of the phrase to be shorter.
+
+subsection:: Caveats
+
+PcollectFinal must look ahead in the stream by one value. It starts by getting two values and yielding the first. On the second call, it gets the third value and yields the second, and so on. This is the only way to know if the next value will be code::nil::.
+
+Potential problems:
+
+list::
+## If the source pattern uses link::Classes/Pkey:: to refer to values calculated outside PcollectFinal, the Pkey values will be out of sync (delayed by one event). The workaround is to wrap a link::Classes/Pbind:: inside PcollectFinal. See the examples.
+## If the source pattern refers to the current clock time, this will be out of sync.
+## If the source pattern generates a link::Classes/Rest::, it may be applied incorrectly.
+::
+
+warning:: These caveats suggest that this may not be an ideal solution. If I find a better approach later, I may remove this class. Avoid relying on it too much. ::
+
+
+CLASSMETHODS::
+
+METHOD:: new
+
+ARGUMENT:: func
+The function that will be applied to the first code::n - 1:: items.
+
+ARGUMENT:: pattern
+The source pattern.
+
+ARGUMENT:: finalFunc
+The function that will be applied to the final item.
+
+
+EXAMPLES::
+
+code::
+PcollectFinal({ |x| x * 2 }, Pseries(0, 1, 5), { |x| x * 200 }).asStream.all;
+-> [ 0, 2, 4, 6, 800 ]
+
+(
+p = PmonoArtic(\default,
+	\legato, 1.01,
+	\dur, 0.5,
+	\degree, Pn(
+		PcollectFinal(
+			{ |x| x },
+			Pseries(0, 1, 8),
+			{ |x, event|
+				event.legato = 0.08;
+				x
+			}
+		),
+		inf
+	)
+).play;
+)
+
+p.stop;
+
+// Pkey here repeats the first octave
+(
+p = PmonoArtic(\default,
+	\legato, 1.01,
+	\dur, 0.5,
+	\oct, Pseq(#[-1, 0, 1], inf),
+	\degree, Pn(
+		PcollectFinal(
+			{ |x| x },
+			Pseries(0, 1, 8) + (7 * Pkey(\oct)),
+			{ |x, event|
+				event.legato = 0.08;
+				x
+			}
+		),
+		inf
+	)
+).play;
+)
+
+p.stop;
+
+// solution: wrap Pbind in PcollectFinal
+(
+p = Pchain(
+	PmonoArtic(\default, \dur, 0.5),
+	Pn(PcollectFinal(
+		{ |x| x },
+		Pbind(
+			\legato, 1.01,
+			\oct, Pseq(#[-1, 0, 1], inf),
+			\degree, Pseries(0, 1, 8) + (7 * Pkey(\oct))
+		),
+		{ |event|
+			event.legato = 0.08;
+			event
+		}
+	), inf)
+).play;
+)
+
+p.stop;
+
+
+// OK if a rest is generated outside PcollectFinal
+(
+p = PmonoArtic(\default,
+	\legato, 1.01,
+	\dur, Pseq([0.5, Rest(0.5)], inf),
+	\degree, Pn(
+		PcollectFinal(
+			{ |x| x },
+			Pseries(0, 1, 8),
+			{ |x, event|
+				event.legato = 0.08;
+				x
+			}
+		),
+		inf
+	)
+).play;
+)
+
+p.stop;
+
+
+// Wonky if a rest is generated inside PcollectFinal
+(
+p = PmonoArtic(\default,
+	\legato, 1.01,
+	\dur, 0.5,
+	\degree, Pn(
+		PcollectFinal(
+			{ |x| x },
+			Pseries(0, 1, 8).collect { |x| if(x.even) { Rest(x) } { x } },
+			{ |x, event|
+				event.legato = 0.08;
+				x
+			}
+		),
+		inf
+	)
+).play;
+)
+
+p.stop;
+::

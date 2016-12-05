@@ -1,0 +1,60 @@
+TITLE:: Resonator2D
+SUMMARY:: describes the physical properties of a linear two-dimensional resonator with stiffness and loss
+CATEGORIES:: Physical Modelling, Sound Synthesis
+RELATED:: Classes/ResonatorNetwork, Classes/Resonator1D
+
+DESCRIPTION::
+CODE::Resonator2D:: describes a two-dimensional resonator. If CODE::gamma:: is zero and CODE::kappa:: is non-zero it describes a thin, linear plate with frequency dependent and independent loss. If CODE::gamma:: is non-zero and CODE::kappa:: is zero or relatively small it describes a membrane with stiffness and frequency dependent and independent loss.
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new instance of CODE::Resonator2D::.
+
+ARGUMENT:: gamma
+A LINK::Classes/SimpleNumber:: denoting the spatially scaled wavespeed.
+WARNING::
+Note that it is generally not adviced to use very small, non-zero values for CODE::gamma:: as the smaller the value for CODE::gamma::, the larger the number of modes will be. As a consequence, the calculation time might increase significantly and in the worst case either Python or SuperCollider will choke on the amount of data it needs to process resulting in no modal data at all. A zero value for CODE::gamma:: is perfectly fine though, provided that CODE::kappa:: is non-zero and relatively large (e.g. CODE::kappa > 10::).
+::
+
+ARGUMENT:: kappa
+A LINK::Classes/SimpleNumber:: denoting a spatially scaled stiffness parameter.
+
+ARGUMENT:: b1
+A LINK::Classes/SimpleNumber:: denoting a frequency independent damping constant.
+
+ARGUMENT:: b2
+A LINK::Classes/SimpleNumber:: denoting a frequency dependent damping constant.
+
+ARGUMENT:: boundaryCond
+A LINK::Classes/Symbol:: denoting a valid 2D boundary condition.
+
+ARGUMENT:: epsilon
+A LINK::Classes/SimpleNumber:: denoting the aspect ratio: CODE::Lx/Ly:: of the rectangular domain.
+
+returns:: A new instance of CODE::Resonator2D::.
+
+METHOD:: validBoundaryConds
+Get an overview of all valid 2D boundary condition combinations.
+
+returns::An immutable LINK::Classes/Array:: of valid 2D boundary conditions.
+
+INSTANCEMETHODS::
+
+METHOD:: jsonString
+Generate a json representation of a CODE::Resonator2D:: object instance.
+
+returns:: A LINK::Classes/String:: representing the resonator object in json format.
+
+PRIVATE:: boundaryCond
+PRIVATE:: epsilon
+
+EXAMPLES::
+
+CODE::
+// create a new instance of Resonator2D with given physical parameters and print the corresponding json representation
+(
+var resonatorDesc = Resonator2D(200,50,0.698698,0.001515,\allSidesClamped);
+resonatorDesc.jsonString
+)
+::

@@ -194,21 +194,8 @@ CVCenterLoadDialog {
 						b.states_([
 							["restart MIDI", Color.black, Color.green]
 						]);
-						MIDIClient.sources.do({ |source|
-							if(midiSources.values.includes(source.uid.asInt).not, {
-								// OSX/Linux specific tweek
-								if(source.name == source.device, {
-									midiSources.put(source.name.asSymbol, source.uid.asInt)
-								}, {
-									midiSources.put(
-										(source.device++":"+source.name).asSymbol, source.uid.asInt
-									)
-								})
-							})
-						});
-						sourceNames = midiSources.keys.asArray.sort;
 						midiSourceSelect.items_(
-							[midiSourceSelect.items[0]]++sourceNames;
+							[midiSourceSelect.items[0]] ++ this.prExternalSourcesList(midiSources);
 						);
 					})
 				})
@@ -227,21 +214,8 @@ CVCenterLoadDialog {
 			;
 
 			if(MIDIClient.initialized, {
-				MIDIClient.sources.do({ |source|
-					if(midiSources.values.includes(source.uid.asInt).not, {
-						// OSX/Linux specific tweek
-						if(source.name == source.device, {
-							midiSources.put(source.name.asSymbol, source.uid.asInt)
-						}, {
-							midiSources.put(
-								(source.device++":"+source.name).asSymbol, source.uid.asInt
-							)
-						})
-					})
-				});
-				sourceNames = midiSources.keys.asArray.sort;
 				midiSourceSelect.items_(
-					[midiSourceSelect.items[0]]++sourceNames
+					[midiSourceSelect.items[0]] ++ this.prExternalSourcesList(midiSources);
 				);
 			});
 
@@ -582,6 +556,22 @@ CVCenterLoadDialog {
 			})
 		});
 		window.front;
+	}
+
+	*prExternalSourcesList { |midiSources|
+		MIDIClient.externalSources.do({ |source|
+			if(midiSources.values.includes(source.uid.asInt).not, {
+				// OSX/Linux specific tweek
+				if(source.name == source.device, {
+					midiSources.put(source.name.asSymbol, source.uid.asInt)
+				}, {
+					midiSources.put(
+						(source.device++":"+source.name).asSymbol, source.uid.asInt
+					)
+				})
+			})
+		});
+		^midiSources.keys.asArray.sort;
 	}
 
 }

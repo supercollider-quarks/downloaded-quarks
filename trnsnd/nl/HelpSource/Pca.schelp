@@ -1,0 +1,6 @@
+title:: Pca
+summary:: pattern cellular automata
+categories:: transnd>pattern
+
+description::
+an abstract class for the subclasses.

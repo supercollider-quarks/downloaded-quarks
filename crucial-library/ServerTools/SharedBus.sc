@@ -1,25 +1,25 @@
 
 SharedBus : Bus {
 
-	var released = false,<>owner;
+	var released = false, <>owner;
 
-	*newFrom { arg bus,owner;
+	*newFrom { arg bus, owner;
 		// only the top owner can free the bus
-		if(bus.isKindOf(SharedBus).not,{
-			^this.new(bus.rate,bus.index,bus.numChannels,bus.server).owner_(owner)
-		},{
+		if(bus.isKindOf(SharedBus).not, {
+			^this.new(bus.rate, bus.index, bus.numChannels, bus.server).owner_(owner)
+		}, {
 			^bus
 		})
 	}
 	releaseBus { arg supposedOwner;
 		// first one (top one) to claim it is the real owner
-		if(owner === supposedOwner,{
+		if(owner === supposedOwner, {
 			released = true;
 			this.free;
 		});
 	}
 	free {
-		if(released,{
+		if(released, {
 			super.free;
 		});
 	}

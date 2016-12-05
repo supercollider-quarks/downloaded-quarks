@@ -16,7 +16,7 @@ EntityRepresentation { var repManager, <>collisionFunc;
     collisionFunc = collisionFunc ?? {{}};
 
     //Do transformation in case there is a camera
-    position = this.cameraTransform(entity) + entity.worldCenter;
+    position = this.cameraTransform(entity);// + entity.worldCenter;
   }
 
 /* public  */

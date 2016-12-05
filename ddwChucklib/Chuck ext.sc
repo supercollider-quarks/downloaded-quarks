@@ -4,7 +4,7 @@
 		// subclass responsibility to implement bind methods for each class
 		// it can receive: aVP.bindVC(aVC) ---> aVoicerProxy.voicer_(aVoicer)
 	=> { |dest, adverb| ^this.chuck(dest, adverb) }
-	
+
 	chuck { |dest, adverb, parms|
 		dest.tryPerform(("bind" ++ this.bindClassName).asSymbol, this, adverb, parms).notNil.if({
 			^dest
@@ -14,11 +14,11 @@
 			^nil
 		});
 	}
-	
+
 		// subclasses of an abstract class can override this to simplify the bind methods
 		// for a chuck receiver
 	bindClassName { ^this.class.name }
-	
+
 	isValidIDictKey { ^false }
 	isPattern { ^false }
 }
@@ -48,26 +48,26 @@
 	play { |...args|
 		this.do({ |item| item.play(*args) });
 	}
-	
+
 	stop { |...args|
 		this.do({ |item| item.stop(*args) });
 	}
-	
+
 	free {
 		this.do(_.free)
 	}
-	
+
 	clearAdapt { this.do(_.clearAdapt) }
-	
+
 	asNoteArray {
 		^this.collect(_.asNoteArray).flat
 	}
-	
+
 		// convert array of freqs, durs, lengths and gates to sequencenotes
 	asNotes {
 		^this.flop.collect(_.asSequenceNote)
 	}
-	
+
 	isValidIDictKey { ^true }
 }
 
@@ -78,13 +78,17 @@
 		var	stream;
 		stream = CollStream(String.new(256));
 		this.streamArgs(stream);
+		// {
+		// 	Document.current
+		// 	.insertTextRange(stream.collection, Document.current.selectedRangeLocation, 0)
+		// }.fork(AppClock);
 		Document.current.selectedString_(stream.collection)
 	}
-	
+
 	listArgs {
 		this.streamArgs(Post);
 	}
-	
+
 	streamArgs { |collstream|
 		(def.argNames.size > 0).if({
 			def.argNames.do({ |name, i|
@@ -102,11 +106,11 @@
 	free {
 		Server.set.do({ |server| server.sendMsg(\d_free, this) });
 	}
-	
+
 	asMode {
 		^Mode(this) ?? { Mode(\default) }
 	}
-	
+
 	prMap { |degree|
 		^this.asMode.prMap(degree)
 	}
@@ -128,7 +132,7 @@
 	free {
 		this.asSymbol.free
 	}
-	
+
 		// needed because Cocoa GUI no longer interprets strings for you
 	draggedIntoMTGui { |gui, index|
 		^this.interpret.draggedIntoMTGui(gui, index)
@@ -175,7 +179,16 @@
 // for importing direct from PR
 
 + Symbol {
-	asProtoImportable { ^PR(this).v }
+	asProtoImportable {
+		if(PR.exists(this)) {
+			^PR(this).v
+		} {
+			MethodError(
+				"Symbol:asProtoImportable: PR(%) does not exist".format(this.asCompileString),
+				this
+			).throw;
+		}
+	}
 
 		// experimental
 	eval { |... args| ^Func(this).value(*args) }

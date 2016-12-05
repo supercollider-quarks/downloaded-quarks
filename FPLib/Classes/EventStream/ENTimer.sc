@@ -23,7 +23,7 @@
 ENTimer {
     var <delta, <maxTime;
     var <>action; //Option[Function]
-    var <task, <t = 0;
+    var <task, <>t = 0;
 
     *new { |delta = 0.1, maxTime = inf|
         ^super.newCopyArgs(delta, maxTime).init;

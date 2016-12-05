@@ -4,6 +4,8 @@
 var	masterLayout, chuckKeyCtl, composeDocKeyResp,
 originalDocInit;	// must maintain independent of environment
 
+var documentClass = 'Document'.asClass;
+
 var	path;
 
 Library.at(\mixer, \smallskin).isNil.if({
@@ -150,7 +152,7 @@ Library.at(\mixer, \smallskin).isNil.if({
 		// and passes key thru
 		~masterLayout.view.keyDownAction_({ |view, char, mods, unicode, keycode|
 			(unicode == 30 and: { (mods bitAnd: 0x40000) > 0 }).if({
-				Document.current.front;
+				documentClass.current.front;
 				}, {
 					chuckKeyCtl.focus.doKey(view, char, mods, unicode, keycode);
 			});
@@ -200,7 +202,7 @@ Library.at(\mixer, \smallskin).isNil.if({
 		~masterLayout.window.bounds = ~controlpanelBounds;
 		// test scrollability
 		(~voicerScroll.respondsTo(\visibleOrigin)).if({
-			~voicerScroll.bounds = ~voicerScroll.bounds.width_(305);
+			~voicerScroll.bounds = ~voicerScroll.bounds.width_(305 * ~voicerColumns);
 			{
 				1.0.wait;
 				~voicerScroll.visibleOrigin = Point(0, 10);
@@ -221,8 +223,8 @@ Library.at(\mixer, \smallskin).isNil.if({
 		// so this whole bit should be skipped
 
 		if(Platform.ideName == "scapp") {
-			~codedoc = Document.new("type code").bounds_(~codedocBounds);
-			Document.listener.bounds = ~postwindowBounds;
+			~codedoc = documentClass.new("type code").bounds_(~codedocBounds);
+			documentClass.listener.bounds = ~postwindowBounds;
 
 			composeDocKeyResp = { |doc|
 				var	oldKeyResp;
@@ -237,15 +239,15 @@ Library.at(\mixer, \smallskin).isNil.if({
 			};
 
 			// enable ctrl-` for all open documents
-			Document.allDocuments.do({ |doc|
+			documentClass.allDocuments.do({ |doc|
 				doc.isListener.not.if({
 					composeDocKeyResp.(doc);
 				});
 			});
 
 			// enable ctrl-` for new documents
-			originalDocInit = Document.initAction;
-			Document.initAction_({ |doc|
+			originalDocInit = documentClass.initAction;
+			documentClass.initAction_({ |doc|
 				originalDocInit.value(doc);
 				//	doc.autoComplete;
 				composeDocKeyResp.(doc);
@@ -263,4 +265,5 @@ Library.at(\mixer, \smallskin).isNil.if({
 
 	}, {
 		"gui already loaded".warn;
+		NotificationCenter.notify(\chucklibGui, \ready);
 });

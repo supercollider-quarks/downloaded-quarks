@@ -1,52 +1,58 @@
-	// Markov chain/generative grammar approach with self-adjusting context depth. 
-	// Nierhaus, de Campo 2008 
-	
+	// Markov chain/generative grammar approach with self-adjusting context depth.
+	// Nierhaus, de Campo 2008
+
+/****** 	possible extensions:
+* force switching when segments get too long? (how to check for that?)
+* choosing could have tendencies, e.g. prefer to stay close,
+		or prefer to switch examples whenever possible.
+******/
+
 ContextSnake : Pattern {
 
 	var <>corpus, <>starter, <>minDepth, <>acceptSingleCond, <>starterLength, <>verbose=false;
-	
-	*new { |corpus, starter, minDepth=4, acceptSingleCond=false, starterLength=4| 
+
+	*new { |corpus, starter, minDepth=4, acceptSingleCond=false, starterLength=4|
 		^super.newCopyArgs(corpus, starter, minDepth, acceptSingleCond, starterLength).init;
-	} 
-	init { 
+	}
+	init {
 		starter ?? { this.randStarter }
 	}
 	randStarter { starter =  corpus.choose.keep(starterLength) }
-	
-	embedInStream { arg inval; 
+
+	embedInStream { arg inval;
 		var predecessor = starter;
 		var candidateIndexPairs, numPairs, chosenSpot, corpusLine, nextVal;
-		
-		var findNext = { 
+
+		var findNext = {
 				// find  successor candidates
 			candidateIndexPairs = this.find(predecessor);
-			if (verbose) { [\candidateIndexPairs, candidateIndexPairs].postln }; 
-			
-			numPairs = candidateIndexPairs.size; 
-			
+			if (verbose) { [\candidateIndexPairs, candidateIndexPairs].postln };
+
+			numPairs = candidateIndexPairs.size;
+
 			numPairs.switch(
-				0, { 
+				0, {
 					if (verbose, { "no successors".postln });
-					nextVal = nil 
+					nextVal = nil
 				},
-				1, { 
+				1, {
 						// if below minimum, or other reasons, accept single choice
-					if ( (predecessor.size <= minDepth) or: 
+					if ( (predecessor.size <= minDepth) or:
 						acceptSingleCond
-					) { 
+					) {
 						if (verbose, { "accepting single".postln });
-						chosenSpot = candidateIndexPairs.first; 
+						chosenSpot = candidateIndexPairs.first;
 						corpusLine = corpus[chosenSpot[0]];
-						
-						nextVal = corpusLine[chosenSpot[1] + predecessor.size]; 
-						if (predecessor.isKindOf(String)) { 
+
+						nextVal = corpusLine[chosenSpot[1] + predecessor.size];
+						if (predecessor.isKindOf(String)) {
 							predecessor = predecessor ++ nextVal;
 						} {
-							predecessor = predecessor.add(nextVal); 
+							predecessor = predecessor.add(nextVal);
 						};
-						
+
 						if (verbose) { "predec: ".post; predecessor.postcs; };
-					} { 
+					} {
 						// else shorten context and try again recursively
 						if (verbose, { \recursion.postcs });
 						predecessor = predecessor.drop(1);
@@ -54,77 +60,77 @@ ContextSnake : Pattern {
 					}
 				},
 				{ 	// more than one option:
-					chosenSpot = candidateIndexPairs.choose; 
-					if (verbose, { [\multi, \chosenSpot, chosenSpot, 
-						\candidateIndexPairs, candidateIndexPairs].postcs 
+					chosenSpot = candidateIndexPairs.choose;
+					if (verbose, { [\multi, \chosenSpot, chosenSpot,
+						\candidateIndexPairs, candidateIndexPairs].postcs
 					});
-					
+
 					corpusLine = corpus[chosenSpot[0]];
 					nextVal = corpusLine[chosenSpot[1]+predecessor.size];
 						// ok, lengthen context
-						if (predecessor.isKindOf(String)) { 
+						if (predecessor.isKindOf(String)) {
 							predecessor = predecessor ++ nextVal;
 						} {
-							predecessor = predecessor.add(nextVal); 
+							predecessor = predecessor.add(nextVal);
 						};
 					nextVal;
 				});
-			
+
 			nextVal;
-		}; 
+		};
 					// yield starter values first
-		predecessor.do { |item| 
-			if (verbose.not) { 
-				inval = item.embedInStream(inval); 
-			} { 
+		predecessor.do { |item|
+			if (verbose.not) {
+				inval = item.embedInStream(inval);
+			} {
 				post("// returning starter: ");
 				inval = item.postln.embedInStream(inval);
 			}
 		};
 					// then if successors are found, yield those.
-		while { nextVal = findNext.value; nextVal.notNil } { 
+		while { nextVal = findNext.value; nextVal.notNil } {
 			if (verbose, { [\context, predecessor, \nextVal, nextVal].postcs });
 			inval = nextVal.embedInStream(inval);
 		};
 		^inval;
 	}
 
-	find { |sublist| 
+	find { |sublist|
 		var indexPairs = [];
-			corpus.do({ |line, i|Ê 
-				var found = line.findAll(sublist);  
-				if (found.notNil) { 
-					indexPairs = indexPairs ++ found.collect({ |where| [i, where] }) 
+			corpus.do({ |line, i|ï¿½
+				var found = line.findAll(sublist);
+				if (found.notNil) {
+					indexPairs = indexPairs ++ found.collect({ |where| [i, where] })
 				};
 			});
 		^indexPairs;
 	}
-	
-	// analysis 
+
+	// analysis
 	vocabulary {
-		var voc = Set[]; 
+		var voc = Set[];
 		corpus.do (voc.addAll(_));
 		^voc;
 	}
-	
-	longestSnippets {  |sample| 
 
-		var snippet, pairs, isEmpty=true, wasEmpty=true, prevSnip, prevPairs; 
-		var allSnips = [], start = 0, end = 0; 
-		
-		while { 
+	longestSnippets {  |sample|
+
+		var snippet, pairs, isEmpty=true, wasEmpty=true, prevSnip, prevPairs;
+		var allSnips = [], start = 0, end = 0;
+
+		while {
 			end = end.max(start);
-			end < sample.size 
-		} { 
+			end < sample.size
+		} {
 			wasEmpty = isEmpty;
 			prevPairs = pairs;
 			prevSnip = snippet;
 
 			snippet = sample.copyRange(start, end);
 			pairs = this.find(snippet);
-			isEmpty = pairs.isEmpty; 
+			isEmpty = pairs.isEmpty;
 
-			if (isEmpty and: wasEmpty.not) { 
+			if (isEmpty and: wasEmpty.not) {
 				// post last valid combination
 				allSnips = allSnips.add([start, end - 1, prevSnip, prevPairs]);
 			};
@@ -137,27 +143,27 @@ ContextSnake : Pattern {
 		};
 		^allSnips;
 	}
-	
+
 	isValidOutput { |sample, snippets|
 
 		var allSnips = snippets ?? { this.longestSnippets(sample) };
 		var numOverlaps = allSnips.size - 1;
-		var shortOverlaps = Array.new(numOverlaps); 
+		var shortOverlaps = Array.new(numOverlaps);
 
-		numOverlaps.do({ |snip, i| 
+		numOverlaps.do({ |snip, i|
 			shortOverlaps.add(allSnips[i][1] - allSnips[i+1][0] + 1)
 		});
 
 		shortOverlaps.postln;
 		^shortOverlaps.every(_ > 0);
 	}
-	
+
 	isNew { |sample|
 		var foundAt = corpus
 			.collect({ |txt, i| [i, txt.find(sample)] })
 			.reject(_.includes(nil));
-			
-		if (foundAt.notEmpty) { 
+
+		if (foundAt.notEmpty) {
 			":::	Sample exists in corpus at:".format(sample).postln;
 			foundAt.do { |pair|
 				"\t[item, index]: % ".format(pair).postln;

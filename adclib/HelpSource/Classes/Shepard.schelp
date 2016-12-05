@@ -1,7 +1,7 @@
 TITLE:: Shepard
 summary:: create interval and amplitude values for Shepard pitch illusions
 categories:: UGens
-related:: ShepardG
+related:: Classes/ShepardG
 
 DESCRIPTION::
 The Shepard effect is the illusion of freely changing the chroma of a tone (the octave-independent notion of its pitch; in equal temperament, also called the pitch class), while keeping its perceived tone height apparently constant, or even moving it in the opposite direction. It is named after Roger Shepard, who first presented a discrete pitch scale with this effect - see http://en.wikipedia.org/wiki/Shepard_tone.

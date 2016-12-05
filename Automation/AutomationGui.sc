@@ -4,7 +4,7 @@
 
    Automation allows to record and playback live changes made to
    other GUI elements in particular, or anything else you wish to
-   setup. 
+   setup.
 
    This is AutomationGui, the class of the Automation Quark that provides
    the transport control GUI to interface with the Automation class.
@@ -23,7 +23,7 @@ AutomationGui {
 
     /*
      Description of Parameters
-     
+
      * automation
          The Automation instance this is the GUI of.
 
@@ -31,7 +31,7 @@ AutomationGui {
          The window that the transport control GUI was put in.
          This is either passed into or automatically created
          by the constructor.
-         
+
      */
 
 
@@ -139,7 +139,7 @@ AutomationGui {
             bounds = nil;
         };
 
-        // simple hack. If the window class' name starts with a 
+        // simple hack. If the window class' name starts with a
         // J as in JSCWindow, we don't need to defer GUI signals.
         // see automation.defer().
         if (("" ++ win.class)[0] == $J){
@@ -238,10 +238,12 @@ AutomationGui {
             bsave.top = bsnap.top + bsnap.height;
             bsave.height = min(bsave.width, 0.1 * bounds.height);
         };
-        saveBtn = GUI.button.new( win, bsave );
-        saveBtn.states = [[ "^", Color.white, Color.grey ]];
-        saveBtn.action = {
-            this.saveDialog;
+        if(automation.showLoadSave){
+            saveBtn = GUI.button.new( win, bsave );
+            saveBtn.states = [[ "^", Color.white, Color.grey ]];
+            saveBtn.action = {
+                this.saveDialog;
+            };
         };
 
         bload = bounds.copy;
@@ -252,10 +254,12 @@ AutomationGui {
             bload.top = bsave.top + bsave.height;
             bload.height = min(bload.width, 0.1 * bounds.height);
         };
-        loadBtn = GUI.button.new( win, bload );
-        loadBtn.states = [[ "...", Color.white, Color.grey ]];
-        loadBtn.action = {
-            this.loadDialog;
+        if(automation.showLoadSave){
+            loadBtn = GUI.button.new( win, bload );
+            loadBtn.states = [[ "...", Color.white, Color.grey ]];
+            loadBtn.action = {
+                this.loadDialog;
+            };
         };
 
         // number field goes to the end
@@ -277,7 +281,11 @@ AutomationGui {
         // slider goes in-between
         bslider = bounds.copy;
         if (bounds.width > bounds.height) {
-            bslider.left = bload.left + bload.width;
+            if(automation.showLoadSave){
+                bslider.left = bload.left + bload.width;
+            } {
+                bslider.left = bsnap.left + bsnap.width;
+            };
             bslider.width = bnr.left - bslider.left;
         }{
             bslider.top = bload.top + bload.height;
@@ -300,18 +308,9 @@ AutomationGui {
             doUpdateTimeSlider = true;
             automation.defer{this.updateTimeGUI(automation.now)};
         }, \mouseUpAction);
-        
-        timeNumberBox.addAction({|view, char, modifiers, unicode, keycode|
-            if (keycode == 27) {
-                doUpdateTimeNumber = true;
-                automation.defer{ this.updateTimeGUI(automation.now) };
-            }{
-                doUpdateTimeNumber = false;
-            };
-        }, \keyDownAction);
 
         timeNumberBox.addAction({
-            doUpdateTimeNumber = false;
+            doUpdateTimeNumber = doUpdateTimeNumber.not;
         }, \mouseDownAction);
 
 
@@ -358,7 +357,7 @@ AutomationGui {
             dwin.front;
         };
     }
-    
+
 
     isMyGuiElement {|guiElement|
         ^ (

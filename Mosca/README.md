@@ -1,0 +1,25 @@
+# Mosca
+
+Homepage: http://escuta.org/mosca
+
+Mosca is a SuperCollider class for GUI-assisted authoring of ambisonic sound fields with simulated moving or stationary sound sources. The class makes extensive use of the Ambisonic Toolkit (ATK, see: http://www.ambisonictoolkit.net/) by Joseph Anderson and the Automation quark (https://github.com/neeels/Automation) by Neels Hofmeyr. Mosca is written by Iain Mott and licensed under a Creative Commons Attribution-NonCommercial 4.0 International License: http://creativecommons.org/licenses/by-nc/4.0/
+
+Sound fields may be decoded using a variety of built in 1st order ambisonic SuperCollider decoders (including binaural) or with external 2nd order decoders such as Ambdec in Linux. Input sources may be any combination of mono, stereo or B-format material and the signals may originate from file, from hardware inputs (physical or from other applications such a DAW via Jack) or from SuperCollider's own synths. In the case of synth input, synths are associated by the user with a particular source in the GUI and registered in a synth registry. In this way, they are spatialised by the GUI and also receive all of the data from the GUI pertaining to the source (eg. x, y and z coordinates and auxiliary fader data). Mosca has its own transport provided by the Automation quark for recording and playback of source data. This may be used independently or may be synchronised to a DAW using Midi Machine Control (MMC) messages. This function has been tested to work with Ardour and Jack.
+
+Mono and stereo sources are encoded as second order ambisonic signals whereas B-format signals remain as 1st order and are angled in space using "push" transformations. Source signals are attenuated proportionally to the inverse of the square root of proximity or in a linear relationship with distance, selectable on a per-source basis via the GUI. All sources are subject to high-frequency attenuation with distance and if decoding is performed by one of the ATK's 1st order decoders, a proximity effect is generated adding a bass boost to proximal sources among other phase effects to simulate wave curvature (see: http://doc.sccode.org/Classes/FoaProximity.html).
+
+Reverberation is performed either using a B-format tail room impulse response (RIR) - the preferred method - or using simple built-in allpass filters, options selectable on creation of a Mosca instance. With both options, two reverberation level controls are included in the GUI to set close and distant levels. A further two reverb types are selectable in the GUI on a per-source basis for both RIR and allpass reverberation modes. The default reverb type uses John Chowning's technique of applying "local" and "global" reverberation to sources (CHOWNING). The "Close" reverberation of the GUI in this case is "global" and is audible by the listener from all directions when the source is close whereas "distant" reverb is "local" in scope and is encoded as a 2nd order ambisonic signal along with the dry signal. This predominates as the source becomes more distant. The second type of reverberation may be described as a "2nd order diffuse A-format reverberation". This technique produces reverberation weighted in the direction of sound events encoded in the dry ambisonic signal and involves conversion to and from A-format in order to apply the effect (ANDERSON). The encoded 2nd order ambisonic signal is converted to a 12-channel A-format signal and then either a) convolved with a B-format RIR which has been "upsampled" to 2nd order and converted to A-format impulse spectrum, or, as in the case of the allpass option, b) passed through a 12-channel bank of allpass filters before being converted back to a 2nd order B-format diffuse signal. Please note that the 2nd order diffuse reverberation may require the user to set a larger audio output buffer and thus increase the latency of the system. The "Chowning" type reverberation is more efficient and the "allpass" option, more still. 
+
+Mosca also has other features including a scalable Doppler Effect on moving sources, looping of sources loaded from file, adjustment of virtual loudspeaker angle of stereo sources and in the case of B-format sources: a rotation control, adjustment of "directivity" (see ATK documentation) and a control of "contraction", whereby the B-format signal may be crossfaded with its W component and which is spatialised as a 2nd order ambisonic signal.
+
+Additionally, Mosca supports methods for making "A-format inserts" on any source spatialised in the GUI. In this way, the user may write a filtering synth and apply it to the sound without disrupting the encoded spatial characteristics.
+
+ACKNOWLEDGEMENTS
+
+Many thanks to Joseph Anderson, Neels Hofmeyr and members of the SuperCollider list for their assistance and valuable suggestions.
+
+REFERENCES
+
+ANDERSON, Joseph. Authoring complex Ambisonic soundfields: An artist's tips & tricks. . In: DIGITAL HYBRIDITY AND SOUNDS IN SPACE JOINT SYMPOSIUM. University of Derby, UK: 2011.
+
+CHOWNING, John M. The Simulation of Moving Sound Sources. Computer Music Journal, v. 1, n. 3, p. 48-52, 1977.

@@ -1,0 +1,49 @@
+TITLE:: SortedNList
+summary:: a limited-size SortedList
+categories:: Undocumented classes
+related:: Classes/SortedList
+
+DESCRIPTION::
+SortedNList can be used to get the first n sorted elements of a longer list.
+more efficient alternative to  list.copy.sort.keep(n);
+
+First code examples:
+
+code::
+// usually make a blank one, and add things
+
+a = (0..10000).scramble;
+bench { a.copy.sort.keep(8) };
+bench {
+	b = SortedNList(8, { |a, b| a > b });
+	a.do (b.add(_)); b;
+};
+
+bench {
+	b = SortedNList(8, { |a, b| a > b });
+	b.addAll(a); b;
+};
+
+// or if made from scratch, adjust size and sort:
+a = SortedNList[1, 2, 3, 6, 4];
+a.maxSize_(4).sort;
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+argument:: maxSize
+argument:: function
+
+INSTANCEMETHODS::
+
+METHOD:: maxSize
+
+METHOD:: add
+argument:: item
+
+METHOD:: addAll
+argument:: aColl
+
+METHOD:: sort
+

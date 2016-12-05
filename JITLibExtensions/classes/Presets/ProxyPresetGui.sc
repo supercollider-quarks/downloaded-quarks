@@ -79,9 +79,11 @@ ProxyPresetGui : JITGui {
 		.font_(font)
 		.action_({ |but, modif|
 			// cocoa and swingosc -alt mod.
-			var rand = if ([524576, 24].includes(modif)) {
-				object.setRand(1.0) } { object.setRand  };
-
+			var rand = if (modif.isAlt) {
+				object.setRand(exprand(0.25, 1.0))
+			} {
+				object.setRand(exprand(0.01, 0.25));
+			};
 		});
 
 		Button(zone, Rect(0,0, 40, butHeight))
@@ -167,14 +169,15 @@ ProxyPresetGui : JITGui {
 			setLPop.items = newState[\setNames];
 			setRPop.items = newState[\setNames];
 		};
-		if (prevState[\currIndex] != newState[\currIndex]) {
-			setLPop.value = newState[\currIndex];
-			setLBox.value = newState[\currIndex];
 
+		if (prevState[\currIndex] != newState[\currIndex]) {
+			setLPop.value = newState[\currIndex] ? 0;
+			setLBox.value = newState[\currIndex] ? 0;
 		};
+
 		if (prevState[\targIndex] != newState[\targIndex]) {
-			setRPop.value = newState[\targIndex];
-			setRBox.value = newState[\targIndex];
+			setRPop.value = newState[\targIndex] ? -1;
+			setRBox.value = newState[\targIndex] ? -1;
 		};
 
 		if (prevState[\morphVal] != newState[\morphVal]) {
@@ -182,6 +185,7 @@ ProxyPresetGui : JITGui {
 		};
 
 		if (proxyGui.notNil) { proxyGui.checkUpdate; };
+		prevState = newState;
 	}
 }
 

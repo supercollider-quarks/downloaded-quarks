@@ -1,7 +1,7 @@
 classmethods::
 
 method:: available
-Return the font defined by code::name:: if available, otherwise return code::nil::
+Return the font-name defined by code::name:: if the font is available on the user's machine, otherwise return code::nil::
 code::
 Font.available("Arial");
 Font.available("ywrsdstr");

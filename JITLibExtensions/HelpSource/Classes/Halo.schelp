@@ -1,6 +1,6 @@
 TITLE:: Halo
 summary:: associate a halo of meanings to any object.
-categories:: Libraries/JITLib
+categories::Live Coding
 related:: Classes/Library, Classes/Ndef, Classes/Tdef, Classes/Pdef
 
 DESCRIPTION::

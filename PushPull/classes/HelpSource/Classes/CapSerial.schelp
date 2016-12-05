@@ -1,0 +1,108 @@
+TITLE:: CapSerial
+summary:: read serial messages from a PSoC4 capacitive sensing chip connected via USB
+categories:: Control, Sensing
+related:: Classes/PushPullOSC, Classes/PushPullOSC_SE
+
+DESCRIPTION::
+Convenience class to read and parse serial messages from a PSoC4 capacitive sensing chip connected via USB as it is built into the PushPull.
+
+
+code::
+q = ();
+
+/* check if this is the device
+SerialPort.devices; // */
+
+q.device = "/dev/tty.usbmodem*".pathMatch[0];
+
+q.serial = SerialPort(q.device,
+	baudrate: 115200,
+	databits: 8,
+	stopbit: 1,
+	parity: nil,
+);
+
+// create an instance of CapSerial
+q.caps = CapSerial(q.serial);
+
+q.caps.trace = true;  // start tracing
+q.caps.trace = false; // stop tracing
+
+q.caps.tareCap(true);  // start tareing
+q.caps.tareCap(false); // stop tareing
+
+// assign minma values to compute normed vals
+q.caps.capMinMax = [ [ 0, 0 ], [ 0, 16383 ], [ 0, 0 ], [ 0, 0 ], [ 0, 9802 ], [ 0, 15940 ] ];
+
+
+// assign a function to be evaluated when new data was succesfully parsed
+(
+q.caps.capAction = {|... args|
+	args.postln;
+};
+)
+
+
+////////////////////
+// or look at it in a bargraph
+
+(
+q.caps.capAction = {|vals|
+	q.allVectors = vals;
+	q.xy = vals.keep(2);
+};
+
+(
+q.win = Window.new.decorate.front;
+q.barview = MultiSliderView(q.win, q.win.bounds.extent * [0.2, 0.4]).size_(q.numVals);
+
+q.sliderview = Slider2D(q.win, q.win.bounds.extent * [0.4, 0.4]);
+);
+
+
+(
+q.skippy.notNil.if{q.skippy.stop};
+q.skippy = SkipJack({
+	q.barview.valueAction = q.allVectors;
+	q.sliderview.setXYActive(*(q.xy));
+
+}, 0.1);
+);
+q.skippy.dt = 0.1;
+)
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+argument:: serialPort
+
+create a new instance that listens to serialPort.
+
+
+INSTANCEMETHODS::
+
+METHOD:: capRawVals
+METHOD:: capNormVals
+returns:: normalised resp. raw values of the last succesful sensor reading.
+
+
+METHOD:: capAction
+Action that is evaluated for each update of the capacitive sensors readings (progressive).
+
+
+METHOD:: trace
+enable/disable tracing
+
+
+METHOD:: tareCap
+argument:: isOn
+
+Enable/disable tareing of the capacitive sensing.
+
+METHOD:: capMinMax
+returns:: array of minima and maxima of capacitive sensors as given by tareCap.
+
+
+PRIVATE:: init, capResp, pr_normalizeCap, pr_makeResponders, pr_tareCap
+

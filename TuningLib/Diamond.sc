@@ -7,7 +7,7 @@ Diamond
 	// an object which holds one row of a tuning table based on overtones
 
 	/*@
-	shortDesc: An object which holds one row of a tuning table based on overtones
+	shortDesc: An N-limit tonality diamond
 	longDesc: An N-limit tonaility diamond, as used by Harry Partch.
 
 With a 9-limit diamond in base 2, one row looks like:
@@ -24,26 +24,26 @@ It also is able to generate and navigate a 2 dimentinal table:
 	@*/
 
 
-	var <>overtones, /*<>otonality, <>utonality,*/ <>lastPivot, base;
+	var <>identities, /*<>otonality, <>utonality,*/ <>lastPivot, base;
 
-	*new { arg otones = nil, base = 2;
+	*new { arg identities = nil, base = 2;
 
 	/*@
-	desc: Creates a new Daimond
-	otones: An array of numbers to use for numerators in otonality. Defaults to
+	desc: Creates a new Diamond
+	identities: An array of numbers to use for numerators in otonality. Defaults to
 	[ 2, 5, 3, 7, 9, 11, 13, 15, 17, 19, 21, 23]
 	base: For octave based systems, this is 2, but if you wanted to base your system on 3s,
 	you could use that instead. Defaults to 2.
 	ex:
-	l = Diamond.new([2, 5, 3, 7, 9]);
+	d = Diamond.new([2, 5, 3, 7, 9]);
 	// generates 1/1	5/4	3/2	7/4	9/8 for otonality as described above
 	@*/
-		if (otones.notNil, {
-			if (otones.isKindOf(SimpleNumber), {
-				^Diamond.limit(otones, base);
+		if (identities.notNil, {
+			if (identities.isKindOf(SimpleNumber), {
+				^Diamond.limit(identities, base);
 		})});
 
-		^super.new.init(otones, base);
+		^super.new.init(identities, base);
 	}
 
 	*limit {arg limit=5, base=2;
@@ -91,16 +91,16 @@ It also is able to generate and navigate a 2 dimentinal table:
 
 
 
-	init { arg otones = nil, bas = 2;
+	init { arg ids = nil, bas = 2;
 
 		var numerator, denominator;
 
 		base = bas;
 
-		if (otones == nil , {
-			overtones  = [ 2, 5, 3, 7, 9, 11, 13, 15, 17, 19, 21, 23];
+		if (ids == nil , {
+			identities  = [ 2, 5, 3, 7, 9, 11, 13, 15, 17, 19, 21, 23];
 		} , {
-			overtones = otones;
+			identities = ids;
 		});
 
 		// Instead of computing these arrays, we'll just adjust the octave as needed.
@@ -168,7 +168,47 @@ It also is able to generate and navigate a 2 dimentinal table:
 	}
 
 
-	makeOvertoneIntervals { arg start, orientation, niad=3;
+	// changed API section
+
+	overtones {
+		//DeprecatedError(this, \overtones, \identities, Diamond).throw;
+		this.deprecated(thisMethod, Diamond.findMethod(\identities));
+		^this.identities;
+	}
+
+	overtones_{|item|
+		//DeprecatedError(this, \overtones_, \identities_, Diamond).throw;
+		this.deprecated(thisMethod, Diamond.findMethod(\identities));
+		^this.identities_(item);
+	}
+
+	makeOvertoneIntervals {|start, orientation, niad=3|
+		//DeprecatedError(this, \makeOvertoneIntervals, \d1Intervals, Diamond).throw;
+		this.deprecated(thisMethod, Diamond.findMethod(\d1Intervals));
+		^this.d1Intervals(start, orientation, niad);
+	}
+	makeTriad {|identitity, orientation|
+       //DeprecatedError(this, \makeTriad, \d1Triad, Diamond).throw;
+		this.deprecated(thisMethod, Diamond.findMethod(\d1Triad));
+		^this.d1Triad(identitity, orientation);
+	}
+
+	makeNiad {|identity,orientation, n=3|
+       //DeprecatedError(this, \makeNiad, \d1Niad, Diamond).throw;
+		this.deprecated(thisMethod, Diamond.findMethod(\d1Niad));
+		^this.d1Niad(identity,orientation, n);
+	}
+
+	getOvertoneInterval {|index, orientation|
+		//DeprecatedError(this, \getOvertoneInterval, \d1Interval, Diamond).throw;
+		this.deprecated(thisMethod, Diamond.findMethod(\d1Interval));
+		^this.d1Interval(index, orientation);
+	}
+
+
+	// real methods
+
+	d1Intervals { arg start, orientation, niad=3;
 	/*@
 	desc: For a given index, return a n-iad of ratios
 	start: The index in the lattice row in which to start. This wraps if need be.
@@ -177,8 +217,8 @@ It also is able to generate and navigate a 2 dimentinal table:
 	The n-iad is computed in regards to the base.
 	ex:
 	d = Diamond.new([2, 5, 3, 7, 9]);
-	d.makeOvertoneIntervals(4, true); // returns [9/8, 2/2, 5/4]
-	d.makeOvertoneIntervals( 2, false); // returns [4/3, 8/7, 16/9]
+	d.make1dIntervals(4, true); // returns [9/8, 2/2, 5/4]
+	d.make1dIntervals( 2, false); // returns [4/3, 8/7, 16/9]
 	@*/
 
 		// this method returns a triad of three notes above the start
@@ -208,7 +248,7 @@ It also is able to generate and navigate a 2 dimentinal table:
 		arr = Array.series(niad); // do the offsets
 
 		result = arr.collect({arg offset;
-			overtones.wrapAt(start + offset);
+			identities.wrapAt(start + offset);
 		});
 
 		if ( orientation,
@@ -226,38 +266,36 @@ It also is able to generate and navigate a 2 dimentinal table:
 		^result;
 	}
 
-	makeTriad { arg interger, orientation;
+	d1Triad { arg identity, orientation;
 		/*@
 		desc: for a given numerator or denominator, return a triad of ratios
-		interger: the numerator or denominator for the first item in the triad. The triad will wrap around if three spaces past the integer goes beyond the limit.
+		identity: the numerator or denominator for the first item in the triad. The triad will wrap around if three spaces past the integer goes beyond the limit.
 		orientation: Use true for utonality or false for otonailty.
 		ex:
 		d = Diamond.limit(9);
-		d.makeTriad(7, true); // returns [7/4, 9/8, 2/2]
+		d.d1Triad(7, true); // returns [7/4, 9/8, 2/2]
 		@*/
 
-		var index;
 
-		index = this.pr_indexOf(interger);
-		^this.makeOvertoneIntervals(index, orientation, 3);
+		^this.d1Niad(identity, orientation, 3);
 
 	}
 
-	makeNiad { arg interger, orientation, n=3;
+	d1Niad { arg identity, orientation, n=3;
 		/*@
 		desc: for a given numerator or denominator, return a chord of n ratios
-		interger: the numerator or denominator for the first item in the triad. The triad will wrap around if three spaces past the integer goes beyond the limit.
+		identity: the numerator or denominator for the first item in the triad. The triad will wrap around if three spaces past the integer goes beyond the limit.
 		orientation: Use true for utonality or false for otonailty.
 		n: the number of conitguious ratios for the N-iad;
 		ex:
 		d = Diamond.limit(9);
-		d.makeTriad(7, true); // returns [7/4, 9/8, 2/2]
+		d.d1Niad(7, true); // returns [7/4, 9/8, 2/2]
 		@*/
 
 		var index;
 
-		index = this.pr_indexOf(interger);
-		^this.makeOvertoneIntervals(index, orientation, n);
+		index = this.pr_indexOf(identity);
+		^this.d1Intervals(index, orientation, n);
 	}
 
 	makeIntervals { arg x, y, orientation, niad=3;
@@ -281,16 +319,16 @@ It also is able to generate and navigate a 2 dimentinal table:
 		if (orientation, {
 
 			result = arr.collect({ arg offset;
-				Diamond.adjustOctave(overtones.wrapAt(x + offset) /
-					overtones.wrapAt(y)) });
+				Diamond.adjustOctave(identities.wrapAt(x + offset) /
+					identities.wrapAt(y)) });
 				//overtones.at((x + offset) % overtones.size) /
 				//	overtones.at(y % overtones.size);
 			//});
 
 		} , {
 			result = arr.collect({ arg offset;
-				Diamond.adjustOctave(overtones.wrapAt(x) /
-					overtones.wrapAt(y + offset)) });
+				Diamond.adjustOctave(identities.wrapAt(x) /
+					identities.wrapAt(y + offset)) });
 
 				//overtones.wrapAt(x) /
 				//	overtones.wrapAt(y + offset);
@@ -300,7 +338,26 @@ It also is able to generate and navigate a 2 dimentinal table:
 		^result;
 	}
 
-	getOvertoneInterval { arg index, orientation;
+	niad { arg numerator, denominator, orientation, n;
+		/*@
+		desc: for a given numerator and denominator, return a chord of n ratios
+		numerator: the numerator for the first item in the triad. The triad will wrap around if three spaces past the integer goes beyond the limit.
+		denominator: the denominator for the first item in the triad. The triad will wrap around if three spaces past the integer goes beyond the limit.
+		orientation: Use true for utonality or false for otonailty.
+		n: the number of conitguious ratios for the N-iad;
+		ex:
+		d = Diamond.limit(9);
+		d.niad(7, 2, true); // returns [7/4, 9/8, 2/2]
+		@*/
+
+		var x, y;
+		x = this.pr_indexOf(numerator);
+		y = this.pr_indexOf(denominator);
+
+		^this.makeIntervals(x, y, orientation, n);
+	}
+
+	d1Interval { arg index, orientation;
 
 		/*@
 		desc: Returns the fraction at the index
@@ -316,9 +373,9 @@ It also is able to generate and navigate a 2 dimentinal table:
 
 		if (orientation, {
 
-			result = overtones.at(index % overtones.size) / base;
+			result = identities.wrapAt(index) / base;
 		} , {
-			result = base / overtones.at(index % overtones.size);
+			result = base / identities.warpAt(index);
 		});
 
 		^Diamond.adjustOctave(result, base);
@@ -336,7 +393,7 @@ It also is able to generate and navigate a 2 dimentinal table:
 		var result;
 
 
-		result = overtones.wrapAt(x) / overtones.wrapAt(y);
+		result = identities.wrapAt(x) / identities.wrapAt(y);
 
 		^Diamond.adjustOctave(result, base);
 	}
@@ -378,17 +435,17 @@ It also is able to generate and navigate a 2 dimentinal table:
 
 		if (orientation, {
 
-			pivotx = (x + niad.rand) % overtones.size;
+			pivotx = (x + niad.rand) % identities.size;
 			pivoty = y;
-			startx = (pivotx - niad.rand) % overtones.size;
+			startx = (pivotx - niad.rand) % identities.size;
 			starty = y;
 
 		} , {
 
 			pivotx = x;
-			pivoty = (y + niad.rand) % overtones.size;
+			pivoty = (y + niad.rand) % identities.size;
 			startx = x;
-			starty = (pivoty - niad.rand) % overtones.size;
+			starty = (pivoty - niad.rand) % identities.size;
 
 		});
 
@@ -396,7 +453,7 @@ It also is able to generate and navigate a 2 dimentinal table:
 
 	}
 
-	d2WalkXY { arg startX, startY, orientation, niad=3;
+	d2WalkXY { arg x, y, orientation, niad=3;
 
 	/*@
 	desc: Start walking based on a start point, describe by o[x]/o[y].
@@ -409,6 +466,13 @@ It also is able to generate and navigate a 2 dimentinal table:
 	undertones will change in the pivot for the first step. This will alternate for every step.
 		niad: The number of contigious ratios to return in the chord
 		@*/
+
+		var startX, startY;
+
+		startX = x;
+		startY = y;
+
+
 		^Routine({
 			var x, y, orient, arr;
 
@@ -465,7 +529,7 @@ It also is able to generate and navigate a 2 dimentinal table:
 		arr = this.d2Pivot(x, y, orientation);
 		x = arr[0];
 		y = arr[1];
-		^[makeIntervals(x, y, orientation, niad), [overtones.wrapAt(x), overtones.wrapAt(y)]]
+		^[makeIntervals(x, y, orientation, niad), [identities.wrapAt(x), identities.wrapAt(y)]]
 	}
 
 	pivotxy { arg x,y, orientation, niad=3;
@@ -485,7 +549,7 @@ It also is able to generate and navigate a 2 dimentinal table:
 		arr = this.d2Pivot(x, y, orientation);
 		x = arr[0];
 		y = arr[1];
-		^[this.makeIntervals(x, y, orientation, niad), [x % overtones.size, y % overtones.size]]
+		^[this.makeIntervals(x, y, orientation, niad), [x % identities.size, y % identities.size]]
 	}
 
 	pr_indexOf{ arg digit;
@@ -511,16 +575,44 @@ It also is able to generate and navigate a 2 dimentinal table:
 
 		if (digit < base, { digit = base});
 
-		^overtones.indexOf(digit);
+		^identities.indexOf(digit);
 	}
+
+	postln {
+		var ratio, str, n, d;
+
+		str = "";
+
+		identities.do({|i|
+			identities.do({|j|
+				n = j;
+				d = i;
+				ratio = n/d;
+
+				{ratio < 1}.while ({
+					n = n *base;
+					ratio = n/d;
+				});
+				{ratio >= base}.while ( {
+					d = d *base;
+					ratio = n/d
+					//ratio.postln;
+				});
+
+				if (n == d, {
+					n = 1;
+					d = 1;
+				});
+
+				str = str + "%/% ".format(n, d);
+			});
+			str = str ++ "\n";
+		});
+
+		str.postln;
+	}
+
+	post { this.postln }
+
 }
 
-Lattice : Diamond {
-
-	* new { arg otones = nil, base = 2;
-
-		DeprecatedError(this, "Lattice", "Diamond", Diamond).throw
-
-		^super.new.init(otones, base);
-	}
-}

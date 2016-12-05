@@ -1,0 +1,114 @@
+TITLE:: MicKeySynth
+summary:: key and mouse interface synth
+categories:: transnd>ui
+related:: Classes/MicKeyWindow, Classes/MicKeyFunc
+
+DESCRIPTION::
+A convenient subclass (of MicKeyFunc) to define and trigger grain synth (must free itself).
+
+CLASSMETHODS::
+
+METHOD:: new
+
+argument:: key
+UTF8 key character as a Symbol
+
+argument:: func
+an UGenGraphFunc
+
+METHOD:: free
+argument:: key
+free this key
+
+METHOD:: freeAll
+clean everything up
+
+INSTANCEMETHODS::
+private:: initMicKeySynth, wrapFunc
+
+EXAMPLES::
+code::
+
+s.boot;
+
+// read soundfile
+~buf = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav");
+
+// bring the window listening to my actions
+MicKeyWindow.front;
+
+
+// 1. evaluate the code block below
+// 2. go back to window
+// 3. play keys 'a, s, d, f' with mouse movements and horizontal scroll
+(
+// ----------------------------------------------------------specs
+~mxSpec    = [0, MicKeyWindow.width].asSpec;//0 is left
+~panSpec   = \pan.asSpec;//mouse x position pan
+
+~mySpec    = [0, MicKeyWindow.height].asSpec;//0 is top
+~freqSpec  = [1000, 500, \exp].asSpec;//mouse y position frequency
+
+~timerSpec = [0.03, 0.5].asSpec;//duration between key down & up
+~rateSpec  = [2, 0.5].asSpec;//buffer rate
+
+// ----------------------------------------------------------synthi
+// key 'a' is dust noise
+// mx is pan position
+MicKeySynth(\a, { |mx|
+	var sig, env;
+	sig = Dust.ar(40, 0.1);
+	env = EnvGen.kr(Env.linen(0.01, 0.9, 0.09), doneAction: 2);
+	sig = sig * env;
+	sig = Pan2.ar(sig, ~panSpec.map(~mxSpec.unmap(mx)));
+	Out.ar(0, sig);
+});
+
+// key 's' is sine oscillator
+// my is frequency
+MicKeySynth(\s, { |my|
+	var sig, env;
+	sig = SinOsc.ar(~freqSpec.map(~mySpec.unmap(my)), 0, -30.dbamp);
+	env = EnvGen.kr(Env.linen(0.01, 0.9, 0.09), doneAction: 2);
+	sig = sig * env;
+	sig = Pan2.ar(sig, 0);
+	Out.ar(0, sig);
+});
+
+// key 'd' is buffer sound
+// mouse scroll dx is playback rate in both directions
+// with some laptops you get nice inertial effects
+MicKeySynth(\d, { |dxBus|
+	var sig, env;
+	sig = PlayBuf.ar(1, ~buf, dxBus/10, loop: 1);
+	env = EnvGen.kr(
+		Env.linen(0.01, 0.9, 0.09), 1, 0.2, 0, 3, 2);
+	sig = sig * env;
+	sig = Pan2.ar(sig, 1);
+	Out.ar(0, sig);
+});
+
+// key 'f' is buffer sound too
+// key duration is frequency & duration
+MicKeySynth(\f, { |timer|
+	var sig, env;
+	var rate = ~rateSpec.map(~timerSpec.unmap(timer));
+	sig = PlayBuf.ar(1, ~buf, rate, loop: 1);
+	env = EnvGen.kr(
+		Env.linen(0.01, 0.9, 0.09), 1, 0.1, 0,
+		BufDur.ir(~buf) * rate.reciprocal, 2
+	);
+	sig = sig * env;
+	sig = Pan2.ar(sig, -0.5);
+	Out.ar(0, sig);
+});
+)
+
+// clean up
+MicKeySynth.freeAll;
+
+// if you happen to have close the window
+MicKeyWindow.front;
+
+// you also need to define MicKeySynth(i) again
+::

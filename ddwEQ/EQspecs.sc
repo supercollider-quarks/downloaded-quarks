@@ -59,10 +59,11 @@ MultiEQ {	// container for specifications for an EQ bank
 	
 	asString { 		var out;		out = "MultiEQ.new(" ++ numChannels ++ ", ";   // initialize string		spec.do( {		// loop through filters			arg s, i;			(i > 0).if({ out = out ++ ", " });  // skip comma for first eq			out = out ++ "\\" ++ s.type				++ ", " ++ s.freq.round(0.001)				++ ", " ++ s.k.ampdb.round(0.001) ++ ".dbamp"				++ ", " ++ s.rq.round(0.001);		});		^(out ++ ")")	}		edit { arg targ, b, addAct = \addToTail, amp = 1;	// just like .play
 			// assumes your synth or process is already playing
+		var wasPlaying = isPlaying;
 		isPlaying.not.if({ this.play(targ, b, addAct, amp); });  // should be playing to edit
-		MultiEQGUI.new(this, 
+		MultiEQGUI.new(this,
 			targ.tryPerform(\name) ++ " EQ Editor",
-			\edit);	// gui needs to know I called, so it can
+			if(wasPlaying.not) { \edit });	// gui needs to know I called, so it can
 					// stop the eq on close (& target?)
 			// when window closes, edited specs will be printed
 	}
@@ -97,6 +98,12 @@ StaticEQ {
 			},
 			\hipass -> { arg in, k, freq;
 				HPF.ar(in, freq)
+			},
+			\blopass -> { |in, k, freq, rq|
+				BLowPass.ar(in, freq, rq)
+			},
+			\bhipass -> { |in, k, freq, rq|
+				BHiPass.ar(in, freq, rq)
 			},
 			\loshelf -> { arg in, k, b1;
 				var allpass;

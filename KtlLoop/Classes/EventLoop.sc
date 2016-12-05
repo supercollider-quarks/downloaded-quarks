@@ -1,4 +1,3 @@
-// replaces TimeLoop and descendants
 
 EventLoop {
 
@@ -9,7 +8,7 @@ EventLoop {
 	var <key, <func;
 	var <list, <task, <isRecording = false;
 	var recStartTime, then;
-	var <>keysToRecord;
+	var <>nonRecordingKeys;
 
 	var <verbosity = 1;
 
@@ -76,7 +75,7 @@ EventLoop {
 	toggleLooped { this.looped_(this.looped.not) }
 
 	tempo { ^task.get(\tempo) }
-	tempo_ { |val| task.set(\tempo, val) }
+	tempo_ { |val| task.set(\tempo, val); }
 
 	step { ^task.get(\step) }
 	step_ { |val| task.set(\step, val) }
@@ -107,6 +106,8 @@ EventLoop {
 			var calcIndexInRange = {
 				indexInRange = (index >= minIndex) and: { index <= maxIndex };
 			};
+
+			this.stopRec;
 
 			if (envir.verbosity > 0) {
 				(envir[\postname] + "plays list of % events and % secs.")
@@ -153,6 +154,8 @@ EventLoop {
 			if (envir.verbosity > 0) { (envir[\postname] + "ends.").postln; };
 
 		});
+
+		task.clock_(TempoClock.new.permanent_(true));
 
 		task.set(\postname, this.asString);
 		task.set(\verbosity, 1);
@@ -262,7 +265,7 @@ EventLoop {
 		task.stop.play;
 	}
 
-	togglePlay { if (task.isPlaying, { this.stop }, { this.play }); }
+	togglePlay { if (task.isActive, { this.stop }, { this.play }); }
 
 	stop {
 		if (verbosity > 0) { "  %.stop;\n".postf(this) };
@@ -272,6 +275,7 @@ EventLoop {
 	pause { task.pause; }
 	resume { task.resume; }
 	isPlaying { ^task.isPlaying; }
+	isActive { ^task.isActive; }
 
 	// could be more flexible
 	playOnce {
@@ -325,6 +329,22 @@ EventLoop {
 
 KeyLoop : EventLoop {
 	var <>actionDict;
+	var <keysToIgnore;
+
+	init {
+		keysToIgnore = [];
+		super.init;
+
+	}
+
+	ignore { |...keys|
+		keys.do { |key|
+			key = key.asUnicode;
+			if (keysToIgnore.indexOf(key).isNil) {
+				keysToIgnore = keysToIgnore.add(key);
+			};
+		}
+	}
 
 	// assume single-depth key dict by default:
 	defaultFunc { ^{ |ev| actionDict[ev[\key]].value.postln }; }
@@ -344,7 +364,11 @@ KeyLoop : EventLoop {
 	// this is kept as is for backwards compat,
 	// maybe unify later.
 	recordEvent { |key, type|
-		if (key.notNil) { key = key.asUnicode };
-		super.recordEvent((unicode: key, type: type));
+		if (key.notNil) { key = key.asUnicode } {
+			^this
+		};
+		if (keysToIgnore.indexOf(key).isNil) {
+			super.recordEvent((unicode: key, type: type));
+		};
 	}
 }

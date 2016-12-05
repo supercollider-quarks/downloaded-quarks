@@ -1,0 +1,54 @@
+TITLE:: AbstractMIDISocket
+summary:: Abstract superclass of all ddwMIDI sockets
+categories:: External Control>MIDI
+related:: Guides/ddwMIDI_Guide
+
+DESCRIPTION::
+This class implements behavior that is common to all MIDI sockets. You will not use this class directly in normal cases.
+
+If you need to define a custom socket, inherit from this class.
+
+
+CLASSMETHODS::
+
+METHOD:: new
+Creates an instance of the socket subclass being invoked. Arguments are generic, and are forwarded to the subclass's code::init:: method.
+
+ARGUMENT:: chan
+The messages' source. See link::Guides/ddwMIDI_Guide#Identifying MIDI channels::.
+
+ARGUMENT:: destination
+In general, sockets target another object: a link::Classes/VoicerMIDISocket:: addresses messages to a link::Classes/Voicer::. This target object is the destination.
+
+ARGUMENT::  ... args
+Additional arguments are up to the subclass.
+
+returns:: The socket instance.
+
+
+INSTANCEMETHODS::
+
+METHOD:: free
+Remove the socket completely from the ddwMIDI hierarchy.
+
+METHOD:: destination
+returns:: The socket's target object.
+
+METHOD:: parent
+returns:: The socket's parent link::Classes/MIDIChannel:: object. From this, you can get information about the device and channel from which the socket is receiving messages.
+
+METHOD:: enable
+Move the socket to the parent link::Classes/MIDIChannel::'s list of enabled sockets. The socket will then respond to incoming messages.
+
+METHOD:: disable
+Move the socket to the parent link::Classes/MIDIChannel::'s list of disabled sockets. The socket will not respond to incoming messages, but it remains intact so that you can reenable it at any time.
+
+METHOD:: clear
+Subclasses may implement code::clear:: to keep the socket registered in the hierarchy, but become inactive.
+
+METHOD:: init
+Subclasses should implement code::init:: for their specific requirements. Users should not call code::init:: directly.
+
+
+PRIVATE:: prInit
+

@@ -11,6 +11,7 @@ Halo : Library {
 
 	*put { |...args|
 		lib.put(*args);
+		args[0].changed(*args[1..]);
 	}
 
 	*at { | ... keys| ^lib.at(*keys); }
@@ -66,17 +67,19 @@ Halo : Library {
 		this.checkSpec;
 		if (pairs.notNil) {
 			pairs.pairsDo { |name, spec|
-				Halo.put(this, \spec, name, spec.asSpec);
+				if (spec.notNil) { spec = spec.asSpec };
+				Halo.put(this, \spec, name, spec);
 			}
 		};
 	}
 
 	getSpec { |name|
-		var specs = this.checkSpec;
+		var spec;
+		var specs = Halo.at(this, \spec);
 		if (name.isNil) { ^specs };
-		^(specs.at(name) ?? {name.asSpec});
+		if (specs.notNil) { spec = specs.at(name) };
+		^spec ?? { name.asSpec }
 	}
-
 
 	addTag { |name, weight = 1|
 		Halo.put(this, \tag, name, weight);

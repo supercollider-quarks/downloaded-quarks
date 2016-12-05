@@ -1,0 +1,19 @@
+(
+name:		"Log",
+summary:	"A simple and flexible logging class.",
+author:		"scott@artificia.org",
+copyright:	"Frank Scott Carver, 2013",
+license:	"MIT",
+version: 	"0.1.0",
+schelp: 	"Log",
+test:		"Test/Log_unittest.scd",
+url:		"https://github.com/scztt/log.quark",
+dependencies:	[
+	"Singleton@1.0.0",
+	"WindowViewRecall@1.0.0",
+	"UnitTesting@2a8f5e18aaa7cd25968ec094bbfa75a7fb3094b6"
+],
+isCompatible:	true,
+since:		"2013"
+)
+

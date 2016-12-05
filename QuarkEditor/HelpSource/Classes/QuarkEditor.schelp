@@ -1,0 +1,103 @@
+TITLE:: QuarkEditor
+summary:: A class providing editing functionality for a quark file.
+categories:: Language
+related:: Classes/QuarkEditorView
+
+DESCRIPTION::
+This class provides methods to facilitate easy editing and validation of a Quark file, as well as notifications when fields are changed.
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new editor for a quark file.
+
+ARGUMENT:: path
+Path to a .quark file or directory.
+
+ARGUMENT:: create
+Boolean. If true, create a new quark if the specified path doesn't exist.
+
+
+INSTANCEMETHODS::
+
+METHOD:: name
+Get/set the "name" field of the quark file.
+
+METHOD:: dependencies
+Get/set the "dependencies" field of the quark file. This field takes/returns a list of strings.
+
+METHOD:: schelp
+Get/set the "schelp" field of the quark file.
+
+METHOD:: version
+Get/set the "version" field of the quark file.
+
+METHOD:: isCompatible
+Get/set the "isCompatible" field of the quark file.
+
+METHOD:: since
+Get/set the "since" field of the quark file.
+
+METHOD:: summary
+Get/set the "summary" field of the quark file.
+
+METHOD:: test
+Get/set the "test" field of the quark file. This should point to an .scd file that runs unit tests for the Quark.
+
+METHOD:: copyright
+Get/set the "copyright" field of the quark file.
+
+METHOD:: license
+Get/set the "license" field of the quark file.
+
+METHOD:: url
+Get/set the "url" field of the quark file.
+
+METHOD:: author
+Get/set the "author" field of the quark file.
+
+METHOD:: scversion
+Get/set the "scversion" field of the quark file.
+
+
+METHOD:: save
+Save changes to the quark file.
+
+METHOD:: load
+Load data from the quark file. This will destroy any unsaved changes made via the QuarkEditor.
+
+METHOD:: validate
+Validate the Quark file. This will detect possible problems including missing fields, unlisted dependencies, etc.
+Note that this operation is asynchronous, so the results may not be immediately available in the link::Classes/QuarkValidator:: that is returned.
+
+ARGUMENT:: doneAction
+A function to be executed when the validation has finished. The first argument is the link::Classes/QuarkValidator:: object.
+
+returns:: A link::Classes/QuarkValidator::.
+
+METHOD:: createHelpFiles
+Create template schelp files for any undocumented classes defined in the Quark.
+
+METHOD:: addDependency
+Add a dependency to the list of dependencies.
+
+ARGUMENT:: dependency
+A string of the form "Dependency" or "Dependency@1.2.3".
+
+EXAMPLES::
+
+code::
+"~/Desktop/TestQuark".standardizePath.mkdir;
+q = QuarkEditor("~/Desktop/TestQuark/TestQuark.quark".standardizePath, true);
+q.name = "TestQuark";
+q.author = "a sc developer";
+q.copyright = "2015";
+q.save();
+q.validate({
+	|validator|
+	validator.errors.do {
+		|error|
+		"Error: %".format(error).postln;
+	};
+})
+::

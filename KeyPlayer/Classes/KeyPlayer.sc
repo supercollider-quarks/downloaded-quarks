@@ -1,7 +1,7 @@
 /*
 
 - KeyPlayer should be able to save/write and load as code
-- well, if one makes lots of functions programmatically, 
+- well, if one makes lots of functions programmatically,
 they will be open functions...
 
 */
@@ -58,7 +58,7 @@ KeyPlayer {
 	}
 
 	makeDefaultMetaActions {
-			// put in some alt-commands for the KeyLoop: 
+			// put in some alt-commands for the KeyLoop:
 			// must be keycodes, alt-unicode does not work.
 		this.putAlt(31, { this.rec.toggleRec });     	// alt-o = 31 keycode
 		this.putAlt(35, { this.rec.togglePlay });    	// alt-p = 35
@@ -86,13 +86,8 @@ KeyPlayer {
 
 	makeLoop { rec = KeyLoop(key, KeyLoop.keyPlayerFunc(this)); }
 
-	makeRec {
-		warn("KeyPlayer:makeRec will be deprecated; use KeyPlayer:makeLoop.");
-		rec = KeyPlayerRec(this);
-	}
-
 	putAll { |dict, both=false, where=\down|
-		dict.keysValuesDo{ |k, f| this.put(k, f, both, where) }
+		dict.keysValuesDo { |k, f| this.put(k, f, both, where) }
 	}
 
 	put { |char, func, both = false, where = \down|
@@ -149,8 +144,7 @@ KeyPlayer {
 		if (this.isMetaAction(modifiers, which)) {
 			^this.doMetaAction(char, modifiers, unicode, keycode, which);
 		};
-		// maybe adapt whether KeyLoop or KeyPlayerRec?
-		// better remove KeyPlayerRec ASAP.
+
 		if (rec.notNil) { rec.recordEvent(unicode, which) };
 
 				// call the function

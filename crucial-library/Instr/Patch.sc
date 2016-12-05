@@ -7,9 +7,9 @@ HasPatchIns : AbstractPlayer {
 
 	connectPatchIns {
 		//i know of the synth, i hand out the NodeControls
-		patchIns.do({ arg patchIn,argi;
-			patchIn.nodeControl_(NodeControl(synth,this.argNameAt(argi)));
-			this.inputs.at(argi).connectToPatchIn(patchIn,false);
+		patchIns.do({ arg patchIn, argi;
+			patchIn.nodeControl_(NodeControl(synth, this.argNameAt(argi)));
+			this.inputs.at(argi).connectToPatchIn(patchIn, false);
 		});
 	}
 
@@ -21,10 +21,10 @@ HasPatchIns : AbstractPlayer {
 	// inputs in this or any sub-patch and then assigning available controllers to those.
 	// these methods are for querying for PlayerInputProxy that are placeholders for
 	// a potentially modulateable input
-	mapInputToBus { arg i,bus;
+	mapInputToBus { arg i, bus;
 		var patchOut;
 		bus = bus.asBus;
-		patchOut = PatchOut.performList(bus.rate,[nil,bus.server.asGroup,bus]);
+		patchOut = PatchOut.performList(bus.rate, [nil, bus.server.asGroup, bus]);
 		patchOut.connectTo(patchIns.at(i), this.isPlaying );
 	}
 
@@ -33,15 +33,15 @@ HasPatchIns : AbstractPlayer {
 	}
 	// do a deep search through this Patch and any sub-patches and return all
 	// PlayerInputProxies [ input , deepOffset, argName, spec ]
-	annotatedInputProxies { arg offset=0,array; // [ input , deepOffset, argName, spec ]
+	annotatedInputProxies { arg offset=0, array; // [ input , deepOffset, argName, spec ]
 		var inputs;
 		inputs = this.inputs;
-		if(array.isNil,{ array = [] });
-		inputs.do({ arg a,i;
-			if(a.isKindOf(PlayerInputProxy),{
+		if(array.isNil, { array = [] });
+		inputs.do({ arg a, i;
+			if(a.isKindOf(PlayerInputProxy), {
 				array = array.add([a, offset + i, this.argNameAt(i), this.specAt(i) ]);
-			},{
-				if(a.isKindOf(HasPatchIns),{
+			}, {
+				if(a.isKindOf(HasPatchIns), {
 					a.annotatedInputProxies(offset + i, array)
 				})
 			})
@@ -49,22 +49,22 @@ HasPatchIns : AbstractPlayer {
 		^array
 	}
 
-	setInput { arg ai,ag;
+	setInput { arg ai, ag;
 		^this.subclassResponsibility(thisMethod)
 	}
 	// see deepSpecAt below
-	setDeepInput { arg ai,ag,offset=0;
+	setDeepInput { arg ai, ag, offset=0;
 		var inputs;
 		inputs = this.inputs;
-		if(inputs.size + offset > ai,{
+		if(inputs.size + offset > ai, {
 			this.setInput(ai - offset, ag);
 			^true
 		});
 		offset = offset + inputs.size;
-		^inputs.any({ arg a,i;
+		^inputs.any({ arg a, i;
 			var set=false;
 			a.isKindOf(HasPatchIns) and: {
-				set = a.setDeepInput(ai,ag,offset + i);
+				set = a.setDeepInput(ai, ag, offset + i);
 				offset = offset + a.inputs.size;
 				set
 			}
@@ -72,16 +72,16 @@ HasPatchIns : AbstractPlayer {
 	}
 	// this finds the spec of an input in a subpatch.
 	// argi is an index into an array of all args of this patch followed by depth first traversal of all subpatches
-	deepSpecAt { arg argi,offset=0;
-		var inputs,deepSpec;
+	deepSpecAt { arg argi, offset=0;
+		var inputs, deepSpec;
 		inputs = this.inputs;
-		if(inputs.size + offset > argi,{
+		if(inputs.size + offset > argi, {
 			^this.specAt(argi - offset)
 		});
 		offset = offset + inputs.size;
-		inputs.detect({ arg a,i;
+		inputs.detect({ arg a, i;
 			a.isKindOf(HasPatchIns) and: {
-				deepSpec = a.deepSpecAt(argi,offset + i);
+				deepSpec = a.deepSpecAt(argi, offset + i);
 				offset = offset + a.inputs.size;
 				deepSpec.notNil
 			}
@@ -91,18 +91,18 @@ HasPatchIns : AbstractPlayer {
 }
 
 
-Patch : HasPatchIns  {
+Patch : HasPatchIns {
 
-	var <instr,<args;
-	var synthPatchIns,<argsForSynth,<argNamesForSynth,<synthArgsIndices;
+	var <instr, <args;
+	var synthPatchIns, <argsForSynth, <argNamesForSynth, <synthArgsIndices;
 
-	var <synthDef,<>outClass;
-	var numChannels,rate; // determined after making synthdef
+	var <synthDef, <>outClass;
+	var numChannels, rate; // determined after making synthdef
 	var <>respawnOnChange = nil;
-	
+
 	var <stepChildren;
 
-	*new { arg name,inputs,outClass;
+	*new { arg name, inputs, outClass;
 		^super.new.loadSubject(name).createArgs(loadDocument(inputs) ? []).outClass_(outClass ? Out)
 	}
 	inputs { ^args }
@@ -113,19 +113,19 @@ Patch : HasPatchIns  {
 		var synthArgi;
 		args.at(index).removeDependant(this);
 		newArg.addDependant(this);
-		args.put(index,newArg);
+		args.put(index, newArg);
 		synthArgi = synthArgsIndices.at(index);
-		if(synthArgi.notNil,{
-			argsForSynth.put(synthArgi,newArg);
+		if(synthArgi.notNil, {
+			argsForSynth.put(synthArgi, newArg);
 		});
 	}
 	args_ { arg inputs;
 		// if you didn't give enough then set defaults for the others
-		if(inputs.size != args.size,{
+		if(inputs.size != args.size, {
 			Error("Args are not the correct size, should be "+args.size).throw;
 		});
-		inputs.do({ |in,i|
-			this.setInput(i,in)
+		inputs.do({ |in, i|
+			this.setInput(i, in)
 		});
 	}
 	instr_ { arg newInstr;
@@ -134,63 +134,79 @@ Patch : HasPatchIns  {
 		instr.addDependant(this);
 		this.changed(\instr);
 	}
-	set { arg index, value;
+	get { arg index;
 		var argg;
-		if(index.isKindOf(Symbol),{
+		if(index.isKindOf(Symbol), {
 			index = this.argNames.detectIndex({ |an| an == index });
-			if(index.isNil,{
+			if(index.isNil, {
 				Error("Key not found in argNames:"+index).throw
 			});
 		});
 		argg = args[index];
-		if(argg.respondsTo('set'),{
+		if(argg.respondsTo('value'), {
+			^argg.value
+		}, {
+			(argg.asString + "does not respond to .value").warn;
+			^nil
+		});
+	}
+	set { arg index, value;
+		var argg;
+		if(index.isKindOf(Symbol), {
+			index = this.argNames.detectIndex({ |an| an == index });
+			if(index.isNil, {
+				Error("Key not found in argNames:"+index).throw
+			});
+		});
+		argg = args[index];
+		if(argg.respondsTo('set'), {
 			argg.set(value);
-		},{
-			(argg.asString + "does not respond to set").warn;
+		}, {
+			(argg.asString + "does not respond to .set").warn;
 		});
 	}
 	rand { arg standardDeviation=0.15;
-		this.inputs.do({ |in,i|
+		this.inputs.do({ |in, i|
 			// at least NumberEditors will respond
-			in.tryPerform(\rand,standardDeviation,this.instr.initAt(i));
+			in.tryPerform(\rand, standardDeviation, this.instr.initAt(i));
 		})
 	}
 	doesNotUnderstand { arg selector ... dnuargs;
-		var sel,setter,argName,index;
+		var sel, setter, argName, index;
 		sel = selector.asString;
 		setter = sel.last == $_;
-		if(setter,{
-			argName = sel.copyRange(0,sel.size-2).asSymbol;
-		},{
+		if(setter, {
+			argName = sel.copyRange(0, sel.size-2).asSymbol;
+		}, {
 			argName = sel.asSymbol;
 		});
 		index = this.argNames.detectIndex({ |an| an == argName });
-		if(index.isNil,{
+		if(index.isNil, {
 			^this.superPerformList(\doesNotUnderstand, selector, dnuargs);
 		});
-		if(setter,{
-			this.setInput(index,dnuargs[0])
-		},{
+		if(setter, {
+			this.setInput(index, dnuargs[0])
+		}, {
 			^args[index]
 		});
 	}
-	
+
 	argNames { ^this.instr.argNames }
 	argNameAt { arg i; ^instr.argNameAt(i) }
 	specAt { arg i; ^instr.specs.at(i) }
 	// out
 	spec {
 		^this.instr.outSpec ?? {
-			if(this.rate.notNil and: this.numChannels.notNil,{
-				if(this.rate == \audio,{
+			if(this.rate.notNil and: this.numChannels.notNil, {
+				if(this.rate == \audio, {
 					AudioSpec(this.numChannels)
-				},{
+				}, {
 					// having built, I think we should know better than this
 					// check the final result of the instr synth def build,
 					// check its signalRange
-					ControlSpec(-1,1)
+					ControlSpec(-1, 1)
 				})
-			},{
+			}, {
 				//("This patch "+this+"does not yet know its output rate until it is built.").warn;
 				nil
 			});
@@ -198,9 +214,9 @@ Patch : HasPatchIns  {
 	}
 	rate {
 		^rate ?? {
-			if(this.instr.outSpec.notNil,{
+			if(this.instr.outSpec.notNil, {
 				rate = this.instr.outSpec.rate
-			},{
+			}, {
 				this.asSynthDef;// force build, sets rate and numChannels
 				rate
 			});
@@ -208,13 +224,13 @@ Patch : HasPatchIns  {
 	}
 	numChannels {
 		^numChannels ?? {
-			if(this.instr.outSpec.notNil,{
+			if(this.instr.outSpec.notNil, {
 				numChannels = this.instr.outSpec.numChannels;
-				if(numChannels.isNil,{
+				if(numChannels.isNil, {
 					this.asSynthDef; // force build, sets rate and numChannels
 				});
 				numChannels
-			},{
+			}, {
 				this.asSynthDef; // force build, sets rate and numChannels
 				numChannels
 			});
@@ -227,58 +243,58 @@ Patch : HasPatchIns  {
 	argFromName { arg argName;
 		var index;
 		index = this.indexFromName(argName);
-		if(index.notNil,{
+		if(index.notNil, {
 			^args.at(index)
-		},{
+		}, {
 			^nil
 		})
 	}
 
 	loadSubject { arg name;
-		if(instr.notNil,{
+		if(instr.notNil, {
 			instr.removeDependant(this);
 		});
 		instr = name.asInstr;
-		if(instr.isNil,{
+		if(instr.isNil, {
 			Error("Instrument not found !!" + name).throw;
 		});
 		//instr.addDependant(this);
 	}
 
 	createArgs { arg argargs;
-		var argsSize,temp;
+		var argsSize, temp;
 		argsForSynth = [];
 		argNamesForSynth = [];
 		patchIns = [];
 		synthPatchIns = [];
 		argsSize = this.instr.argsSize;
 		synthArgsIndices = Array.newClear(argsSize);
-		if(argargs.isKindOf(Dictionary),{
+		if(argargs.isKindOf(Dictionary), {
 			temp = nil ! argsSize;
-			argargs.keysValuesDo { arg k,v;
+			argargs.keysValuesDo { arg k, v;
 				var i;
 				i = this.instr.argNames.indexOf(k);
-				if(i.notNil,{
+				if(i.notNil, {
 					temp[i] = v
 				})
 			};
 			argargs = temp
 		});
-								
-		args = Array.fill(argsSize,{arg i;
-			var proto,spec,ag,patchIn,darg,inSpec;
+
+		args = Array.fill(argsSize, {arg i;
+			var proto, spec, ag, patchIn, darg, inSpec;
 			spec = instr.specs.at(i);
-			if(argargs.at(i).notNil,{
-				ag = argargs[i];//.asInputForPatch(spec,argName,initAt);
+			if(argargs.at(i).notNil, {
+				ag = argargs[i];//.asInputForPatch(spec, argName, initAt);
 				/*
 					check the spec of the incoming arg if possible.
 					compare it to required spec.
 				*/
 				inSpec = ag.tryPerform(\spec);
-				if(inSpec.notNil and: {inSpec.class !== spec.class},{
+				if(inSpec.notNil and: {inSpec.class !== spec.class}, {
 					// spec validation
 					// only if you did supply an explicit spec
-					if(spec.canAccept(ag).not and: {instr.explicitSpecs[i] == spec},{
+					if(spec.canAccept(ag).not and: {instr.explicitSpecs[i] == spec}, {
 						//Error(
 							String.streamContents({ arg stream;
 								stream << "For " <<< this.instr << Char.nl;
@@ -294,12 +310,12 @@ Patch : HasPatchIns  {
 							//).throw;
 					});
 				});
-			},{
+			}, {
 				//  or auto-create a suitable control...
 				darg = instr.initAt(i);
-				if(darg.isNumber,{
+				if(darg.isNumber, {
 					proto = spec.defaultControl(darg);
-				},{
+				}, {
 					proto = spec.defaultControl;
 				});
 				ag = proto
@@ -309,36 +325,36 @@ Patch : HasPatchIns  {
 
 			// although input is control, an arg could overide that
 			if(spec.rate != \noncontrol
-				and: {ag.rate != \noncontrol} ,{
+				and: {ag.rate != \noncontrol} , {
 				// if rate is \stream and spec is not EventStream
 				// then it should fail
 				argsForSynth = argsForSynth.add(ag);
 				argNamesForSynth = argNamesForSynth.add(this.argNameAt(i));
 				synthPatchIns = synthPatchIns.add(patchIn);
-				synthArgsIndices.put(i,synthPatchIns.size - 1);
+				synthArgsIndices.put(i, synthPatchIns.size - 1);
 			});
 			ag
 		});
 	}
 	defName {
 		^defName ?? {
-			defName = InstrSynthDef.makeDefName(this.instr,this.args,this.outClass)[1];
+			defName = InstrSynthDef.makeDefName(this.instr, this.args, this.outClass)[1];
 		}
 	}
 	asSynthDef {
 		^synthDef ?? {
-			synthDef = InstrSynthDef.cacheAt(this.defName,Server.default) ?? {
-						synthDef = InstrSynthDef.build(this.instr,this.args,this.outClass);
+			synthDef = InstrSynthDef.cacheAt(this.defName, Server.default) ?? {
+						synthDef = InstrSynthDef.build(this.instr, this.args, this.outClass);
 						synthDef;
 					};
-			
+
 			// the synthDef has now evaluated and can know the number of channels
 			// but if it returned a manual Out.ar then it does not know
 			// so we will have to trust the Instr outSpec
-			if(synthDef.numChannels.notNil,{
+			if(synthDef.numChannels.notNil, {
 				numChannels = synthDef.numChannels;
 			});
-			if(synthDef.rate.notNil,{
+			if(synthDef.rate.notNil, {
 				rate = synthDef.rate;
 			});
 			this.watchNoncontrols;
@@ -349,13 +365,13 @@ Patch : HasPatchIns  {
 		}
 	}
 	watchNoncontrols {
-		this.args.do({ arg ag,i;
+		this.args.do({ arg ag, i;
 			if(this.specAt(i).rate === \noncontrol
 				or: {ag.rate === \noncontrol}
-			,{
+			, {
 				// watch objects for changes.
 				// if Env or Sample or a quantity changed, the synth def is invalid
-				if(ag.isNumber.not,{
+				if(ag.isNumber.not, {
 					ag.addDependant(this);
 				});
 			});
@@ -363,26 +379,26 @@ Patch : HasPatchIns  {
 	}
 	respawn { arg atTime;
 		// will improve this implementation later
-		this.onStop({ 
+		this.onStop({
 			{
-				this.play(atTime:atTime) 
+				this.play(atTime:atTime)
 			}.defer(0.5)
 		});
 		this.stop;
 	}
-	update { arg changed,what;
+	update { arg changed, what;
 		var newArgs;
-		if(changed === this.instr,{
+		if(changed === this.instr, {
 			this.removeSynthDefCache;
 			if(this.isPlaying) {
 				if(respawnOnChange.notNil) {
 					^this.respawn(respawnOnChange)
 				};
 			};
-			^this		
+			^this
 		});
-		if(changed === synth,{
-			if(what == 'n_end',{
+		if(changed === synth, {
+			if(what == 'n_end', {
 				this.children.do(_.stop);
 				stepChildren.do(_.stop);
 				this.prSetStatus(\isStopped);
@@ -390,25 +406,25 @@ Patch : HasPatchIns  {
 			^this.changed(status)
 		});
 		// one of my inputs changed
-		if(this.args.includes(changed),{
-			if(this.isPlaying,{
-				if(changed.spec.rate != \control,{
-					if(respawnOnChange.notNil,{
+		if(this.args.includes(changed), {
+			if(this.isPlaying, {
+				if(changed.spec.rate != \control, {
+					if(respawnOnChange.notNil, {
 						this.invalidateSynthDef;
 						^this.respawn(respawnOnChange)
 					})
 				});
 				newArgs = synthDef.secretDefArgs(this.args);
-				if(newArgs.notEmpty,{
-					synth.performList(\set,newArgs);
+				if(newArgs.notEmpty, {
+					synth.performList(\set, newArgs);
 				});
-			},{
+			}, {
 				this.invalidateSynthDef;
 			})
 		});
 	}
 	removeSynthDefCache {
-		if(defName.notNil,{
+		if(defName.notNil, {
 			InstrSynthDef.cacheRemoveAt(defName);
 		});
 		synthDef = nil;
@@ -431,27 +447,27 @@ Patch : HasPatchIns  {
 	prepareChildrenToBundle { arg bundle;
 		super.prepareChildrenToBundle(bundle);
 		stepChildren.do({ arg child;
-			child.prepareToBundle(group,bundle,true,nil,false);
+			child.prepareToBundle(group, bundle, true, nil, false);
 		});
 	}
 
 	// has inputs
 	spawnToBundle { arg bundle;
 		var synthArgs;
-		if(patchOut.isNil,{
+		if(patchOut.isNil, {
 			Error("PatchOut is nil. Has this been prepared for play ?" + this + thisMethod.asString).throw;
 		});
 
 		// experimental but harmless
 		// If I am a builder patch, building a stream
-		if(this.rate === 'stream',{
+		if(this.rate === 'stream', {
 			this.children.do({ arg child;
 				child.spawnToBundle(bundle);
 			});
 			this.stepChildren.do({ arg child;
 				child.spawnToBundle(bundle);
 			});
-			bundle.addMessage(this,\didSpawn);
+			bundle.addMessage(this, \didSpawn);
 			^this
 		});
 
@@ -466,8 +482,8 @@ Patch : HasPatchIns  {
 			child.spawnToBundle(bundle);
 		});
 
-		synth = Synth.basicNew(this.defName,this.server);
-		this.annotate(synth,"synth");
+		synth = Synth.basicNew(this.defName, this.server);
+		this.annotate(synth, "synth");
 		NodeWatcher.register(synth);
 		synth.addDependant(this);
 		bundle.add(
@@ -477,7 +493,7 @@ Patch : HasPatchIns  {
 			)
 		);
 		this.connectPatchIns;
-		bundle.addMessage(this,\didSpawn);
+		bundle.addMessage(this, \didSpawn);
 	}
 	didSpawn {
 		super.didSpawn;
@@ -489,11 +505,11 @@ Patch : HasPatchIns  {
 		// not every arg makes it into the synth def
 		var args;
 		args = Array(argsForSynth.size * 2 + 2);
-		argsForSynth.do({ arg ag,i;
+		argsForSynth.do({ arg ag, i;
 			args.add(argNamesForSynth.at(i));
 			args.add(ag.synthArg);
 		});
-		if(patchOut.rate != \scalar,{
+		if(patchOut.rate != \scalar, {
 			args.add(\out);
 			args.add(patchOut.synthArg);
 		});
@@ -515,14 +531,14 @@ Patch : HasPatchIns  {
 	//ar { arg ... overideArgs;	^this.valueArray(overideArgs) }
 	value { arg ... overideArgs;  ^this.valueArray(overideArgs) }
 	valueArray { arg  overideArgs;
-		var result,usedArgs;
+		var result, usedArgs;
 		// each arg is valued as it is passed into the instr function
-		usedArgs = args.collect({ arg a,i;
+		usedArgs = args.collect({ arg a, i;
 					{
 						(overideArgs.at(i) ? a).value;
 					}.try({ arg err;
 						"Error while argument "+i+"for the function was .valued".postln;
-						if(overideArgs.size > 0,{
+						if(overideArgs.size > 0, {
 							"Args passed in to Patch-value:".postln;
 							overideArgs.do({ |oa| oa.dump });
 						});
@@ -536,8 +552,8 @@ Patch : HasPatchIns  {
 		}.try({ arg err;
 			("ERROR during Patch-value " + this).postln;
 			"ARGS:".postln;
-			this.instr.argNames.do({ |an,i|
-				("	%:	%".format(an,usedArgs[i])).postln;
+			this.instr.argNames.do({ |an, i|
+				("	%:	%".format(an, usedArgs[i])).postln;
 			});
 			//err.errorString.postln;
 			//this.dump;
@@ -548,13 +564,13 @@ Patch : HasPatchIns  {
 	}
 	asEvent {
 		var e;
-		e = ('type':'instr','instr':this.instr);
-		this.instr.argNames.do { arg an,i;
-			if(an == \tempo and: {args[i].isKindOf(TempoPlayer)},{
+		e = ('type':'instr', 'instr':this.instr);
+		this.instr.argNames.do { arg an, i;
+			if(an == \tempo and: {args[i].isKindOf(TempoPlayer)}, {
 				// normally TempoPlayer is correct to pass to a Patch
 				// but Event will set tempo if ~tempo is set
 				e[an] = args[i].tempo.tempo
-			},{
+			}, {
 				e[an] = args[i].dereference
 			})
 		};
@@ -569,33 +585,32 @@ Patch : HasPatchIns  {
 	printOn { arg s;
 		var n;
 		s << this.class.name << "(" <<< (instr !? {instr.dotNotation}) << ")";
-		if((n = this.name).notNil,{
+		if((n = this.name).notNil, {
 			s << "{"++n++"}";
 		});
 	}
 	storeParamsOn { arg stream;
 		var last;
-		if(this.class === Patch,{ // an indulgence ...
+		if(this.class === Patch, { // an indulgence ...
 			last = args.size - 1;
-			stream << "(" <<< this.instr.storeableFuncReference << ",[";
-			
-			if(stream.isKindOf(PrettyPrintStream),{ stream.indent(1); });
-			args.do({ arg ag,i;
+			stream << "(" <<< this.instr.storeableFuncReference << ", [";
+
+			if(stream.isKindOf(PrettyPrintStream), { stream.indent(1); });
+			args.do({ arg ag, i;
 				stream.nl;
 				stream <<< enpath(ag);
-				if(i != last,{ stream << "," });
+				if(i != last, { stream << ", " });
 			});
-			if(stream.isKindOf(PrettyPrintStream),{ stream.indent(-1); });
-			
+			if(stream.isKindOf(PrettyPrintStream), { stream.indent(-1); });
+
 			stream.nl;
 			stream << "])";
-		},{
+		}, {
 			super.storeParamsOn(stream)
 		});
 	}
-	storeArgs { 
-		^[this.instr.name,args] 
+	storeArgs {
+		^[this.instr.name, args]
 	}
 	guiClass { ^PatchGui }
 }
-

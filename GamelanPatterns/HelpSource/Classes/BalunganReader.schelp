@@ -1,0 +1,189 @@
+TITLE:: BalunganReader
+summary:: Converts notation-strings to sc-events
+categories:: Extensions>Virtual Gamelan
+related:: Classes/StringConverter, Classes/KendhanganReader, Classes/EventScoreReader, Reference/VGNotationStrings
+
+DESCRIPTION::
+Subclass off StringConverter that allows to convert melodic gamelan-notation (balungan and other parts) to sc-Events. BalunganReader can handle toneciphers and diacriticas that designate rhythmic values and octave register. For notation symbols see link::Reference/VGNotationStrings::
+
+CLASSMETHODS::
+
+METHOD:: removeDuplicateSpaces
+(describe method here)
+
+ARGUMENT:: str
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: applyDiacritica
+(describe method here)
+
+ARGUMENT:: str
+(describe argument here)
+
+ARGUMENT:: event
+(describe argument here)
+
+ARGUMENT:: index
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: unconvert
+Convert an array of events back to score string. If the events have a \score entry, it is used.
+
+ARGUMENT:: eventList
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: initClass
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: convert
+(describe method here)
+
+ARGUMENT:: str
+(describe argument here)
+
+ARGUMENT:: addScore
+(describe argument here)
+
+ARGUMENT:: postDur
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: diacritica
+Array of array of pairs of strings and functions to add properties to the events. Each array group is searched for one single result. Currently the first array is diacritica for rhythms.
+
+returns:: (describe returnvalue here)
+
+METHOD:: events
+Pairs of strings and functions for generating events. Those strings are the ones that mark the beginning of a new event.
+
+ARGUMENT:: pairs
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: getEvent
+(describe method here)
+
+ARGUMENT:: str
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: reverseDiacritica
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: reverseTranslationFunction
+(describe method here)
+
+ARGUMENT:: key
+(describe argument here)
+
+ARGUMENT:: value
+(describe argument here)
+
+ARGUMENT:: str
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: moveBracketsIntoSuffixPosition
+(describe method here)
+
+ARGUMENT:: str
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: isDiakritikum
+(describe method here)
+
+ARGUMENT:: str
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: acceptInsteadOfNote
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: isSeparator
+(describe method here)
+
+ARGUMENT:: char
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+
+INSTANCEMETHODS::
+
+SECTION::Notation Symbols
+The following strings are used in balungan-notation:
+LIST::
+## Toneciphers 1..7 (8 and 9?)
+## Rhythmic diacritics
+LIST::
+## "|", 1,
+## "-", 2,	// * 1 + 1
+## "--", 3, // * 1 + 2
+## "---", 4, // * 1 + 3
+## "----", 5,  // * 1 + 4
+## "-_", 1.5, // * 1 + 0.5
+## "--_", 2.5, // * 1 + 1.5
+## "---_", 3.5,
+## "_-=", 0.75, // problem: < 1.0 bei Verlängerung an segmentgrenzen
+## "=", 0.25,
+## "_-_", 1, // * 0.5 + 0.5
+## "_-", 1.5,
+##"=-=", 0.5,
+## "_", 0.5
+::
+## Octave diacritics
+LIST::
+## ' -> octave high (\octave = 6)
+## . -> octave low (\octave = 4)
+::
+::
+
+EXAMPLES::
+
+code::
+
+a = BalunganReader.convert("3567 6532");
+a = BalunganReader.convert("1=1=");
+a = BalunganReader.convert("1'65_3_216.");
+
+// play the score
+Pseq(a).play;
+
+// unconvert it back to string
+b = BalunganReader.unconvert(a);
+
+// Above rules can be extended, example
+// add super-octaves
+(
+// long keys before short keys!
+BalunganReader.diacritica = BalunganReader.diacritica.add(
+    [
+        "^^", { |event| event.put(\octave, 8.0) },
+        "^", { |event| event.put(\octave, 7.0) }
+    ]
+);
+)
+
+// now we get events with the correct octave:
+BalunganReader.convert("1^21^^2^");
+
+::

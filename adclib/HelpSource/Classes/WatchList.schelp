@@ -1,0 +1,213 @@
+TITLE:: WatchList
+summary:: a dynamic list of items.
+categories:: Classes
+related:: Classes/List, Classes/ProxySpace, Classes/Ndef, Overviews/JITLib
+
+DESCRIPTION::
+
+A WatchList tracks dynamic collections of items and keeps them in a list in  historical order. Examples of such collections include:
+
+* keys in an Environment, e.g. a ProxySpace;
+
+* parameter names (controlKeys) of processes like Ndef, Tdef, Pdef
+
+
+The main argument for historical order is that this is more location-stable that e.g. alphabetic order. When adding processes and parameters by live coding, the locations of parameters on physical controllers remain the same (as long as there is space for more), creating less distraction than changing orders based on alphabet (or order of \control.kr calls when rewriting an Ndef).
+
+note:: ToDo : selection of subsets by offset and size ::
+
+First code examples:
+
+code::
+// a dict to watch
+a = ();
+b = WatchList.envir(a);
+g = ParamGui(a, 8); g.orderedNames = b.list;
+h = ParamGui(a, 8).moveTo(100, 800);
+
+
+a.put(\x, 1);
+b.list;
+a.put(\y, 1);
+b.list;
+a.put(\a, 123); // changes order
+b.list;
+
+// WatchList keeps old items in list
+a.put(\x, nil);
+b.list;
+// ParamGui does not show empty keys yet, but should
+a.put(\x, [1, 2, 3]); // old order comes back
+a.put(\bc, [3, 2, 1]);
+
+::
+
+CLASSMETHODS::
+
+private:: initClass
+private:: getFuncs
+
+subsection:: basic creation
+
+METHOD:: new
+basic creation of a new WatchList.
+argument:: object
+the object to watch
+argument:: getFunc
+the function fr getting a list of items from object
+argument:: keepGone
+not used yet: flag whether to keep or remove old names.
+argument:: skip
+flag whether to add a skipjack for watching
+argument:: halo
+flag whether to add watchlist to object halo
+
+subsection:: convenience creation
+
+create watchlists for some typical objects with proper getFuncs.
+arguments are the same as above minus getFunc:
+object, keepGone, skip, halo
+
+METHOD:: envir
+for environments, gets keys
+
+METHOD:: proxy
+for nodeproxies, Ndef, Tdef, Pdef
+
+METHOD:: spaceAr
+for proxyspaces, gets ar proxies
+
+METHOD:: spaceKr
+for proxyspaces, gets ar proxies
+
+
+
+INSTANCEMETHODS::
+
+METHOD:: list
+the list of items in order
+
+METHOD:: object
+get and set the object to watch
+
+METHOD:: getFunc
+the func by which to ask the object for its items
+
+METHOD:: keepGone
+(unused) flag whether to keep old names in list or not.
+
+METHOD:: update
+update the list
+
+METHOD:: skip
+skipjack to update list automagically
+
+METHOD:: clear
+clear the list
+
+private:: init, makeSkip, addToHalo
+
+EXAMPLES::
+
+code::
+// example for using WatchLists for a proxyspace and its proxies
+
+p = ProxySpace.push(s);
+
+d = WatchList.spaceAr(p);
+e = WatchList.spaceKr(p);
+f = WatchList.proxy();
+
+// add these one by one
+~a.ar;
+~z.ar;
+~b.ar;
+d.list;
+
+~k.kr;
+~j.kr;
+~i.kr;
+
+// alphabetic
+p.arProxyNames
+p.krProxyNames
+
+// historic
+d.list
+e.list
+
+f.object = ~a;
+~a = { SinOscFB.ar(\freq.kr(300) + [0, \detune.kr]) * \amp.kr(0.2, 0.1) };
+f.list;
+
+// this has alphabetic order - could be adapted for WatchLists
+ProxyMixer(p);
+
+// use WatchLists for controller - works without gui too.
+// needs modality quark
+//
+
+m = MKtl(\nk2, "*trol2"); m.gui;
+
+m.elementsDict.do(_.action_(MFunc()));
+
+(
+// sliders set volume
+m.elAt(\sl).do { |el, i|
+	el.action.add(\arVol, { |el|
+		var arkey = d.list[i];
+		if (arkey.notNil) {
+			p[arkey].softVol_(el.value.squared, lastVal: el.prevValue.squared)
+		}
+	})
+};
+// S button stops
+m.elAt(\bt, \S).do { |el, i|
+	el.action.add(\arPlay, { |el|
+		var proxy, arkey = d.list[i];
+		if (arkey.notNil) {
+			p[arkey].stop;
+			"% stops.\n".postf(arkey.cs);
+		};
+	});
+};
+// M button plays
+m.elAt(\bt, \M).do { |el, i|
+	el.action.add(\arPlay, { |el|
+		var arkey = d.list[i];
+		if (arkey.notNil) {
+			p[arkey].play;
+			"% plays.\n".postf(arkey.cs);
+		};
+	});
+};
+
+// R button chooses proxy for edit
+m.elAt(\bt, \R).do { |el, i|
+	el.action.add(\arEdit, { |el|
+		var arkey = d.list[i];
+		if (arkey.notNil) {
+			f.object_(p[arkey]);
+			"% knobs edit %\n.".postf(m, arkey.cs);
+		};
+	});
+};
+
+// knobs edit parameters of selected proxy
+m.elAt(\kn).do { |el, i|
+	el.action.add(\setParam, { |el|
+		var ctlkey = f.list[i];
+		if (ctlkey.notNil) {
+			f.object.softSet(ctlkey, el.value,
+				mapped: false, lastVal: el.prevValue);
+		};
+	});
+};
+)
+
+// now add processes:
+// they will be added to the bottom of the list
+// add parameters on "front" proxies - params are added to the end
+// note: this order is lost when switching front proxy
+// would require making a separate watchlist for each proxy
+::

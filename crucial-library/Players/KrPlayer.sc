@@ -7,7 +7,7 @@ KrPlayer : AbstractPlayer {
 	rate { ^\control }
 
 	instrArgFromControl { arg control;
-		^In.kr(control,this.numChannels)
+		^In.kr(control, this.numChannels)
 	}
 
 	//kr {  ^this.subclassResponsibility(thisMethod) }

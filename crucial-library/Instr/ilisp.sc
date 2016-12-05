@@ -15,10 +15,10 @@
 
 			if(arguments.size == 1 and: {
 				arguments.first.isKindOf(Dictionary)
-			},{
+			}, {
 				// accept keyword arguments
 				arguments = arguments.first.ilisp
-			},{
+			}, {
 				arguments = arguments.collect(_.ilisp)
 			});
 			^operator.asInstr.valueArray(arguments);

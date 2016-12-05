@@ -1,0 +1,1 @@
+/usr/bin/c++   -arch i386 -arch x86_64 -bundle -Wl,-headerpad_max_install_names   -o Dstoch.scx CMakeFiles/Dstoch.dir/Dstoch.cpp.o 

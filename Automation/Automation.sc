@@ -4,7 +4,7 @@
 
    Automation allows to record and playback live changes made to
    other GUI elements in particular, or anything else you wish to
-   setup. 
+   setup.
 
    This is Automation, the main class of the Automation Quark.
    This is what you instantiate to use Automation.
@@ -21,7 +21,7 @@ Automation {
         <>presetDir,
         <>onPlay, <>onStop, <>onSeek,
         <>playLatency = 0.1, <>seekLatency = 0.1,
-        <>doStopOnSeek = false, 
+        <>doStopOnSeek = false,
         <>onEnd,
         <>verbose = true,
         <>server,
@@ -29,6 +29,8 @@ Automation {
         <doRecord = false,
         <clients,
         <>gui,
+        <>showLoadSave = true,
+        <>minTimeStep = 0.01,
         startTime = -1, startOffset = 0,
         semaphore = nil,
         playRoutine,
@@ -38,7 +40,7 @@ Automation {
 
     /*
      Description of Parameters
-     
+
      * length (Default is 180, that's 3 minutes.)
          This value *only* affects the time slider, nothing else.
          Recorded values are NOT interfered with based on this number,
@@ -100,7 +102,7 @@ Automation {
 
      * gui
          The AutomationGui instance that is connected to this Automation
-         instance, if any.         
+         instance, if any.
      */
 
 
@@ -109,8 +111,8 @@ Automation {
      * server: The server to use.
      *      If server==nil, then Server.default will be used.
      */
-    *new { |length=180, server=nil|
-        ^super.new.constructor(length, server);
+    *new { |length=180, server=nil, showLoadSave=true, minTimeStep=0.01|
+        ^super.new.constructor(length, server, showLoadSave, minTimeStep);
     }
 
 
@@ -162,8 +164,11 @@ Automation {
         var classname;
         list.do{|child|
             classname = "" ++ child.class;
-            if (classname.containsi("button") || classname.containsi("slider")
-                || classname.containsi("numberbox")){
+            if (classname.containsi("button")
+                || classname.containsi("slider")
+                || classname.containsi("numberbox")
+                || classname.containsi("checkbox")
+                || classname.containsi("textfield")){
                 this.dock(child);
             // Note: we're not passing a name to dock(), so the control
             // elements will be auto-named by order of appearance. That
@@ -305,12 +310,14 @@ Automation {
 
 
     // internal constructor function
-    constructor { |ilength, iserver|
+    constructor { |ilength, iserver, ishowLoadSave, iminTimeStep|
         // evaluate input args
 
         server = iserver;
         length = 0.0 + ilength; // make sure it is a float
 
+        showLoadSave = ishowLoadSave;
+        minTimeStep = iminTimeStep;
         if (server == nil){
             server = Server.default;
         };
@@ -377,12 +384,12 @@ Automation {
                     playDoReschedule = false;
 
                     // skip to another time position; redo the events queue.
-                    events.clear; 
-                    
+                    events.clear;
+
                     clients.do{|client|
                         visitClient.value(client, now);
                     };
-                    
+
                     nextTimeSlider = -1;
                 };
 
@@ -406,7 +413,7 @@ Automation {
                     if (gui != nil){
                         this.defer{ gui.updateTimeGUI(nowdisp); };
                     };
-                    
+
                     // in that resolution, this is the next time that we
                     // need time slider action.
                     nextTimeSlider = nowdisp + 0.25;
@@ -434,9 +441,9 @@ Automation {
                 };
 
                 // determine the next soonest event
-                if (events.size > 0) { 
+                if (events.size > 0) {
                     nextEventTime = events[0][0];
-                }{  
+                }{
                     nextEventTime = inf;
                 };
 
@@ -460,7 +467,7 @@ Automation {
             // notify status "stopped", and the time of stopping.
             playStatus = false;
             playLastStopped = this.clockTime;
-            
+
             // exit/unlock semaphore
             semaphore.signal;
 
@@ -494,9 +501,9 @@ Automation {
         });
 
         playDoReschedule = true;
-      
+
         playStatus = \playing;
-      
+
         if (gui != nil){
             this.defer{
                 gui.unblock;
@@ -635,7 +642,8 @@ Automation {
 
         clients.add(autoClient);
         if (verbose){
-            ("Automation: Added client `" ++ autoClient.name ++ "'").postln;
+            ("Automation: Added client `" ++ autoClient.name ++ "' as "
+             ++ autoClient.valueKind.class).postln;
         };
     }
 

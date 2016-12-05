@@ -78,8 +78,11 @@ BufferQueryQueue {
 		buffer.allocRead(path, startFrame, numFrames, ["/b_query", buffer.bufnum]);
 			// check for failure -- if failure, continue with next file
 		SystemClock.schedAbs(Main.elapsedTime + (timeout ?? { timeToFail }), {
-				// this is a valid test b/c readAndQuery doesn't have a sampleRate arg
-			buffer.sampleRate.isNil.if({
+			// this is a valid test b/c readAndQuery doesn't have a sampleRate arg
+			// why check bufnum? If you free the buffer before this test (rare),
+			// sampleRate is nil AND the bufnum is cleared
+			// in this case you don't want to post a failure
+			if(buffer.sampleRate.isNil and: { buffer.bufnum.notNil }) {
 				format("Buffer-readAndQuery for % failed. Continuing with next.", path).warn;
 				resp.remove;	// otherwise old responders remain and break later file loads
 				queue.removeAt(0);
@@ -89,7 +92,7 @@ BufferQueryQueue {
 				}, {
 					isRunning = false;		// so I can start again with the next .add call
 				});
-			});
+			};
 			nil
 		})
 	}

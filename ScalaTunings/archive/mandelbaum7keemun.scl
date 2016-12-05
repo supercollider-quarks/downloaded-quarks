@@ -1,9 +1,8 @@
 ! mandelbaum7keemun.scl
 !
-Keemun Fokkerization of mandelbaum7.scl
-! 
+Keemun Fokkerization of mandelbaum7.scl, Gene Ward Smith, TL 8-3-2012
  19
-! meantone: -8 to 10; magic: -6 to 12; keemun: -6 to 12
+!
  25/24
  15/14
  9/8

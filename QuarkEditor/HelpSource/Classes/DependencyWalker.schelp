@@ -1,0 +1,46 @@
+TITLE:: DependencyWalker
+summary:: Provides information about Classes, Methods, and symbols used in an .sc file.
+categories:: Language
+related:: Classes/QuarkEditor
+
+DESCRIPTION::
+Provides information about Classes, Methods, and symbols used in an .sc file. These utility functions are used by the link::Classes/QuarkEditor:: classes.
+
+
+CLASSMETHODS::
+
+METHOD:: methodsForFile
+
+ARGUMENT:: file
+Path to an .sc file
+
+returns:: A list of link::Classes/Method::'s defined in an .sc file.
+
+
+METHOD:: methodsForSelector
+
+ARGUMENT:: selector
+A link::Classes/Symbol::
+
+returns:: A list of link::Classes/Method::'s matching the selector argument
+
+METHOD:: classesForFile
+
+ARGUMENT:: file
+Path to an .sc file
+
+returns:: A list of link::Classes/Class::es defined in the .sc file.
+
+METHOD:: docsForFile
+
+ARGUMENT:: file
+Path to an .schelp file.
+
+returns:: List of SCDoc objects defined in the .schelp file.
+
+METHOD:: selectorsForFile
+
+ARGUMENT:: file
+Path to an .sc file.
+
+returns:: List of selectors (e.g. method calls performed) used in the .sc file.

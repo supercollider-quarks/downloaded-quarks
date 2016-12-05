@@ -1,0 +1,253 @@
+title:: Using Voicer 
+summary:: An introduction to the DDW Voicer class written by H. James Harkins, jamshark70@gmail.com
+categories:: Guides>Voicer
+keyword:: Voicer
+
+description:: 
+
+This Guide contains information about using DDW Voicer. It organizes Voicer methods into three functional groupings: Playing, Controlling and Sequencing. For a complete description of Voicer’s features, Class and Instance methods, along with addition example code, please refer to the link::Classes/Voicer##Voicer:: Class entry.
+
+section:: Playing
+
+method:: set
+
+Sends the same /n_set message to each node in this voicer. Global controls (see below) send the value to the associated kr bus.
+
+argument:: args
+can be a single argument array, such as [\ffreq, 10000], or an array of arg arrays: [ [\ffreq, 10000], [\ffreq, 15000] ]. 
+
+argument:: lat
+Server latency -- see trigger1 / trigger below.
+
+method:: trigger1, trigger(freq, gate = 1, args, lat) 
+
+Trigger a note (trigger1), or several notes (trigger). For trigger1, freq must be a float or int. For trigger, freq can be a single value or a collection. If you are triggering several notes, args can also be a collection of argument arrays e.g. [ [\filter, 300], [\filter, 500], [\filter, 700] ]. Each set of args will be sent in succession to the nodes as they're triggered (using wrapAt). In this case, the first node triggered will get \filter = 300, the second \filter = 500, etc.
+
+code:: 
+trigger1(freq, gate = 1, args, lat)
+trigger(freq, gate = 1, args, lat) 
+::
+
+lat is the Server latency to use for this event. The following values are allowed for all methods with a "lat" argument:
+
+definitionlist::
+## < 0 : 
+|| Use the Voicer's default latency (set by myVoicer.latency = 1)
+
+## >= 0 :
+|| Non-negative number: use this number as the latency for this event
+
+## nil :	
+|| No latency: Server will play the message as soon as received
+::
+
+method:: release1, release(freq, lat)
+
+Returns the node played, or a collection of nodes played.
+
+code::
+release1(freq, lat)
+release(freq, lat) 
+::
+
+method:: gate1, gate(freq, dur, gate = 1, args, lat)
+
+Find the earliest-triggered note(s) with the frequency/frequencies given and send [\gate,0] to it. release1 allows only one frequency to be given; release works with either a single value or a collection. If there is no node with a given frequency, that frequency is ignored. 
+
+Returns the node(s) released.
+
+code::
+v = Voicer.new(8, "harpsi");  // uses Server.local
+f = Array.fill(5, { 1000.0.rand + 50 });
+v.trigger(f);  // play 5 notes
+v.release(f);  // release the same
+gate1(freq, dur, gate = 1, args, lat)
+gate(freq, dur, gate = 1, args, lat) 
+::
+
+Triggers the notes and schedules their releases. If freq is a collection, dur and args may be the same thing for every node, or you can supply collections to have different arguments and different release times for each node. 
+
+Returns the node(s) played.
+
+code::
+f = Array.fill(5, { 1000.0.rand + 50 });
+  // listen to the notes stop one by one
+v.gate(f, Array.fill(5, { arg i; 2*(i+1) }));
+::
+
+method:: releaseNow1, releaseNow(freq, sec)
+
+Uses a negative gate to cause an instant release. Sec determines how long the release takes. Unlike gate, you may not supply a collection for sec. (Sec is converted to the negative gate by sec.abs.neg-1)
+
+section:: Controlling 
+
+method:: panic
+
+Stops all active Synths belonging to this Voicer immediately.
+
+method:: trace
+
+Sends the n_trace message to all active Synths. Useful for debugging SynthDefs. You can also trace a single playing node using the following:
+
+code::
+aVoicer.playingNodes.choose.trace;
+::
+
+method:: gui
+
+Makes a window showing all global controls (see mapGlobal) and processes (see addProcess).
+
+Voicer-gui uses a proxy system so that you can display different voicers without incurring the overhead of removing views, resizing the window, adding views, and resizing again. For normal use, this process is transparent to the user. To change the Voicer shown in a particular GUI, drag an expression that evaluates to the Voicer (usually a variable name) into the drag sink immediately to the right of the Voicer GUI label.
+
+
+method:: mapGlobal, unmapGlobal(name, bus)
+
+Makes an input to the Synth global, by using the supplied kr bus (or creating a new one if no bus is supplied) and mapping the input to that bus in each Voicer node. Newly triggered Voicer nodes will be mapped automatically. This lets you control filter cutoff frequencies, pitch bends, etc. globally for all nodes in a voicer. A kr Synth can be played on the bus to provide an LFO.
+
+code::
+(
+i = Instr([\harpsi], {
+	arg freq = 440, gate = 0;
+	var out;
+	out = EnvGen.ar(Env.adsr, gate, doneAction:2) *
+	Pulse.ar(freq, 0.25, 0.25);
+	[out,out]
+}/*, [\freq, \amp]*/);
+
+f = Instr([\test, \rlpf], {
+	arg audio, ffreq = 500, rq = 0.1;
+	RLPF.ar(audio, ffreq, rq);
+});
+
+v = Voicer(8, f, [\audio, i, nil, \ffreq, 5000, \rq, 0.08]);
+)
+
+// globalize the filter cutoff
+b = v.mapGlobal(\ffreq);
+::
+code::
+
+(
+SynthDef.new("SinLFO", {	// sinewave lfo
+	arg outbus, freq = 1, phase = 0, mul = 1, add = 0;
+	ReplaceOut.kr(outbus, SinOsc.kr(freq, phase, mul, add));
+}).add;
+)
+
+l = Synth.new("SinLFO", [\freq, 0.2, \mul, 500, \add, 1400, \outbus, b.index]);
+
+// all notes have the same filter LFO
+
+v.trigger([60, 64, 67].midicps);
+v.unmapGlobal(\ffreq);  // LFO stops
+v.mapGlobal(\ffreq, b); // set LFO to bus (which is still active)
+v.release([60, 64, 67].midicps);
+l.free;
+::
+
+method:: addProcess(states, type)
+
+Adds a VoicerProcessGroup to this Voicer. The group will be displayed as a button or pop-up menu in the voicer's GUI. For a button, specify type as \toggle in the addProcess message. See the VoicerProcessGroup help file for the correct syntax for states. Returns the new process group.
+
+This allows you to add graphically triggered sequencers and other processes directly to the Voicer GUI.
+
+VoicerProcessGroups belong to the voicer's proxy, not to the Voicer itself. This means you can change the Voicer that is to play the sequence while the sequence is playing (provided both voicers use the same clock as the sequence). As with Voicer-gui, under normal circumstances this is transparent to the user.
+
+emphasis::VoicerProcesses:: and emphasis::VoicerProcessGroups:: are deprecated and no longer maintained.
+
+method:: removeProcess(p)
+
+Stops the process group if playing and removes it from the Voicer and GUI.
+
+method:: stealer
+
+Chooses the algorithm the Voicer uses to find the next node to play. Your choices are:
+definitionlist::
+## \preferLate: 
+||prefers nodes that were more recently played
+## \preferEarly: 
+||the default setting; prefers nodes that were played longer ago
+## \random: 
+||chooses a non-playing node at random
+## \cycle: 
+||cycles through the nodes in sequence, skipping nodes that are playing
+##\strictCycle: 
+||cycles through the nodes in sequence, always in order whether they're playing or not
+::
+
+method:: latency
+
+Sets the default latency for this voicer. Default latency should be a positive number and can be overridden using the lat argument in trigger, release, gate, and set method calls.
+
+section:: Sequencing
+
+Voicer adds two new events that can be used with event streams (Pbind):
+definitionlist::
+##\voicerNote: 
+|| an alternate event type in the standard event framework, except that instead of including \instrument, \synthdefName in the Pbind, you should include \voicer, myVoicerObject. 
+
+code::
+v = Voicer(10, \default);
+(
+p = Pbind(\degree, Pseq((0..7), inf), 
+	\delta, 0.25, 
+	\sustain, Pwhite(1, 9, inf) * 0.25, 
+	\amp, Pwhite(0.001, 0.15, inf), 
+	\argKeys, #[\amp],   // leave this out and the amp stream will be ignored
+	\voicer, v, 
+	\type, \voicerNote  // leave this out and it will try to play on \instrument, default
+).play;
+)
+p.stop;
+::
+
+## \voicerMIDI: 
+||a completely separate event prototype optimized for working with MIDIRecBuf. Not as flexible for general use, but easier for MIDI.
+
+code::
+v = Voicer(10, \default);
+k = VoicerMIDISocket(0, v);
+m = MIDIBufManager(chan:0);
+m.gui
+m.initRecord;  // recording starts when you start playing
+m.stopRecord;  // run this at the exact time you want the buffer to start looping
+
+p = Pbind(
+	\note, Pseq(m[0].notes, inf),
+	\voicer, v,
+	\latency, 0.5,
+	\midi, true	// note frequencies are MIDI note numbers...
+// if true, the event will convert them to Hz -- true is the default
+// if you already converted them, set this to false
+).play(protoEvent: Event.makeProto(\voicerMIDI));
+
+// note above how you retrieve the voicerMIDI event prototype
+
+p.stop;
+::
+
+You may also override note parameters individually: \freq is midi note number, \delta is \delta, \length corresponds to \sustain, and \gate corresponds to velocity.
+
+code::
+p = Pbind(
+	\note, Pseq(m[0].notes, inf),
+// replace with different note numbers, but leave the rhythm alone
+	\freq, Pwhite(48, 78, inf),
+	\voicer, v,
+	\latency, 0.5
+).play(protoEvent: Event.makeProto(\voicerMIDI));
+
+p.stop;
+::
+code::
+p = Pbind(
+	\note, Pseq(m[0].notes, inf),
+// round the original note's rhythmic value to nearest 1/32
+	\delta, Pfunc({ |event| event[\note].dur.round(0.125).max(0.125) }),
+	\voicer, v,
+	\latency, 0.5
+).play(protoEvent: Event.makeProto(\voicerMIDI));
+
+p.stop;
+::
+::

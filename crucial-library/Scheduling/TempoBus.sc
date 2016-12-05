@@ -1,17 +1,17 @@
 
 TempoBus   {
 
-	var <>tempo,bus,isReady = false;
+	var <>tempo, bus, isReady = false;
 
-	*new { arg server,tempo;
+	*new { arg server, tempo;
 		var new;
 		server = server ? Server.default;
 		tempo = tempo ?? {Tempo.default};
 		// return the same one for any combo
-		^(Library.at(this,server.name,tempo) ??
+		^(Library.at(this, server.name, tempo) ??
 			{
 				new = super.new.tempo_(tempo).init(server);
-				Library.put(this,server.name,tempo,new);
+				Library.put(this, server.name, tempo, new);
 				new
 			}
 		)
@@ -24,13 +24,13 @@ TempoBus   {
 	asBus {}
 	index { ^bus.index }
 	server { ^bus.server }
-	prepareToBundle { arg group,bundle;
+	prepareToBundle { arg group, bundle;
 		// for now setting duplicate setMsg in there
 		bundle.add( bus.setMsg(tempo.tempo) );
 		// will trap by isReady later when that is fully dependable
 	}
-	addToSynthDef {  arg synthDef,name;
-		synthDef.addIr(name,this.synthArg);
+	addToSynthDef {  arg synthDef, name;
+		synthDef.addIr(name, this.synthArg);
 	}
 	synthArg { ^this.index }
 	rate { ^\control }
@@ -48,18 +48,18 @@ TempoBus   {
 
 	init { arg server;
 		// BusPool
-		bus = Bus.control(server,1);
-		AbstractPlayer.annotate(bus,"TempoBus");
+		bus = Bus.control(server, 1);
+		AbstractPlayer.annotate(bus, "TempoBus");
 		bus.set(tempo.tempo);
 		tempo.addDependant(this);
 
-		if(server.serverRunning,{
+		if(server.serverRunning, {
 			isReady = true;
 			bus.value = tempo.tempo;
 		});
 	}
-	update { arg changed,changer;
-		if(changed === tempo,{
+	update { arg changed, changer;
+		if(changed === tempo, {
 			bus.server.listSendBundle(0.02, [bus.setMsg(tempo.tempo)]);
 		})
 	}

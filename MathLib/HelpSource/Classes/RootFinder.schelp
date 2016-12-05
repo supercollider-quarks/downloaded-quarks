@@ -1,5 +1,5 @@
 CLASS:: RootFinder
-summary:: a multi-dimensional root finder 
+summary:: a multi-dimensional root finder
 categories:: Math
 
 DESCRIPTION::
@@ -12,40 +12,38 @@ CODE::RootFinder:: requires the user to provide an analytic Jacobian (or the sin
 CLASSMETHODS::
 
 METHOD:: findRoot
-Find a shared root of MATH::N:: real-valued functions each containing MATH::M:: independent variables.
+Find a shared root of TELETYPE::N:: real-valued functions each containing TELETYPE::M:: independent variables.
 
 ARGUMENT:: func
-An (array of) instance(s) of link::Classes/AbstractFunction::, where each instance returns a single scalar value of type link::Classes/SimpleNumber::. These are the functions MATH::F_n \left(x\right):: to be minimized.
+An (array of) instance(s) of link::Classes/AbstractFunction::, where each instance returns a single scalar value of type link::Classes/SimpleNumber::. These are the functions TELETYPE::F_n(x):: to be minimized.
 
 ARGUMENT:: jacobian
-An (array of) instance(s) of link::Classes/AbstractFunction::, where each instance returns a single scalar value of type link::Classes/SimpleNumber::. This is the Jacobian: a matrix of all first-order partial derivatives of a scalar-valued function MATH::F\left(x\right):: with respect to the coordinate vector MATH::x = \left[x_1,x_2,\dots,x_{M-1},x_M\right]::.
+An (array of) instance(s) of link::Classes/AbstractFunction::, where each instance returns a single scalar value of type link::Classes/SimpleNumber::. This is the Jacobian: a matrix of all first-order partial derivatives of a scalar-valued function TELETYPE::F(x):: with respect to the coordinate vector TELETYPE::x = [x_1, x_2, ... , x_{M - 1}, x_M]::.
 
 ARGUMENT:: x0
-An (array of) instance(s) of link::Classes/SimpleNumber::. This denotes the initial guess MATH::x_0=\left[x_{0,1},x_{0,2},\dots,x_{0,M-1},x_{0,M}\right]:: for the location of the root.
+An (array of) instance(s) of link::Classes/SimpleNumber::. This denotes the initial guess TELETYPE::x_0 = [x_{0, 1}, x_{0, 2}, ... , x_{0, M - 1}, x_{0, M}]:: for the location of the root.
 
 ARGUMENT:: param
 An optional link::Classes/Collection:: or single instance of link::Classes/SimpleNumber::. This may be used for supplying any additional function parameters.
 
 ARGUMENT:: opts
-An instance of link::Classes/Array:: holding 4 optional parameters which are used in the stopping criteria of the algorithm. The first parameter MATH::\tau:: is a number between  MATH::1\times10^{-8}:: and MATH::1::. Smaller values apply if it is assumed that MATH::x_0:: is already close to MATH::x_r::. The second parameter MATH::\epsilon_1:: is used in the stoping criterion MATH::\Vert F'\left(x\right)\Vert \leq \epsilon_1::, the third parameter MATH::\epsilon_2:: is used in the stopping criterion MATH::\Vert h\Vert \leq \epsilon_2 \Vert x\Vert::, and the fourth parameter MATH::k_\text{max}:: denotes the maximum nr. of iterations so that the algorithm stops as soon as the iteration count MATH::k:: satisfies the condition MATH::k \geq k_\text{max}::.
+An instance of link::Classes/Array:: holding 4 optional parameters which are used in the stopping criteria of the algorithm. The first parameter TELETYPE::tau:: is a number between TELETYPE::1 * 10^{-8}:: and TELETYPE::1::. Smaller values apply if it is assumed that TELETYPE::x_0:: is already close to TELETYPE::x_r::. The second parameter TELETYPE::epsilon_1:: is used in the stoping criterion TELETYPE::|F'(x)| <= epsilon_1::, the third parameter TELETYPE::epsilon_2:: is used in the stopping criterion TELETYPE::|h| <= epsilon_2 |x|::, and the fourth parameter TELETYPE::k_max:: denotes the maximum nr. of iterations so that the algorithm stops as soon as the iteration count TELETYPE::k:: satisfies the condition TELETYPE::k >= k_max::.
 
-returns:: An link::Classes/Array:: holding the location MATH::x_r:: of the shared root.
+returns:: An link::Classes/Array:: holding the location TELETYPE::x_r:: of the shared root.
 
 DISCUSSION::
 First example: solving a system of two equations in two unknowns
-MATH::
-\begin{align}
-2x_1 - x_2 - e^{-x_1} &= 0 \\
--x_1 + 2x_2 - e^{-x_2} &= 0
-\end{align}
+TELETYPE::
+2x_1 - x_2 - e^{-x_1} = 0
+-x_1 + 2x_2 - e^{-x_2} = 0
 ::
-with initial guess MATH::x_0 = \left[-5,-5\right]::.
+with initial guess TELETYPE::x_0 = [-5, -5]::.
 
 Second example: finding a root of one equation in one unknown
-MATH::
+TELETYPE::
 2x-e^{-x} = 0
 ::
-with initial guess MATH::x_0 = 0::.
+with initial guess TELETYPE::x_0 = 0::.
 
 
 EXAMPLES::

@@ -1,25 +1,33 @@
-//Martin Heidegger:
-//DIE FRAGE NACH DER TECHNIK
-//Vortrag, gehalten am 18. November 1953 im Auditorium Maximum der Technischen Hochschule M�nchen, in der Reihe 'Die K�nste im technischen Zeitalter', veranstaltet von der Bayerischen Akademie der Sch�nen K�nste unter Leitung des Pr�sidenten Emil Preetorius, im Druck erschienen in Band III des Jahrbuches der Akademie (Redaktion: Clemens Graf Podewils), R. Oldenbourg M�nchen 1954, S. 70 ff.
+A detailed example for creating Heideggerian text variations in German.
 
-f = File("Heidegger_Text.scd".resolveRelative, "r"); a = f.readAllString; f.close;
+// Martin Heidegger:
+// DIE FRAGE NACH DER TECHNIK
+// Vortrag, gehalten am 18. November 1953 im Auditorium Maximum der Technischen Hochschule M�nchen, in der Reihe 'Die K�nste im technischen Zeitalter', veranstaltet von der Bayerischen Akademie der Sch�nen K�nste unter Leitung des Pr�sidenten Emil Preetorius, im Druck erschienen in Band III des Jahrbuches der Akademie (Redaktion: Clemens Graf Podewils), R. Oldenbourg M�nchen 1954, S. 70 ff.
+
+// read file
+f = File("Heidegger_Technik.txt".resolveRelative, "r");
+a = f.readAllString; f.close;
 a.size;
+// split by lines
 b = a.split($\n);
+// split into all words
 b = b.collect(_.split($ )).flatten(1).collect(_.select(_.isAlpha));
 b.size;
 
+// statistics - count word occurences
 d = ();
 b.do { |word| var keyword = word.asSymbol; d.put(keyword, d[keyword] ? 0 + 1); };
-d.size; // wortschatz
-d.sum
+d.size; // vocabulary
 
+// sort them by count
+// should filter basic words, articles etc first
 e = SortedList[].function = {|a, b| a[1] > b[1] }; d.keysValuesDo { |k, v| e.add([k, v]); };
-e.printAll;
+e.keep(200).printAll;
 
-
+// now make a ContextSnake for it based on raw text (letters)
 c = ContextSnake([a], "Im", 10);
 e = c.asStream;
-e.next;
+// e.next;
 x = e.nextN(3000).join;
 
 // example result:

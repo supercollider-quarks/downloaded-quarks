@@ -44,17 +44,6 @@ CVWidget2D : CVWidget {
 
 		synchKeys ?? { synchKeys = [\default] };
 
-		if(Main.versionAtLeast(3, 7), {
-			rSliderClass = RangeSlider; slider2DClass = Slider2D;
-		}, {
-			rSliderClass = QRangeSlider; slider2DClass = QSlider2D;
-		});
-
-		if(GUI.id === \qt, {
-			CV.viewDictionary[slider2DClass].props_(#[xValue, yValue]);
-			CV.viewDictionary[rSliderClass].props_(#[loValue, hiValue]);
-		});
-
 		setupArgs !? {
 			(setupArgs.class !== Event).if{
 				Error( "a setup for a CVWidget2D has to be provided as an Event: (lo: (argname: arg), hi: (argname: arg))!").throw;

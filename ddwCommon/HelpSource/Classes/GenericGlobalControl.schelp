@@ -1,0 +1,371 @@
+TITLE:: GenericGlobalControl
+summary:: A numeric value mirrored on a control bus
+categories:: Libraries>ddwCommon
+related:: Classes/VoicerGlobalControl, Classes/MixerControl, Classes/Bus
+
+DESCRIPTION::
+GenericGlobalControl is a placeholder for a numeric value, synchronized between the language and the server. Because it is synchronized, it may be used interchangeably in math operations, patterns and synths.
+
+GenericGlobalControl supports the following uses (assuming code::g:: is a GenericGlobalControl):
+
+list::
+## strong::GUI:: -- Use code::.gui:: to embed the GenericGlobalControl in a crucial-library style GUI. Also, a GenericGlobalControl sends a notification to dependents when its value changes, so you can easily use it as a model in your own Model-View-Controller (MVC) scheme.
+## strong::Math:: -- GenericGlobalControl will try to respond to math ops by substituting the numeric value: code::g + 2:: is the same as code::g.value + 2::.
+## strong::Patterns:: -- In patterns, GenericGlobalControls automatically convert themselves into streams: code::Pbind(\g, g):: is the same as code::Pbind(\g, Pfunc { g.value })::.
+## strong::Synth arguments:: -- GenericGlobalControls automatically map the control bus: code::Synth(\default, [freq: g]):: is the same as code::Synth(\default, [freq: g.asMap])::.
+## strong::SynthDefs:: -- GenericGlobalControl supports the code::kr:: message to read the bus with link::Classes/In:: (optionally wrapping itself in a link::Classes/Lag::): code::SinOsc.ar(g):: is the same as code::SinOsc.ar(In.kr(g.bus, 1))::.
+::
+
+GenericGlobalControl also supports automation, by playing a control-rate synth onto its bus.
+
+Most methods are defined in code::GlobalControlBase::, but documented here.
+
+subsection:: Notifications
+
+GenericGlobalControl uses Events for notifications, so that additional data may be added later without breaking the argument signature, e.g.:
+
+code::
+this.changed((what: \value, updateGUI: updateGUI, resync: resync, updateBus: false));
+::
+
+Dependants' code::update:: methods traditionally receive code::object, what ... args::. GenericGlobalControl notifications pass the event to code::what::. Within the event, the code::\what:: key holds an identifier for the type of notification.
+
+code::
+g = GenericGlobalControl(\test, nil, 0, [0, 1]);
+c = Updater(g, { |object, what|
+	switch(what[\what])
+	{ \value } {
+		... do something appropriate for value changes...
+	}
+	{ \modelWasFreed } {
+		c.remove;  // cleanup dependant
+	};
+});
+::
+
+GenericGlobalControl broadcasts the following notifications on state changes:
+
+definitionlist::
+## code::\value:: || When a new value is set. Code::(what: \value, updateGUI: updateGUI, resync: resync, updateBus: false)::; use code::object.value:: to get the new value.
+## Code::\modelWasFreed:: || Upon link::Classes/GenericGlobalControl#-free::.
+## Code::\spec:: || When the control spec is changed. Code::(what: \spec, updateGUI: updateGUI)::.
+## Code::\midi:: || When an associated MIDI control object is changed. Code::(what: \midi)::.
+::
+
+
+CLASSMETHODS::
+METHOD:: new
+Create a new GenericGlobalControl. The server must be booted.
+
+ARGUMENT:: name
+The name (generally a link::Classes/Symbol::) to identify the value in GUIs.
+
+ARGUMENT:: bus
+(Optional) You may provide a specific control bus -- as a link::Classes/Bus:: instance (a number is not allowed here). If code::nil::, a control bus will be allocated for you on the default server.
+
+If you want to use a non-default server, you must provide a Bus instance.
+
+ARGUMENT:: value
+The initial value: float or integer.
+
+ARGUMENT:: spec
+A link::Classes/ControlSpec:: (or any object responding to code::asSpec::), describing the range for the GUI slider.
+
+ARGUMENT:: allowGUI
+For subclasses. If true, this control may appear in GUIs. If false, it may be omitted. Link::Classes/VoicerGlobalControl:: uses this flag. GenericGlobalControl does not.
+
+ARGUMENT:: ... extraArgs
+For subclasses.
+
+
+METHOD:: defaultLag
+The lag time assigned to new GenericGlobalControls during initialization. See link::Classes/GenericGlobalControl#-lag::.
+
+returns:: The current default lag (float, in seconds).
+
+
+private:: indexForSorting
+
+
+INSTANCEMETHODS::
+
+METHOD:: free
+Stop active automation, and release the control bus index. (Note: If automation is ongoing, the bus number will not be released until a code::/n_end:: message is received from the server indicating that the automation synth has stopped. This is to prevent the old automation synth from writing values onto a bus number that may be reassigned for another use.)
+
+ARGUMENT:: updateGUI
+Deprecated argument. Not used.
+
+
+
+METHOD:: value
+Get or set the control's value. Sends a code::\value:: notification.
+
+
+METHOD:: set
+Set the control's value. (This is the implementation of the code::value_::.) Stops any active automation, and sends a code::\value:: notification.
+
+ARGUMENT:: val
+The new value (float or integer).
+
+ARGUMENT:: updateGUI
+Internal use. Pass code::false:: if you want to suppress GUI updates.
+
+ARGUMENT:: latency
+Optional. If a float is given, this is used as OSC messaging latency for the code::/c_set:: message that updates the control bus.
+
+ARGUMENT:: resync
+A flag, passed on in the notification, telling associated MIDI controllers whether to reset any sync information.
+
+
+METHOD:: activeValue
+A synonym for code::set::.
+
+ARGUMENT:: v
+The new value (float or integer).
+
+
+METHOD:: silentValue
+Sets the GenericGlobalControl's language-side value variable, without touching the control bus or notifying any dependence (e.g. GUIs). Generally internal use only.
+
+ARGUMENT:: val
+The new value (float or integer).
+
+
+METHOD:: setMsg
+Constructs a code::/c_set:: message to update the control bus. Useful if you are building your own message bundles.
+
+ARGUMENT:: val
+Deprecated argument. Not used.
+
+returns:: An array containing a code::/c_set:: message.
+
+
+METHOD:: unmappedValue
+Get the control's value, normalized to the range 0-1.
+
+
+subsection:: State variables
+
+METHOD:: name
+Get or set the name.
+
+
+METHOD:: bus
+Get the control link::Classes/Bus:: instance.
+
+
+METHOD:: index
+Get the bus number (integer).
+
+
+METHOD:: spec
+Get or set the link::Classes/ControlSpec::.
+
+ARGUMENT:: newSpec
+A ControlSpec, or anything that responds to code::.asSpec::.
+
+ARGUMENT:: updateGUI
+Boolean. If true, notify dependants to update the display to match the new range.
+
+
+METHOD:: lag
+Set the lag time to apply in the link::Classes/GenericGlobalControl#-kr:: method. New lag times apply only to new code::kr:: calls; they do not update previously-created SynthDefs (because the lag time is hardcoded).
+
+
+METHOD:: server
+The bus's server.
+
+
+METHOD:: allowGUI
+Get the flag that permits the control to be displayed, e.g., in a Voicer GUI.
+
+returns:: Boolean.
+
+
+METHOD:: active
+Boolean. True if the GenericGlobalControl still exists in the server; false after it has been freed.
+
+subsection:: Conversions (type casting)
+
+METHOD:: asBus
+Returns the control bus.
+
+
+METHOD:: asMap
+Returns a mapping symbol for use in Synth argument lists. See link::Classes/Bus#-asMap::.
+
+
+METHOD:: asMapArg
+METHOD:: asNodeArg
+Synonyms for code::asMap::.
+
+METHOD:: asPattern
+Returns a Pattern, which polls the control's current value for every "next" call: code::Pfunc { this.value }::.
+
+
+METHOD:: asStream
+For convenience, returns a Stream based on the pattern from link::Classes/GenericGlobalControl#-asPattern:: -- code::this.asPattern.asStream::.
+
+
+METHOD:: asControlInput
+This method is called when preparing an argument list for Synth messaging -- so, it returns the mapping string as in link::Classes/GenericGlobalControl#-asMap::.
+
+
+METHOD:: kr
+Returns an link::Classes/In:: reading from the control bus. If the GenericGlobalControl's link::Classes/GenericGlobalControl#-lag:: is not nil, the In will be wrapped in a link::Classes/Lag:: for smoothing.
+
+
+METHOD:: asUGenInput
+This method is called on all inputs to UGens -- so, it returns an link::Classes/In:: reading from the control bus as in code::kr::.
+
+
+subsection:: Automation
+
+A GenericGlobalControl can maintain a Synth to "automate" the control's value. This is not exactly the same thing as automation in a DAW, because it is not based on control points pinned to a timeline. (If you need to control points, you can play an link::Classes/EnvGen:: onto the control.)
+
+METHOD:: automate
+Play a Synth or other object on the bus. Generally you should use this method, because it tracks the automation player. Also, if you already have automation running and you call code::automate::, it will automatically stop the old automation player. This way is much better for safety.
+
+ARGUMENT:: thing
+Anything that responds to code::playOnGlobalControl(this, args, target, addAction)::. Currently supported are:
+
+list::
+## String or Symbol: Play a code::Synth(name)::.
+## SynthDef: Play a code::Synth(def.name)::.
+## Function: Similar to code::theFunction.play(target, this.bus, addAction: addAction, args: args)::.
+## AbstractPlayer: Any kind of crucial library Patch or other player (but control rate only). code::args:: are ignored because they should have been given to the player.
+## Instr: Also crucial library. Automatically makes a Patch (using the given arguments) and plays it.
+::
+
+ARGUMENT:: args
+Argument list.
+
+ARGUMENT:: target
+The target for node positioning (default is the server's defaultGroup).
+
+ARGUMENT:: addAction
+See link::Classes/Synth#*new::.
+
+returns:: The new automation player, a Synth or crucial-library player, depending on the code::thing::.
+
+
+METHOD:: autoSynth
+As a getter, returns the current automation player.
+
+As a setter, stops any currently running automation player and sets the code::autoSynth:: variable to the new code::node::. Normally, you will not call code::autoSynth_:: yourself; use link::Classes/GenericGlobalControl#-automate:: instead. However, there may be rare cases in which to create an automation player manually. In those cases, use code::autoSynth_:: for tracking. Your player should respond to code::free::.
+
+
+METHOD:: stopAuto
+Stop any current automation.
+
+
+METHOD:: watch
+"Watch" for value changes on the server's control bus. While automating, the global control's value is changing in the server; the language does not automatically synchronize (because this requires repeated server requests, and you might not need it).
+
+code::watch:: adds the control bus to a link::Classes/KrBusWatcher:: and updates the control's value based on notifications from the bus watcher. The global control will also send code::\value:: notifications, for GUI updates.
+
+Typical idiom: code::g.watch.automate({ ..... });::.
+
+ARGUMENT:: count
+Several objects might be interested in the control's "watching" status. code::count:: is the number of "watch-watchers" to add. At least 1 will always be added to the current count.
+
+
+METHOD:: stopWatching
+Tells the global control that the caller is not interested in syncing to the server value anymore. The count of current "watch-watchers" will be decreased. When it reaches 0, the bus will be removed from the link::Classes/KrBusWatcher::.
+
+ARGUMENT:: count
+The number to subtract from the current count. If 0, it will hard-stop all watching. Otherwise, your client object should pass the same number that you passed earlier to code::watch::.
+
+
+METHOD:: play
+Simply plays the code::thing:: on the control's bus (using code::playOnGlobalControl::). No tracking is done. You should consider this a private method: use link::Classes/GenericGlobalControl#-automate:: instead.
+
+
+
+private:: bindClassName
+private:: composeBinaryOp
+private:: composeNAryOp
+private:: composeUnaryOp
+private:: displayNameSet
+private:: draggedIntoVoicerGCGUI
+private:: proxy
+private:: guiClass
+private:: init
+private:: instrArgFromControl
+private:: makeGUI
+private:: midiControl
+private:: midiControl
+private:: parentProxy
+private:: proxify
+private:: proxy
+private:: rate
+private:: reverseComposeBinaryOp
+private:: synthArg
+private:: update
+private:: voicerIndex
+private:: addToSynthDef
+
+
+
+
+EXAMPLES::
+
+code::
+s.boot;
+
+g = GenericGlobalControl(\freq, nil, 440, \freq);
+g.gui;
+
+a = Synth(\default, [freq: g]);
+// ... and move the slider: 'freq' was mapped to g
+
+a.release;
+
+// 'g' is automatically converted to kr for use in VarSaw.ar()
+a = { VarSaw.ar(g, mul: 0.1) ! 2 }.play;
+a.release;
+// zipper noise not good
+
+g.lag = 0.1;  // set lag
+// same function, but now 'g' is wrapped in a Lag
+a = { VarSaw.ar(g, mul: 0.1) ! 2 }.play;
+a.release;
+
+g.lag = nil;
+
+// 'g' as a pattern:
+// value is sampled-and-held for each event
+p = Pbind(
+	\freq, g,
+	\dur, Pwhite(1, 4, inf) * 0.25,
+	\legato, 1.6
+).play;
+
+// 'watch' returns itself
+// so it's easy to start watching and automate in one go
+g.watch.automate({ LFDNoise3.kr(0.6).exprange(200, 600) });
+
+// sample-and-hold continues
+
+// faster screen updates:
+KrBusWatcher.newFrom(s).updateFreq = 6;
+
+p.stop;
+
+// asMap in pattern: same value for all synths
+// already-playing notes follow the control value
+// for fun, faster = higher.
+// note here that the server is generating freq values;
+// 'watch' easily syncs these to the client and they are
+// available for pattern calculations!
+p = Pbind(
+	\freq, g.asMap,
+	\dur, g.asPattern.expexp(200, 600, 0.2, 0.08),
+	\legato, 1.6
+).play;
+
+p.stop;
+
+g.stopWatching.stopAuto;
+g.free;
+::
