@@ -1,0 +1,43 @@
+TITLE::CUBE
+summary:: For IEM CUBE 24 speaker setup
+categories::Libraries>AmbIEM
+related:: Overviews/AmbIEM
+
+DESCRIPTION::
+This helpfile is especially made for the IEM CUBE and for its 24 speaker setup.
+
+code::
+p = p ?? ProxySpace.new;
+p.push;
+
+b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav");
+
+~test = { | amp = 0.2| PlayBuf.ar(1, b.bufnum, BufRateScale.kr(b.bufnum), loop: 1)*amp; };
+
+// the sphere is projected onto your screen and you may move the mouse to
+// control the source location
+// middle of the screen = top, top/middle of the screen = front,
+// top-bottom of the screen = back etc.
+(
+~mouse = { [MouseX.kr(-1,1), MouseY.kr(1, -1)] };
+~azi = { atan2(~mouse.kr(1,1), ~mouse.kr(1,0)) - (pi/2)};
+~elev = {
+	var plane, z;
+	plane = hypot(~mouse.kr(1,0), ~mouse.kr(1,1)).min(1);
+	z = (1 - plane.squared).sqrt;
+	pi/2 - atan2(plane, z);
+};
+)
+
+~enc = { PanAmbi3O.ar(~test.ar, ~azi.kr, ~elev.kr) };
+~dec = { DecodeAmbi3O.ar(~enc.ar, 'CUBE_basic') };
+
+// split the 25th channel between the last 4 real speakers (21-24)
+~out = { ~dec.ar(20, 0) ++ (~dec.ar(1, 24)*0.25 + ~dec.ar(4, 20)) };
+
+~out.play
+
+// the other settings
+~dec = { DecodeAmbi3O.ar(~enc.ar, 'CUBE_strong') };
+~dec = { DecodeAmbi3O.ar(~enc.ar, 'CUBE_weak') };
+::

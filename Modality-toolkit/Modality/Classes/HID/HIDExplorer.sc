@@ -10,10 +10,18 @@ HIDExplorer {
 
     classvar <exploreFunction;
 
-	*shutUp { verbose = false }
+	classvar <specMap;
 
-	*init {
-        exploreFunction = { |devid, thisdevice, elid, page, usage, value, mappedvalue| this.updateRange( elid, page, usage, value ) };
+	*trace { |flag = true| verbose = flag }
+
+	*initClass {
+		specMap = (
+			\Button: \hidBut
+		);
+
+        exploreFunction = { |devid, thisdevice, elid, page, usage, value, mappedvalue|
+			this.updateRange( elid, page, usage, value )
+		};
 	}
 
 	*start { |srcDev|
@@ -31,6 +39,7 @@ HIDExplorer {
 			srcDev.debug_( false );
 		}{
 			HID.debug_( false );
+			// observedSrcDev = nil; // is this a good idea?
 		}
 	}
 
@@ -47,13 +56,13 @@ HIDExplorer {
         Document("edit and save me", this.compileFromDevice( dev ) );
 	}
 
-    *detectDuplicateElements{ |elements|
+    *detectDuplicateElements { |elements|
         var elementUsageDict = IdentityDictionary.new;
         var duplicates = IdentityDictionary.new;
         var uniques = IdentityDictionary.new;
         var usagePageKey;
 
-        elements.sortedKeysValuesDo{ |elid,ele|
+        elements.sortedKeysValuesDo { |elid,ele|
             usagePageKey = ( ele.usage.asString ++ "_" ++ ele.usagePage ).asSymbol;
             if ( elementUsageDict.at( usagePageKey ).notNil ){
                 // this one already appeared, it's a double!!
@@ -69,63 +78,86 @@ HIDExplorer {
     *compileFromDevice { |dev|
 		var str = "(\n";
         var elements = dev.elements;
-        var uniques, duplicates;
 
-		str = str ++ "device: \"" ++ dev.info.productName.asString ++ "_" ++ dev.info.vendorName.asString ++ "\",\n";
+		var inElements, outElements, featureElements;
+		var idInfo = dev.info.productName.asString
+		   ++ "_" ++ dev.info.vendorName.asString;
+
+		// header
+		str = str ++ "idInfo: \"" ++ idInfo ++ "\",\n";
 		str = str ++ "protocol: 'hid',\n";
-		str = str ++ "description: (\n";
+		str = str ++ "deviceName: \"" ++ idInfo ++ "\",\n";
+		str = str ++
+"deviceType: '___',
+elementTypes: [],
+status: (
+	linux: \"unknown\",
+	osx: \"unknown\",
+	win: \"unknown\"
+),
 
-        /// todo: check the device elements whether any duplicate usages occur, if so, then we need to filter by element id
+// hardwarePages: [1, 2, 3, 4],
+
+// deviceInfo: (
+// vendorURI: 'http://company.com/products/this',
+// manualURI: 'http://company.com/products/this/manual.pdf',
+	// description: ,
+	// features: [],
+	// notes: ,
+	// hasScribble: false
+// ),
+";
+		str = str ++ "elementsDesc: (\n";
+		str = str ++ "	elements: [\n";
+
+        /// todo: check the device elements whether any duplicate usages occur,
+		/// and if so, then we need to filter by element id
         /// could infer type from the control
         /// could infer name from the control -> suggest a name
 
         /// FIXME: ignore constant fields!
 
-        #uniques, duplicates = this.detectDuplicateElements( elements.select{ |v| v.ioType == 1 } );
-        if ( uniques.size + duplicates.size > 0 ){
-            str = str + "\n\n// --------- input elements ----------";
-            uniques.sortedKeysValuesDo{ |key,val|
-				str = str + "\n'<element name %>': ('hidUsage': %, 'hidUsagePage': %, 'type': '<type %>', 'ioType': 'in', 'spec': <spec %> ),"
-                .format(val.usageName, val.usage, val.usagePage, val.pageName, val.usageName );
-            };
-            duplicates.sortedKeysValuesDo{ |key,val|
-                str = str + "\n'<element name %_%>': ('hidElementID': %, 'type': '<type %>', 'ioType': 'in', 'spec': <spec %> ),"
-                .format(val.usageName, key, key, val.pageName, val.usageName );
-            };
-        };
+		inElements = elements.select { |v| v.ioType == 1 };
+		str = str + this.stringFor(inElements, 'in', "input elements");
 
-        #uniques, duplicates = this.detectDuplicateElements( elements.select{ |v| v.ioType == 2 } );
-        if ( uniques.size + duplicates.size > 0 ){
-            str = str + "\n\n// --------- output elements ----------";
-            uniques.sortedKeysValuesDo{ |key,val|
-				str = str + "\n'<element name %>': ('hidUsage': %, 'hidUsagePage': %, 'type': '<type %>', 'ioType': 'out', 'spec': <spec %> ),"
-                .format(val.usageName, val.usage, val.usagePage, val.pageName, val.usageName );
-            };
-            duplicates.sortedKeysValuesDo{ |key,val|
-				str = str + "\n'<element name %_%>': ('hidElementID': %, 'type': '<type %>', 'ioType': 'out', 'spec': <spec> ),"
-                .format(val.usageName, key, key, val.pageName, val.usageName );
-            };
-        };
+		outElements = elements.select { |v| v.ioType == 1 };
+		str = str + this.stringFor(outElements, 'out', "output elements");
 
-        /*
-        #uniques, duplicates = this.detectDuplicateElements( elements.select{ |v| v.ioType == 3 } );
-        if ( uniques.size + duplicates.size > 0 ){
-            str = str + "\n\n// --------- feature report ----------";
-            uniques.sortedKeysValuesDo{ |key,val|
-                str = str + "\n'<element name %>': ('hidhidUsage': %, 'usagePage': %, , 'type': '<type %>', 'ioType': 'feature' ),"
-                .format(val.usageName, val.usage, val.usagePage, val.pageName );
-            };
-            duplicates.sortedKeysValuesDo{ |key,val|
-                str = str + "\n'<element name %_%>': ('hidElementID': %, 'type': '<type %>', 'ioType': 'feature' ),"
-                .format(val.usageName, key, key, val.pageName );
-            };
-        };
-        */
+		// featureElements = elements.select { |v| v.ioType == 1 };
+		// str = str + this.stringFor(outElements, 'feature', "feature report");
 
+		str = str + "\t]";
 		str = str + "\n)\n);";
 
 		^str;
     }
+
+	*stringFor { |elems, ioType, title|
+		var uniques, duplicates, str = "";
+		#uniques, duplicates = this.detectDuplicateElements(elems);
+
+		if ( uniques.size + duplicates.size > 0 ) {
+			str = str + "\n\n\t\t// --------- % ----------".format(title);
+		};
+
+		uniques.sortedKeysValuesDo { |key, elem|
+			var specName = specMap[elem.pageName.asSymbol]
+			?? { "_%_".format(elem.usageName) };
+			str = str + "\n\t\t( key: '_%_', 'hidUsage': %, 'hidUsagePage': %, "
+			"'elementType': '%', 'ioType': '%', 'spec': '%' ),"
+			.format(elem.usageName, elem.usage, elem.usagePage, elem.pageName,
+				ioType, specName );
+		};
+		duplicates.sortedKeysValuesDo { |key, elem|
+			var specName = specMap[elem.pageName.asSymbol]
+			?? { "_%_".format(elem.usageName) };
+			str = str + "\n\t\t( key: '_%_%_', 'hidElementID': %, "
+			"'elementType': '%', 'ioType': '%', 'spec': '%' ),"
+			.format(elem.usageName, key, key, elem.pageName, ioType, specName );
+		};
+
+		^str
+	}
 
 	*compileFromObservation { |includeSpecs = false|
 
@@ -137,7 +169,7 @@ HIDExplorer {
 			str = str + "\n// ------ element ids -------------";
 			observeDict[\elid].sortedKeysValuesDo { |key, val|
 				#num, chan = key.split($_).collect(_.asInteger);
-				str = str + "\n'<element name %>': ('hidElementID': %, 'type': '<type>'),"
+				str = str + "\n'<element name %>': ('hidElementID': %, 'elementType': '<type>'),"
 					.format(key, val);
 			};
 		};
@@ -146,7 +178,7 @@ HIDExplorer {
 			str = str + "\n\n// --------- usage ids ----------";
 			observeDict[\usage].sortedKeysValuesDo { |key, val|
 				#num, chan = key.split($_).collect(_.asInteger);
-				str = str + "\n'<element name %>': ('hidUsage': %, 'hidUsagePage': %, , 'type': '<type>' ),"
+				str = str + "\n'<element name %>': ('hidUsage': %, 'hidUsagePage': %, , 'elementType': '<type>' ),"
 				.format(key, val.usage, val.hidUsagePage ); /// could infer type from the control
 			};
 		};

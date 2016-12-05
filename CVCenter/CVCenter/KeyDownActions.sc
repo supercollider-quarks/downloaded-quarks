@@ -357,14 +357,60 @@ KeyDownActions {
 
 		this.globalShortcuts = IdentityDictionary.new;
 
-		if(globalShortcuts.isNil) {
+		if (globalShortcuts.isNil) {
 			scFunc =
-			"// bring all Windows to front and call CVCenter.makeWindow *afterwards*
-			{ Window.allWindows.do(_.front); CVCenter.makeWindow }";
+			"// bring all Windows to front and call CVCenter.front *afterwards*\n" ++
+			{ Window.allWindows.do(_.front); CVCenter.front }.asCompileString;
+
 			this.globalShortcuts.put(
 				'fn + F1',
 				(func: scFunc, keyCode: KeyDownActions.keyCodes['fn + F1'])
-			)
+			);
+
+			scFunc =
+			"// load a new setup via dialog\n" ++
+			{ CVCenterLoadDialog() }.asCompileString;
+
+			this.globalShortcuts.put(
+				'fn + F2',
+				(func: scFunc, keyCode: KeyDownActions.keyCodes['fn + F2'])
+			);
+
+			scFunc =
+			"// show server meter\n" ++
+			{
+				if(CVCenter.scv[\meter].isNil or:{
+					CVCenter.scv[\meter].window.isClosed
+				}) {
+					CVCenter.scv.put(\meter, ServerMeter(Server.default));
+				};
+				CVCenter.scv[\meter].window.front;
+			}.asCompileString;
+
+			this.globalShortcuts.put(
+				'fn + F3',
+				(func: scFunc, keyCode: KeyDownActions.keyCodes['fn + F3'])
+			);
+
+			scFunc =
+			"// plot node tree\n" ++
+			{
+				var plot = { |win|
+					Server.default.plotTreeView(parent: win, actionIfFail: { defer { win.close }});
+				};
+				if (CVCenter.scv[\plotTree].isNil or:{
+					CVCenter.scv[\plotTree].isClosed
+				}) {
+					CVCenter.scv.put(\plotTree, Window.new);
+				};
+				CVCenter.scv[\plotTree].front;
+				plot.value(CVCenter.scv[\plotTree]);
+			}.asCompileString;
+
+			this.globalShortcuts.put(
+				'fn + F4',
+				(func: scFunc, keyCode: KeyDownActions.keyCodes['fn + F4'])
+			);
 		} {
 			this.globalShortcuts = globalShortcuts;
 		};
@@ -408,12 +454,12 @@ KeyDownActions {
 				[trackingSynth, syncResponder].do(_.free);
 				trackingSynth = Synth.basicNew(\keyListener);
 				trackingSynthID = trackingSynth.nodeID;
-				if(Main.versionAtLeast(3, 5)) {
+				if (Main.versionAtLeast(3, 5)) {
 					syncResponder = OSCFunc({ |msg, time, addr, recvPort|
 						// "msg: %\n".postf([msg, time, addr, recvPort]);
-						if(msg[1].asInt == trackingSynthID) {
+						if(msg[1].asInteger == trackingSynthID) {
 							funcSlot = this.globalShortcuts.values.detect({ |sc|
-								sc.keyCode == msg[2].asInt and:{ msg[3].asInt.asBoolean }
+								sc.keyCode == msg[2].asInteger and:{ msg[3].asInteger.asBoolean }
 							});
 							funcSlot !? { { funcSlot.func.interpret.value }.defer };
 						};
@@ -421,9 +467,9 @@ KeyDownActions {
 				} {
 					syncResponder = OSCresponderNode(Server.default.addr, '/tr', { |t, r, msg|
 						// "msg: %\n".postf([t, r, msg]);
-						if(msg[1].asInt == trackingSynthID) {
+						if(msg[1].asInteger == trackingSynthID) {
 							funcSlot = this.globalShortcuts.values.detect({ |sc|
-								sc.keyCode == msg[2].asInt and:{ msg[3].asInt.asBoolean }
+								sc.keyCode == msg[2].asInteger and:{ msg[3].asInteger.asBoolean }
 							});
 							funcSlot !? { { funcSlot.func.interpret.value }.defer };
 						};

@@ -1,0 +1,115 @@
+TITLE:: Peuclid
+summary:: a pattern for euclidian rhythms
+categories:: Patterns
+related:: Classes/Pattern, Classes/Pbjorklund
+
+DESCRIPTION::
+Peuclid evenly distributes m hits in n beats. Many timeline rhythms coming from West African music that today be found in e.g. Cuban and Brazilian music are based on subdividing 12 or 16 beats into a number that is prime to them, such as 5 or 7.
+
+EXAMPLES::
+code::
+// a Peuclid with 3 hits within 8 beats:
+a = Peuclid(3, 8);
+a.asStream.nextN(9);
+
+// use Peuclid to control amplitude
+Pbind(
+	\amp, Peuclid(5, 8, 4) * 0.2,
+	\dur, 0.25
+).play;
+
+(	// a percussive sound
+SynthDef(\tic, { |out, freq = (60.midicps), amp = 0.1, pan, ringtime = 0.03|
+	var env = XLine.ar(1, 0.001, ringtime, doneAction: 2);
+	var snd = SinOsc.ar(freq);
+	Out.ar(out, Pan2.ar(env * snd, pan, amp));
+}).add;
+)
+
+// use Peuclid to control amplitude via Pkey:
+Pbind(
+	\hit, Peuclid(7, 12, inf),
+	\amp, Pkey(\hit) * 0.2,
+	\instrument, \tic,
+	// emphasize beat 1 with a lower pitch
+	\freq, Pseq([[1000, 2000], 2000].clipExtend(12), inf),
+	\dur, 0.125
+).play;
+
+// play all euclidian subdivisions of length 12, from 1 - 12
+// add ghost notes to hear grid
+Pdef(\euclid, Pbind(
+	\hit, Peuclid(Pseries(1, 1, 12).stutter(4), 12, 48),
+	\amp, Pkey(\hit) * 0.2 + 0.02,
+	\instrument, \tic, \ringtime, 0.1,
+	\freq, Pseq([[1000, 2000], 2000].clipExtend(12), inf),
+	// emphasize beat 1 with a lower pitch
+	\dur, 0.125,
+)).play;
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+make a new Peuclid
+argument:: numHits
+with a given number of hits,
+argument:: numBeats
+distributed within a given number of beats,
+argument:: repeats
+and repeating a given number of times.
+
+All arguments can be patterns.
+
+INSTANCEMETHODS::
+
+private:: storeArgs, numHits, repeats, numBeats, embedInStream
+
+code::
+
+(
+Pdef(\metro, Pbind(
+	\instrument, \tic, \ringtime, 0.1,
+	\freq, Pseq([[1000, 2000], 2000] * 0.5, inf),
+	\dur, 0.75
+)).play;
+
+Pdefn(\numHits, 5);
+Pdefn(\numBeats, 12);
+// can also
+Pdef(\euclid, Pbind(
+	\hit, Pn(Peuclid(Pdefn(\numHits), 12, 48)),
+    \amp, Pkey(\hit) * 0.2 + 0.02,
+    \instrument, \tic, \ringtime, 0.1,
+    \freq, 2000,
+    \dur, 0.125,
+)).play;
+)
+
+Pdefn(\numHits, 2pi);
+Pdefn(\numHits, );
+
+// an example of the algorithm by hand
+(
+Tdef(\euclid).set(\numbeats, 12, \numhits, 7, \dt, 0.25);
+
+Tdef(\euclid, { |ev|
+	var currval = 0;
+	loop {
+		currval.postln;
+		currval = (currval.round(10e-10) % ev[\numbeats]).postln;
+		ev[\numbeats].do { |i|
+			var isHit = (currval.round(1) == i);
+			[currval, i, isHit].postln;
+			if (isHit) {
+				(instrument: \tic, freq: 2000).play;
+				currval = currval
+				+ (ev[\numbeats] / ev[\numhits])
+				% ev[\numbeats];
+			};
+			ev[\dt].wait;
+		};
+	}
+}).play;
+)
+::

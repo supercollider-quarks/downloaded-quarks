@@ -1,0 +1,81 @@
+TITLE:: AbstractMIDIControl
+summary:: Abstract superclass of all ddwMIDI controllers
+categories:: External Control>MIDI
+related:: Guides/ddwMIDI_Guide
+
+DESCRIPTION::
+This class implements behavior that is common to all MIDI controllers. You will not use this class directly in normal cases.
+
+If you need to define a custom controller, inherit from this class.
+
+Note::
+By default, continuous controllers do not respond until the incoming controller value either comes close to, or crosses, the existing value. This is to prevent the value in SuperCollider from jumping suddenly to a physical controller value that may be quite distant. You can disable this behavior globally by setting code::AbstractMIDIControl.syncByDefault = false::. It is currently not supported to choose this behavior per responder.
+::
+
+
+CLASSMETHODS::
+
+METHOD:: syncByDefault
+A Boolean, determining whether future MIDI controllers will update immediately (if false) or wait until the new value is close to the old one (if true).
+
+
+METHOD:: new
+Creates an instance of the socket subclass being invoked. Arguments are generic, and are forwarded to the subclass's code::init:: method.
+
+ARGUMENT:: chan
+The messages' source. See link::Guides/ddwMIDI_Guide#Identifying MIDI channels::.
+
+ARGUMENT:: num
+The controller number. See link::Guides/ddwMIDI_Guide#Controller numbers::.
+
+ARGUMENT:: destination
+In general, controllers target another object. This target object is the destination.
+
+ARGUMENT::  ... args
+Additional arguments are up to the subclass.
+
+returns:: The controller instance.
+
+
+INSTANCEMETHODS::
+
+METHOD:: ccnum
+returns:: The controller number. If the controller was automatically allocated, the return value may be an instance of link::Classes/CControl::. Otherwise, the return value should be an Integer.
+
+METHOD:: controlType
+A symbol, indicating the default controller type to look up, if no controller number is given. See link::Classes/CCAllocator:: for details.
+
+METHOD:: destValue
+(Optionally supported by subclasses.) If the destination has a concrete value, return the value here.
+
+METHOD:: destinationChanged
+Method not used at present.
+
+METHOD:: resync
+Reset the controller-sync status -- i.e., force the next incoming MIDI CC message for this responder to update the active value, regardless of its distance from the previous value.
+
+METHOD:: setSync
+Called internally by link::Classes/MIDIChannel::. Implements the value-sync logic: If the new value is close to, or crosses, the old value, then update. Otherwise, ignore.
+
+METHOD:: spec
+returns:: The destination's link::Classes/ControlSpec::, if it has one.
+
+
+METHOD:: free
+Remove the controller completely from the ddwMIDI hierarchy.
+
+METHOD:: destination
+returns:: The controller's target object.
+
+METHOD:: parent
+returns:: The controller's parent link::Classes/MIDIChannel:: object. From this, you can get information about the device and channel from which the controller is receiving messages.
+
+METHOD:: clear
+Subclasses may implement code::clear:: to keep the controller registered in the hierarchy, but become inactive.
+
+METHOD:: init
+Subclasses should implement code::init:: for their specific requirements. Users should not call code::init:: directly.
+
+
+PRIVATE:: prInit
+

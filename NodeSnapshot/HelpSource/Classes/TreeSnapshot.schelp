@@ -1,0 +1,28 @@
+TITLE:: TreeSnapshot
+summary:: A snapshot of the state of the node tree on a server.
+categories:: Server
+related:: Classes/TreeSnapshot, Classes/TreeSnapshotView, Classes/Server, Classes/Group
+
+DESCRIPTION::
+link::Classes/TreeSnapshot:: is a snapshot of the node tree running on a server, at a single point in time. Snapshots can be generated using the link::#*get:: method.
+
+CLASSMETHODS::
+
+METHOD:: get
+
+ARGUMENT:: action
+A function to be executed when the TreeShapshot has been build. Snapshot is passed as the first argument.
+
+ARGUMENT:: node
+(Optional) A group on the server to query. This useful to build a snapshot of only a subsection of the node tree.
+
+EXAMPLES::
+code::
+
+TreeSnapshot.get({
+	|snapshot|
+	snapshot.postln;
+});
+
+::
+

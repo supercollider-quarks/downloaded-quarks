@@ -1,0 +1,9 @@
+(
+	\name: 			"VirtualGamelan",
+	\summary:		"A library for research in gamelan music",
+	\author: 		"Rainer Schütz, Alberto de Campo, Julian Rohrhuber",
+	\organisation:	"Art University Graz, University Cologne, University of the Arts Berlin, IMM Düsseldorf",
+	\since: 		"2007",
+	\version:		"0.1",
+	\dependencies:  ["ListeningClocks", "GamelanSynthesis", "GamelanPatterns", "EventArray"]
+)

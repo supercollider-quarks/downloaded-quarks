@@ -275,7 +275,7 @@ AbstractChuckArray.defaultSubType = \chordFit;
 
 		// midi input will be in the event - use it if present
 	notes = inEvent[\chNotes] ? source[\notes];
-	(topEvent = inEvent[\top]).notNil.if({
+	(topEvent = inEvent[\top].dereference).notNil.if({
 		top = topEvent[\freq] ?? { topEvent[\note].asFloat };
 		topMode = topEvent[\mode]/*.asMode*/;
 	}, {
@@ -393,7 +393,7 @@ AbstractChuckArray.defaultSubType = \chordFit;
 	BP.exists(newBPname).not.if({
 		new = PR(parentName).chuck(PR(childName).chuck(BP(newBPname), nil, parms), nil, parms);
 			// short form for ch.notNil.if({ ... })
-		mode.asMode !? { mode.asMode => new };
+		mode !? { mode.asMode => new };
 		chordMIDIBuf !? { chordMIDIBuf =>.ch new };
 		topMelodyMIDIBuf !? { topMelodyMIDIBuf =>.mel new };
 		macrorhythm !? { macrorhythm =>.macro new };

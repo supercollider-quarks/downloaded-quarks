@@ -1,0 +1,48 @@
+title:: Pgcm
+summary:: pattern globally coupled maps
+categories:: transnd>pattern
+
+description::
+implements globally coupled maps where f(x) is the logistic equation whose variable is r :
+
+x_{n+1}(i) = (1 - g) f(x_{n}(i)) + {g \over N} \sum_{j=1} ^ {N} f(x_{n}(j))
+
+
+CLASSMETHODS::
+
+METHOD:: new
+
+argument:: list
+a list of initial values of x in the lattice
+
+argument:: r
+equation variable [1.0, 2.0]
+
+argument:: g
+coupling strength [0.0, 1.0]
+
+argument:: repeats
+stream length
+
+INSTANCEMETHODS::
+private:: r, g, f, evolve, embedInStream
+
+
+EXAMPLES::
+
+code::
+s.boot;
+
+// as degree, patterns transmit spatially
+p = Pgcm(Array.fill(10, { 0.1.rand }), 1.9, 0.11, inf);
+Pbind(\degree, (p * 8).trunc, \dur, 0.125, \amp, 0.01, \pan, Array.series(10, -1, 2/10)).play;
+
+// change r
+p = Pgcm(Array.fill(10, { 0.1.rand }), Pseries(1.5, 0.5/500, 500), 0.01, inf);
+Pbind(\degree, (p * 8).trunc, \dur, 0.125, \amp, 0.01, \pan, Array.series(10, -1, 2/10)).play;
+
+// change g
+p = Pgcm(Array.fill(10, { 0.1.rand }), 2.0, Pseries(0, 1/500, 500), inf);
+Pbind(\degree, (p * 12).trunc, \dur, 0.125, \amp, 0.01, \pan, Array.series(5, -1, 2/5)).play;
+
+::

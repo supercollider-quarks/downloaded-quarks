@@ -1,27 +1,29 @@
-/*
+/* todo Influx:
 
-Questions -
+* implement clip, fold, wrap, compression for outvals
+(as in Nudge)
 
-  [move scaler and offsets to InfluxBase?]
+* write a method for making skewed diagonals
 
-* InfluxBase is the base class for the Influx family.
-  It passes on incoming values under the same name,
-  (puts them into outValDict - maybe remove this step?),
-  and spreads them as they are to multiple destinations
-  by means of the named actions in its action, a MFunc.
+* flexify weights
+  * allow using weights presets:
+  * make basic named ones once when called, then lookup
+  * distinguish between known and added new ones;
+  * on demand, save new weights to disk.
 
-* InfluxMix can accept influences from multiple sources
-  and decides on param values based on the influences.
-  Different sources can have different trust values,
-  which will determine the strength of their influence.
+* implement a crossfade task:
+*  xfade to new set of weights,
+*  xfade to new offsets
+*  xfade to multi-offsets,
+*   e.g. locate them at (0.5@0.5), (-0.5 @ -0.5)
+* same for 3dim controls
 
-* InfluxSpread can distribute incoming values to
-  multiple destinations, with optional rescaling,
-  and optional mapping to other parameter names.
+* Examples with Tdef, Pdef
+* Example with multitouchpad:
+*  new finger gets next ndef/tdef, 3 params (vol, x, y)
 
-* Influx can entangle or disentangle inValues to outValues
-  by means of a matrix of weights  which determine how strongly
-  a given input param will affect a given output param.
+* PresetZone - a dense field of lots of presets, morph by distance
+* PresetGrid - a grid with presets at each intersection
 
 */
 
@@ -110,8 +112,8 @@ InfluxBase {
 	}
 
 		// overwrite in subclasses
-	initOuts {
-		outNames = inNames;
+	initOuts { |argOutNames|
+		outNames = argOutNames; // here, innames
 		outValDict = ();
 	}
 
@@ -140,18 +142,15 @@ InfluxBase {
 		};
 	}
 
-	// interface to MFunc:
-	// for more complex ordering, use i.action.addAfter etc.
+	// basic interface to MFunc,
+	// for more complex ordering, use inph.action.addAfter etc.
 	add { |name, func| action.add(name, func) }
 	remove { |name| action.remove(name) }
-	// no anonymous functions anymore,
-	// too clumsy to drag them along in MFunc
-	// addFunc { |func| action.addFunc(func) }
-	// removeFunc { |func| action.removeFunc(func) }
 
-	// create simple funcnames based on relevent object
+	// create simple funcnames based on relevant object
 	funcName { |str, obj|
-		var objname = if (obj.respondsTo(\key)) { obj.key } { action.funcDict.size };
+		var objname = if (obj.respondsTo(\key)) {
+			obj.key } { action.funcDict.size };
 		^(str ++ "_" ++ objname).asSymbol;
 	}
 
@@ -203,36 +202,19 @@ InfluxBase {
 
 }
 
-/* todo:
-
-* weight presets:
-  * make the named ones once when called, then lookup
-  * distinguish between known and added new ones;
-  * on demand save new ones to disk.
-
-* write method for making skewed diagonals
-
-* crossfade background task:
-*  xfade to new set of weights,
-*  xfade to new offsets
-*  xfade to multi-offsets,
-*   e.g. locate them at (0.5@0.5), (-0.5 @ -0.5)
-* same for 3dim controls
-
-* Examples with Tdef, Pdef
-
-* Example with multitouchpad:
-*  new finger gets next ndef/tdef, 3 params (vol, x, y)
-
-* PresetZone - a dense field of lots of presets, morph by distance
-* PresetGrid - a grid with presets at each intersection
-
-*/
-
-
 Influx :InfluxBase {
+	classvar <outFilters;
+
 	var <weights, <presets;
 	var <outOffsets, <>inScaler = 1;
+	var <outProcs;
+
+	// *initClass {
+	// 	outFilters = (
+	// 		tanh: _.tanh,
+	// 		fold: _.fold2
+	// 	)[\tanh].postcs;
+	// }
 
 	*new { |ins = 2, outs = 8, vals, weights|
 		ins = this.makeInNames(ins);
@@ -257,7 +239,8 @@ Influx :InfluxBase {
 		outNames = outs;
 		outValDict = ();
 		outNames.do (outValDict.put(_, 0));
-		outOffsets = 0 ! outNames.size;
+		outProcs = ();
+		outOffsets = ();
 	}
 
 	initWeights { |argWeights|
@@ -275,10 +258,19 @@ Influx :InfluxBase {
 		weights.do { |line, i|
 			var outVal = line.sum({ |weight, j|
 				weight * (inValDict[inNames[j]] ? 0) * inScaler;
-			}) + outOffsets[i];
+			});
+			outVal = outProcs[\base].value(outVal) ? outVal;
 			outValDict.put(outNames[i], outVal);
 		};
 	}
+
+	deltaFor { |...inDeltas|
+		^inDeltas.keep(inValDict.size).collect { |indelta, i|
+			weights.collect { |line| line[i] * indelta };
+		}.sum
+	}
+
+	addProc { |name, func| outProcs.put(name, func); }
 
 	makePresets {
 
@@ -343,6 +335,10 @@ Influx :InfluxBase {
 		.name_(name);
 	}
 
+	center {
+		this.set(*inNames.collect([_, 0]).flat);
+	}
+
 	// create new random weights
 	rand { |maxval = 1.0|
 		weights = weights.collect { |row|
@@ -385,8 +381,9 @@ Influx :InfluxBase {
 		if (pre.notNil) { this.setw(pre) };
 	}
 
-	outOffsets_ { |newOffs|
-		var insize = newOffs.size, offsize = outOffsets.size;
+	setOffsets { |key, newOffs|
+		var insize = newOffs.size;
+		var offsize = outOffsets[key].size;
 		if (insize < offsize) {
 			newOffs = newOffs ++ 0.dup(offsize - insize);
 		} {
@@ -394,7 +391,7 @@ Influx :InfluxBase {
 				newOffs = newOffs.keep(offsize);
 			};
 		};
-		outOffsets = newOffs;
+		outOffsets.put(key, newOffs);
 	}
 
 	offsetsFromProxy { |proxy|
@@ -402,7 +399,7 @@ Influx :InfluxBase {
 		var normVals = setting.collect { |pair|
 			proxy.getSpec(pair[0]).unmap(pair[1]);
 		};
-		this.outOffsets_(normVals.unibi);
+		this.setOffsets(proxy.key, normVals.unibi);
 		^outOffsets;
 	}
 
@@ -411,11 +408,11 @@ Influx :InfluxBase {
 		var normVals = setting.value.collect { |pair|
 			preset.proxy.getSpec(pair[0]).unmap(pair[1]);
 		};
-		this.outOffsets_(normVals.unibi);
+		this.setOffsets(preset.proxy.key, normVals.unibi);
 		^outOffsets;
 	}
 
-	attachMapped { |object, funcName, paramNames, specs|
+	attachMapped { |object, funcName, paramNames, specs, proc|
 		var mappedKeyValList;
 		specs = specs ?? { object.getSpec; };
 		funcName = funcName ?? { object.key };
@@ -423,12 +420,20 @@ Influx :InfluxBase {
 		?? { object.getHalo(\orderedNames); }
 		?? { object.controlKeys; };
 
+		outOffsets.put(funcName, 0 ! outNames.size);
+		outProcs.put(funcName, proc);
+
 		action.addLast(funcName, {
+			var myOffsets = outOffsets[funcName];
+			var myProc = outProcs[funcName];
 			mappedKeyValList = paramNames.collect { |extParName, i|
 				var inflOutName = outNames[i];
 				var inflVal = outValDict[inflOutName];
 				var mappedVal;
+
 				if (inflVal.notNil) {
+					inflVal = inflVal + myOffsets[i];
+					inflVal = myProc.value(inflVal) ? inflVal;
 					mappedVal = specs[extParName].map(inflVal + 1 * 0.5);
 					[extParName, mappedVal];
 				} { [] }
@@ -436,7 +441,12 @@ Influx :InfluxBase {
 			object.set(*mappedKeyValList.flat);
 		});
 	}
+
 	removeMapped { |funcName|
 		action.disable(funcName);
+	}
+
+	attachNudge { |object, funcName, paramNames, specs, proc|
+
 	}
 }

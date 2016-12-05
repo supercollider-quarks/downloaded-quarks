@@ -1,0 +1,80 @@
+TITLE:: PstepDur
+summary:: A Pstep variant that supports lookahead
+categories:: Streams-Patterns-Events>Patterns>Time
+related:: Classes/Pstep
+
+DESCRIPTION::
+link::Classes/Pstep:: and PstepDur are both "sample and hold" patterns: One value from teletype::levels:: is repeated until a duration from teletype::durs:: elapses. Then, another value is chosen and repeated for the next duration.
+
+link::Classes/Pstep:: measures elapsed time using the thread's logical time. That is, it assumes it will be evaluated only exactly when needed, not before.
+
+PstepDur measures time based on the input event's delta. Provided that duration keys have already been set in the event, PstepDur may be polled in advance.
+
+note:: It's mandatory to prepare timing information emphasis::earlier:: in the event pattern's processing chain. See the examples. ::
+
+See link::Classes/PcollectFinal:: for an example of a lookahead filter pattern.
+
+
+CLASSMETHODS::
+
+METHOD:: new
+Create an instance of PstepDur.
+
+ARGUMENT:: levels
+The values (of any data type) to be sampled and held.
+
+ARGUMENT:: durs
+The durations for which to hold items from teletype::levels::.
+
+ARGUMENT:: repeats
+How many times to repeat, after running out of either teletype::levels:: or teletype::durs::.
+
+ARGUMENT:: tolerance
+How close is "close enough" (avoids problems with floating point rounding error in repeated sums).
+
+
+EXAMPLES::
+
+code::
+// Read 10 values from Pstep, all at once
+// Pseries never advances! (Because logical time doesn't advance)
+Pstep(Pseries(0, 1, inf), 1).asStream.nextN(10);
+
+// Pull from Pstep in a Routine
+// Now the clock advances, and so do the values
+fork {
+	var stream = Pstep(Pseries(0, 1, inf), 1).asStream;
+	10.do {
+		stream.next.postln;
+		0.5.wait;
+	}
+};
+
+// With PstepDur, supply the duration in the input event.
+// You get the same values as in a routine,
+// but you get them all at once (no clock dependence).
+PstepDur(Pseries(0, 1, inf), 1).asStream.nextN(10, (dur: 0.5));
+
+// No input event: Error.
+PstepDur(Pseries(0, 1, inf), 1).asStream.nextN(10);
+
+// Correct use of PstepDur in Pbind: Set \dur first.
+// As expected, each degree gets repeated twice.
+p = Pbind(
+	\dur, 0.5,
+	\degree, PstepDur(Pwhite(0, 7, inf), 1)
+).play;
+
+p.stop;
+
+// Incorrect use in Pbind:
+// At the time of evaluating \degree, the input event
+// still has its default \dur == 1. So the degree values
+// do not repeat.
+p = Pbind(
+	\degree, PstepDur(Pwhite(0, 7, inf), 1),
+	\dur, 0.5
+).play;
+
+p.stop;
+::

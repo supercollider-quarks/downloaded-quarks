@@ -1,100 +1,125 @@
 CLASS:: MKtlElement
 summary:: An element of an MKtl.
 categories:: Libraries>Modality
-related:: Overviews/Modality, Classes/MAbstractElement, Classes/MKtl
+related:: Overviews/Modality, Classes/MKtl, Classes/MAbstractElement
 
 DESCRIPTION::
-An element of an link::Classes/MKtl::.
+A named element within an link::Classes/MKtl::, which typically represents a slider, a button, a joystick axis etc etc. It has a description with a deviceSpec (e.g. \midiNum for a midi faderbox slider), and a type (e.g. \slider). It also has a deviceValue (in the deviceSpec range), and a value (in range 0.0 - 1.0).
+It is mostly created automatically when an link::Classes/MKtl:: is made.
 
+See also link::Tutorials/Creating_Custom_Elements_and_Groups::.
 
 CLASSMETHODS::
 
 METHOD:: types
-Available types.
+The types of elements used in descs so far:
+code::
+MKtlElement.types;
+// to update after adding more desc files:
+MKtlDesc.loadDescs;
+MKtlDesc.elementTypesUsed;
 
+::
 private:: initClass
 
 METHOD:: new
-Creates a new instance.
-
-argument:: source
-The link::Classes/MKtl:: it belongs to.
-
-argument:: name
-A name.
+Creates a new instance, with a name, a description and optionally a source.
+code::
+x = MKtlElement(\x, (spec: [-100, 100], type: \joyX, ioType: \in));
+x.value = 0.42;
+x.value
+x.deviceValue
+::
+The source arg is usually an MKtl.
 
 INSTANCEMETHODS::
 
-METHOD:: spec
-The element's spec
+METHOD:: deviceSpec
+The spec that maps between the numerical value range the device sends and/or receives, and the the unipolar range in the MKtlElement.
 
-private:: init
+private:: init, setSpecFromDesc, updateDescription
 
 METHOD:: defaultValue
 The element's default value
 
 
-METHOD:: rawValue
-Get the element's value (raw)
-
-argument:: newVal
-Set the element's value (raw)
-
+METHOD:: deviceValue
+Get and set the element's deviceValue in units and range of the deviceSpec
 
 METHOD:: value
-Get and set the element's current value (normed)
+Get and set the element's current value in normalised range
 
 argument:: newval
 a Float between 0.0 and 1.0
 
+METHOD:: valueNoSend, deviceValueNoSend
+Set the element's deviceValue or value without sending back to the hardware device
+
+METHOD:: valueAction, deviceValueAction
+Set the element's deviceValue or value and perform its action.
+
 discussion::
 
-This will not cause the action to be performed.
+deviceValue_ and value_ will not cause the action to be performed.
+deviceValueNoSend_ and valueNoSend_ will also not trigger the action.
 
-If the element is of type inout or out then the value will also be sent back to the control. Value should be in 0.0-1.0 range, it will be automatically mapped to the correct range for this device (e.g. 0-127).
+If the element is has an output to send back to the device, value_ and deviceValue_ will send the deviceValue to the device, while deviceValueNoSend_ and valueNoSend_ allow just setting the value without sending it (which is sometimes necessary).
 
 Example:
 Control a knob on the Behringer BCF2000
 
 code::
-MKtl('bcf20000').elements.at(\kn_1_1).value_(0.5)
+// This will send the value to the device, causing the motorised fader to go to that position:
+MKtl('bcf1', "behringer-bcf2000");
+MKtl('bcf1').elementsDict[\kn_1_1].value_(0.5);
+MKtl('bcf1').elementAt(\kn, 1, 1).deviceValue_(64);
+
+// This just sets the value in the MKtlElement:
+MKtl('bcf1').elementAt(\kn, 1, 1).valueNoSend_(0.5);
+MKtl('bcf1').elementAt(\kn, 1, 1).deviceValueNoSend_(64);
 ::
-
-
-METHOD:: rawValue
-
-Set the value to the element.
-
-argument:: newval
-Number in the range expected by the device
-
-returns:: MKtlElement
-
-discussion::
-
-This will not cause the action to be performed and will not send the value back to the device.
 
 METHOD:: addAction
 
-argument:: action
-
-Add the action to a FunctionList, creating the FunctionList if doesn't exist yet.
+Add an action to the element's action. Adding multiple actions will create a FunctionList.
 
 METHOD:: removeAction
 
-argument:: action
-
-Remove an action from the list of current actions. Has no effect if 'action' is a function or nil, only removes the action if 'action' is a FunctionList.
+Remove an action from the list of current actions. The action to be removed has to be the exact same function object.
 
 METHOD:: doAction
 
-Perform any actions related to this element.
+Perform the actions related to this element. This includes the action instance variable,
+and the actions of its parents, up to the containing MKtl.
 
 argument:: sendValue
 Whether or not to send the value out to the device if this is an output element.
 
+Method:: enabled
+ask whether this element's action is currently enabled
+Method:: enable, disable
+enable and disable this element's action. works hierarchically in MKtlElementGroup as well:
+code::
+make a
+g = MKtl(\fer, "*run*drive"); g.gui;
+g.dictAt(\wheel).action = { |el| [el.name, el.value.round(0.001)].postln };
+g.elAt(\wheel).disable;
+g.elAt(\wheel).enable;
 
-METHOD:: reset
+// set action for bt group and bt_1:
+g.elAt(\bt).action = { |el| [\bt, el.name, el.value.round(0.001)].postln };
+g.dictAt(\bt_1).action = { "yo, 1!".postln };
+// bt1 posts from two actions!
+// disable group: bt1 posts its action, not group action
+g.elAt(\bt).disable;
+// disable bt 1, enable group:
+g.elAt(\bt, 0).disable; g.elAt(\bt).enable;
+// disable all individual button actions:
+g.elAt(\bt).do(_.enable);
+::
+
+
+METHOD:: resetAction
 
 Set action to nil.
 
@@ -106,12 +131,12 @@ pattern support - embed MKtlElement in a stream.
 
 code::
 // examples for direct pattern usage:
-n = MKtl(\nk1, 'nanoKONTROL');
-x = n.elementsDict[\play];
+MKtlDesc.postLoadable
+n = MKtl(\nk1, "korg-nanokontrol");
+x = n.elementsDict[\play]; // the play button
 
 // test asStream method - simple endless lookup
 p = Pbind(\test, x).trace.play;
-
 // switch value while playing, pattern gets current value
 x.value = 1;
 x.value = 0;
@@ -125,7 +150,7 @@ p = Pbind(
 	\dur, 0.5
 ).trace.play;
 )
-// switch value while playing
+// change value while playing
 x.value = 1;
 x.value = 0;
 
@@ -133,11 +158,12 @@ p.stop;
 ::
 
 
-METHOD:: elementDescription
-An Event/dictionary with the description for the element.
+METHOD:: elemDesc
+An Event or dictionary with a description of the element.
+Typically contains a deviceSpec, a type, and
 
 METHOD:: gui
-Create a gui for this elements.
+Create a gui for this element.
 
 
 EXAMPLES::
@@ -145,24 +171,57 @@ EXAMPLES::
 Sending data back to MIDI device, one should use link::Classes/MAbstractElement#value_:: :
 
 code::
-MKtl('bcf20000').elementAt(\kn,1,1).value_(0.5)
+MKtlDesc.postLoadable; // pick one of the supported devices
+m = MKtl('bcf', "behringer-bcf2000");
+m.gui;
+k = m.elementAt(\kn,1,0);
+k.value_(0.5);
+k.value;
 ::
 
-Classic knobs rotating demo for B:
+Classic knobs rotating demo for BCF:
 
 code::
 (
-x = 0;
-fork{
-	loop{
+var x = 0;
+fork {
+	loop {
 		0.1.wait;
 		x = x + 0.1;
-		8.do{ |i|
-			MKtl('bcf20000').elementAt(\kn,1,i).value_(
-				(x + (i/7)).mod(1.0)
-			)
+		8.do { |i|
+			var el = m.elementAt(\kn, 1, i);
+			var val =  (x + (i/7)).mod(1.0);
+			el.value_( val )
 		}
 	}
 }
 )
+
+// Various tests to show how MKtl works.
+
+// Make one by hand:
+x = MKtlElement(\x, (spec: [-100, 100], type: \joyX, ioType: \in));
+
+x.value = 0.42;
+x.value
+x.deviceValue
+
+x.name
+x.type
+x.ioType
+x.elemDesc;
+// change the elemDesc
+x.elemDesc_((spec: [100, -100], type: \joyY, ioType: \inout));
+x.elemDesc;
+
+// update some entries in the elemDesc
+x.updateDescription((spec: [5, 105], type: \joyXYZ));
+x.elemDesc;
+x.type
+x.ioType;
+
+x.deviceSpec_([5, 105] * 2);
+
+x.value_(0.55).value;
+x.deviceValue
 ::

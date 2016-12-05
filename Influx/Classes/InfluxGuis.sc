@@ -110,25 +110,40 @@ InfluxIOGui : JITGui {
 	}
 
 	checkUpdate {
+		var newState = this.getState;
 		if (object != prevState[\object]) {
 			if (object.notNil) {
-				plotter.specs_([\pan]).domainSpecs_([[0, object.outNames.lastIndex, \lin, 1]]);
-				plotter.setValue(object.weights.flop, false);
-				object.inNames.do(inValsGui.specs.put(_, \pan));
+				// plotter.specs_([\pan]).domainSpecs_([[0, object.outNames.lastIndex, \lin, 1]]);
+				// plotter.setValue(object.weights.flop, false);
 				inValsGui.object_(object.inValDict);
+				object.inNames.do { |name| inValsGui.specs.put(name, \pan) };
 				this.addInvalActions;
 
-				object.outNames.do(outValsGui.specs.put(_, \pan));
 				outValsGui.object_(object.outValDict);
+				object.outNames.do { |name|
+					outValsGui.specs.put(name, \pan) };
 			};
 		};
+		prevState = newState;
+	}
+
+	setSpecs {
+		var bispec =\bipolar.asSpec;
+		if (object.notNil) {
+			object.inNames.do { |name|
+				inValsGui.specs.put(name, bispec);
+			};
+			object.outNames.do { |name|
+				outValsGui.specs.put(name, bispec);
+			};
+		}
 	}
 
 	addInvalActions {
 		inValsGui.widgets.do { |widge|
 			if (widge.isKindOf(EZSlider)) {
 				widge.action = widge.action.addFunc({ |widge|
-					object.calcOutVals;
+					object.calcOutVals.doAction;
 				});
 			}
 		}

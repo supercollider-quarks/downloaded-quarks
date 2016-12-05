@@ -1,0 +1,275 @@
+TITLE:: VirtualRoom
+summary:: Easy to use class for creation of virtual environments
+categories:: Libraries>AmbIEM, UGens>Multichannel>Ambisonics
+related:: Overviews/AmbIEM
+
+
+DESCRIPTION::
+A convenience class for easy creation and management of virtual audio environments. The rendering is done in a class method (ar) while multiple instances of a VirtualRoom may be defined to be able to switch between them (its also possible to play them
+simultaniously, if that makes sense to some application).
+
+
+CLASSMETHODS::
+
+METHOD:: new
+
+
+METHOD:: maxSources
+
+
+METHOD:: kemarPath
+
+
+
+INSTANCEMETHODS::
+
+METHOD:: room
+
+ARGUMENT:: value
+
+
+METHOD:: bin
+
+
+METHOD:: hfDamping
+
+ARGUMENT:: value
+
+
+METHOD:: roomProperties
+
+
+METHOD:: refGain
+
+ARGUMENT:: value
+
+
+METHOD:: play
+
+
+METHOD:: init
+
+
+METHOD:: gui
+
+
+METHOD:: addSource
+
+ARGUMENT:: source
+
+ARGUMENT:: key
+
+ARGUMENT:: x
+
+ARGUMENT:: y
+
+ARGUMENT:: z
+
+
+METHOD:: removeSource
+
+ARGUMENT:: key
+
+
+METHOD:: stop
+
+
+METHOD:: out
+
+
+METHOD:: roomSize
+
+
+METHOD:: fullSourceFunc
+
+ARGUMENT:: source
+
+
+METHOD:: addSourceLight
+
+ARGUMENT:: source
+
+ARGUMENT:: key
+
+ARGUMENT:: x
+
+ARGUMENT:: y
+
+ARGUMENT:: z
+
+
+METHOD:: encoded
+
+
+METHOD:: end
+
+ARGUMENT:: fadeTime
+
+
+METHOD:: sources
+
+
+METHOD:: lightSourceFunc
+
+ARGUMENT:: source
+
+
+METHOD:: revIn
+
+
+METHOD:: listener
+
+
+METHOD:: revGain
+
+ARGUMENT:: value
+
+
+METHOD:: prAddSource
+
+ARGUMENT:: light
+
+ARGUMENT:: source
+
+ARGUMENT:: key
+
+ARGUMENT:: x
+
+ARGUMENT:: y
+
+ARGUMENT:: z
+
+
+
+EXAMPLES::
+NOTE::For better performance the following server options should be set before booting the server.::
+code::
+s.options.blockSize_(128)			// sets kr blocksize; default = 64
+s.options.memSize_(8192 * 16);		// more memory for delay lines
+s.reboot;							// dont forget to reboot the server after this
+
+p = ProxySpace.push;
+::
+
+First thing is to set the path to the full Kemar HRTFs (dowloadable from http://sound.media.mit.edu/KEMAR/full.tar.Z). Default is "KemarHRTF/" (located in the SC3 application folder)
+
+code::
+// set the Kemar path
+VirtualRoom.kemarPath = "KemarHRTF/";
+::
+
+Then init the class - that will switch on the rendering (and consumes CPU) and route the output to the standard output with .play
+
+code::
+// create instance
+v = VirtualRoom.new;
+
+// initialise rendering
+v.init;
+
+// set the room properties
+// reverbration gain, hf damping, early reflections gain
+(
+v.revGain = 0.1;
+v.hfDamping = 0.5;
+v.refGain = 0.8;
+)
+
+// A gui is also available
+v.gui;
+::
+
+note:: The coordinate system is given according to the listener's head:  x-axis (nose), y-axis (left-ear) and z-axis (vertex) and Rooms are defined by the origin and width/depth/height::
+
+code::
+// a room 8m wide (y), 5m deep(x) and 5m high(z) - nose is always along x
+v.room = [0, 0, 0, 5, 8, 5];
+
+// make it  play to standard out
+v.play;
+
+// listener is a NodeProxy.kr, set the source
+v.listener.source = { [ MouseY.kr(5,0), MouseX.kr(8,0), 2.5, 0] };
+
+// more static
+v.listener.source = { |x=2.5, y=4, z=2.5, o=0| [ x, y, z, o] };
+
+
+// adding sources to the scene
+(
+~noisy = { EnvGen.kr(Env.adsr, Impulse.kr(3)) * PinkNoise.ar(1) };
+~sinus = { EnvGen.kr(Env.adsr, Impulse.kr(3)) * SinOsc.ar(440,0.8) };
+~dust = { Dust.ar(400) };
+)
+
+
+v.addSource( ~noisy, \test1, [1, 2, 2.5]);
+v.addSource( ~sinus, \test2, [4, 7, 2.5]);
+v.addSource( ~dust, \test3, [2, 5, 2.5]);
+
+// change the source position
+v.sources[\test1].setn(\xpos, [2.5, 3, 2.5]);		// right
+v.sources[\test1].setn(\xpos, [2.5, 5, 2.5]);		// left
+v.sources[\test1].setn(\xpos, [2, 4, 2.5]);		// back
+v.sources[\test1].setn(\xpos, [3, 4, 2.5]);		// front
+
+// change the listener position
+v.listener.setn(\x, [3, 5, 2.5, 0])				// source to the right
+v.listener.setn(\x, [3, 5, 2.5, pi/2])			// turn, source to the front
+
+
+// remove the sources
+v.removeSource(\test1);
+v.removeSource(\test2);
+v.removeSource(\test3);
+
+
+// the light version of addSource is used if a lot of sources are needed
+// consumes 63% CPU on iBook G4 1Ghz
+(
+x = (1..6).collect ({ |i|
+	var test, testpos;
+	test = NodeProxy.audio(s,1);
+	test.source = { EnvGen.kr(Env.adsr, Impulse.kr(3)) * SinOsc.ar(440.rand,0.6) };
+	v.addSourceLight(test, i.asString, [1 , 4, 2.5] );
+	test;
+});
+)
+
+// remove the sources and free the node proxies
+6.do ({ |i|  v.removeSource(i.asString); x[i].free; });
+
+// adjust the room properties as you like
+v.gui;
+
+// Create a second virtual room
+w = VirtualRoom.new;
+
+// initialise rendering
+w.init;
+
+// set the room properties (reverberation time and gain,
+// hf damping on reverb and early reflections gain
+(
+w.revTime = 0;
+w.revGain = 0;
+w.hfDamping = 1;
+)
+
+// same listener, same room dimensions
+w.listener.source = { |x=2.5, y=4, z=2.5, o=0| [ x, y, z, o] };
+w.room = [0, 0, 0, 5, 8, 5];
+
+// play it on channels 2, 3
+w.out.playN([2,3]);
+~dust = { Dust.ar(400) };
+w.addSource( ~dust, \test3, [3, 3, 2.5]);
+w.removeSource(\test3);
+
+// free the virtual room
+v.free;
+w.free;
+
+// remove the ProxySpace
+p.pop;
+::

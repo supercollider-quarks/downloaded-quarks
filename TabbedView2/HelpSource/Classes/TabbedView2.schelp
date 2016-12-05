@@ -7,7 +7,7 @@ DESCRIPTION::
 There are extensive explanations in the LINK::#Examples:: section on how to use TabbedView2 with its many configuration options .
 
 SUBSECTION:: Version and Author
-version: 1.04 , May 2, 2014
+version: 1.05 , Oct 28, 2016
 
 author: Jost Muxfeldt
 
@@ -20,6 +20,8 @@ LIST::
 ##Double-clicking tabs changes their orientation.
 ##Tabs can be set to be closable.
 ##Tabs are individually configurable, not just globally, though global defaults are settable.
+##Tab states can be automatically archived. See LINK::#Auto-Archiving a TabbedView2 State#Auto-Archiving a TabbedView2 State::
+
 ::
 NOTE::
 Try the LINK::#Demo#DEMO:: Code to test all the features, and go through the LINK::#Examples#EXAMPLES::.
@@ -131,6 +133,7 @@ PRIVATE::newBasic
 PRIVATE::newTransparent
 
 INSTANCEMETHODS::
+
 
 SUBSECTION:: Views and Windows
 
@@ -255,8 +258,6 @@ int, the index to focus
 METHOD:: activeTab
 returns:: returns the  focused tab
 
-
-
 SUBSECTION::Set tabPosition and followEdges
 NOTE::
 Double-clicking or dragging  a tab widget will  change the tab followEdges or position (\left, \top, \right, or \bottom), or the order of the tabs.
@@ -316,6 +317,51 @@ TabbedView2.newTall(nil,Rect(100,500,400,100)).tabPosition_(\bottom).demo(5,"tes
 
 )
 ::
+
+
+SUBSECTION:: Auto-Archiving a TabbedView2 State
+NOTE::
+In order to archive tab positions, their labels must be unique.
+::
+NOTE:: Does not support detached Tabs::
+METHOD:: autoArchive
+Automatically saves the state of the TabbedView2 to given path in the Archive.
+NOTE::
+If the number of saved \indexes is different than the number of tabs, the saved \indexes array will be ignored and reset.
+::
+ARGUMENT:: symbols
+symbol1, symbol2, symbol3, ...
+CODE::
+v=TabbedView2.new;
+v.add("tab1"); // tab names must be unique
+v.add("tab2");
+v.add("tab3");
+// call autoArchive **after** adding the tabs;
+v.autoArchive(\myStorageProject, \myStorageSubsection, \myTabbedViewStorageName);
+::
+
+METHOD:: archiveKeys
+Array:
+Determines which keys will be archived when autoArchive is enabled.
+
+CODE::default=[\indexes, \followEdges, \tabPosition, \tabFocus]::
+ARGUMENT:: array
+Array of  Symbols, may include only
+CODE::[\indexes, \followEdges, \tabPosition, \tabFocus]::
+
+
+METHOD:: saveStateToArchive
+Saves the state of the TabbedView2 to given path in the Archive.
+ARGUMENT:: symbols
+symbol1, symbol2, symbol3, ...
+
+METHOD:: restoreStateFromArchive
+Restores the state of the TabbedView2 from given path in the Archive.
+NOTE::
+If the number of saved \indexes is different than the number of tabs, the saved \indexes array will be ignored and reset.
+::
+ARGUMENT:: symbols
+symbol1, symbol2, symbol3, ...
 
 SUBSECTION::Setting Colors
 NOTE::
@@ -512,6 +558,19 @@ v.insert(2,"squeeze me in")
 
 v.removeAt(2)
 ::
+
+SUBSECTION:: Auto-Archiving Tabs
+NOTE:: Does not support detached Tabs::
+CODE::
+v.add("tab1"); // tab names must be unique
+v.add("tab2");
+v.add("tab3");
+// call autoArchive **after** adding the tabs;
+v.autoArchive(\myStorageProject, \myStorageSubsection, \myTabbedViewStorageName);
+// v's state will now be stored in the archive,
+// and will be restored if you execte the above code again.
+::
+
 
 SUBSECTION:: resize
 CODE::

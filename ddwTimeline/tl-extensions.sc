@@ -2,7 +2,7 @@
 // not ready for prime time!
 
 + Object {
-	asTLItem { ^this.value }
+	asTLItem { |now, iterator| ^this.value(now, iterator) }
 }
 
 + SequenceableCollection {

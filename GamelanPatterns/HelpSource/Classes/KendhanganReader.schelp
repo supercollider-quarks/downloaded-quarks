@@ -1,0 +1,42 @@
+TITLE::KendhanganReader
+summary::Converts drumming notation (strings) to sc-events
+categories::Extensions>Virtual Gamelan
+related::Classes/StringConverter, Classes/BalunganReader, Reference/VGNotationStrings
+
+DESCRIPTION::
+Subclass of StringConverter that converts notation-symbols (strings) into sc-events
+
+CLASSMETHODS::
+
+METHOD:: strokeMap
+
+returns:: Returns the dictionary containing all drumming-symbols and sound-names
+
+METHOD:: initClass
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: getEvent
+(describe method here)
+
+ARGUMENT:: str
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+
+INSTANCEMETHODS::
+
+
+EXAMPLES::
+
+code::
+KendhanganReader.strokeMap;
+
+a = KendhanganReader.convert("ttpb")
+Pseq(a).play // nonsensical - kendhangan requires drumsounds
+a = KendhanganReader.convert("ktktkpiboobpoobp");
+// see the events
+a.do({|i| i.postln; });
+::

@@ -3,7 +3,7 @@
 
 ProxySubmix : Ndef {
 
-	var <skipjack, <proxies, <sendNames, <volBusses;
+	var <skipjack, collection;
 
 	addLevel { |lev_ALL = 1, masterNodeID = 1001|
 		// if needed, init with default numChannels from NodeProxy
@@ -18,24 +18,25 @@ ProxySubmix : Ndef {
 
 	addMix { |proxy, sendLevel = 0.25, postVol = true, mono = false|
 
-		var indexInMix, sendName, volBus;
+		var index, item, sendName, volBus;
 		this.checkInit(proxy);
 
-		if (proxies.includes(proxy)) { ^this };
+		if (collection.includes(proxy)) { ^this };
 
-		indexInMix = proxies.size + 1;
+		index = collection.indexOf(nil) ?? { collection.size };
+		collection = collection.extend(max(collection.size, index + 1));
 		sendName = ("snd_" ++ proxy.key).asSymbol;
-		proxies = proxies.add(proxy);
-		sendNames = sendNames.add(sendName);
+		item = (proxy: proxy, name: sendName);
+		collection[index] = item;
 		this.addSpec(sendName, \amp);
 
 		if (postVol) {
 			if (skipjack.isNil) { this.makeSkip };
 			volBus = Bus.control(server, 1);
-			volBusses = volBusses.add(volBus);
+			item[\volBus] = volBus;
 		};
 
-		this.put(indexInMix, {
+		this.put(index + 1, {
 			var source, levelCtl;
 			source = NumChannels.ar(proxy.ar,
 				if(mono) { 1 } { this.numChannels }
@@ -46,15 +47,23 @@ ProxySubmix : Ndef {
 			};
 			source * levelCtl.lag(0.05);
 		});
+		proxy.addDependant(this);
+	}
+	removeMix { |proxy|
+		var i = collection.detectIndex { |item| item[\proxy] === proxy };
+		if(i.notNil) {
+			collection[i][\proxy].removeDependant(this);
+			collection[i][\volBus].free;
+			collection[i] = nil;
+			this.put(i+1, nil);
+		};
 	}
 
 	checkInit { |proxy|
 		if (this.isNeutral) { this.ar(proxy.numChannels) };
 
-		if (proxies.isNil) {
-			proxies = [];
-			sendNames = [];
-			volBusses = [];
+		if (collection.isNil) {
+			collection = [];
 			this.addSpec(\lev_ALL, [0, 4, \amp]);
 		};
 	}
@@ -67,21 +76,35 @@ ProxySubmix : Ndef {
 		// collect all setmessages and send as one bundle
 		// to reduce osc traffic
 		server.bind {
-			proxies.do { |proxy, i|
-				var volBus = volBusses[i];
-				if (volBus.notNil) { volBus.set(proxy.vol) }
+			collection.do { |item, i|
+				var volBus;
+				if(item.notNil) {
+					volBus = item[\volBus];
+					if (volBus.notNil) {
+						volBus.set(
+							item[\proxy].vol
+							* item[\proxy].monitor.isPlaying.binaryValue
+						)
+					};
+				};
 			};
 		};
 	}
 
 	clear {
-		proxies.clear;
-		sendNames.clear;
-		volBusses.do(_.free);
-		volBusses.clear;
+		collection.do { |item|
+			if(item.notNil) {
+				item[\proxy].removeDependant(this);
+				item[\volBus].free;
+			};
+		};
+		collection.clear;
 
 		skipjack.stop;
 		skipjack = nil;
 		^super.clear;
 	}
+
+	proxies { ^collection.collect { |item| item[\proxy] } }
+	sendNames { ^collection.collect { |item| item[\name] } }
 }

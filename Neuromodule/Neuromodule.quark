@@ -1,0 +1,8 @@
+(
+	\name: 			"Neuromodule",
+	\summary:		"A model for experimenting with the temporal dynamics of time-discrete neural networks",
+	\author: 		"Julian Rohrhuber and Frank Pasemann",
+	\organization: 	"Institute for Music and Media Duesseldorf",
+	\country: 		"Germany",
+	\since: 		"2015"
+)

@@ -1,0 +1,22 @@
+
+
+
+SecondObject {
+	var object;
+
+	*new{ |argObject| ^super.init(argObject) }
+
+	init {
+		object = argObject;
+	}
+
+	postValueFromOtherObject {
+		object.value.postln;
+	}
+}
+
+FirstObject {
+	var <>value;
+
+	*new { value = 100; }
+} 	

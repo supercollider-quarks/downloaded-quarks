@@ -2,13 +2,13 @@
 
 PatchIn {
 
-	var <>nodeControl,<>connectedTo;
+	var <>nodeControl, <>connectedTo;
 
 	*new  { arg nodeControl;
 		^super.newCopyArgs(nodeControl)
 	}
-	*newByRate { arg rate,nodeControl;
-		^this.perform(rate,nodeControl)
+	*newByRate { arg rate, nodeControl;
+		^this.perform(rate, nodeControl)
 	}
 	*audio { arg nodeControl;
 		^AudioPatchIn(nodeControl)
@@ -40,7 +40,7 @@ AudioPatchIn : PatchIn {
 		nodeControl.value = bus.index;
 	}
 	value_ { arg val;
-		if(nodeControl.node.isPlaying,{
+		if(nodeControl.node.isPlaying, {
 			nodeControl.value = val;
 		})
 	}
@@ -67,42 +67,42 @@ ObjectPatchIn : ScalarPatchIn {
 
 PatchOut {
 
-	var <>source,<>group,<bus;
-	var <connectedTo,<>patchOutsOfInputs;
+	var <>source, <>group, <bus;
+	var <connectedTo, <>patchOutsOfInputs;
 	var busses;
 
-	*new { arg source,group,bus;
-		^this.perform(source.rate ?? 
+	*new { arg source, group, bus;
+		^this.perform(source.rate ??
 			{Error("source has nil rate" + source).throw},
-			source,group,bus)
+			source, group, bus)
 	}
-	*prNew {arg source,group,bus;
-		 ^super.newCopyArgs(source,group.asGroup,bus).init;
+	*prNew {arg source, group, bus;
+		 ^super.newCopyArgs(source, group.asGroup, bus).init;
 	}
-	*audio { arg source,group,bus;
-		^AudioPatchOut.prNew(source, group,bus)
+	*audio { arg source, group, bus;
+		^AudioPatchOut.prNew(source, group, bus)
 	}
-	*control { arg source,group,bus;
-		^ControlPatchOut.prNew(source, group,bus)
+	*control { arg source, group, bus;
+		^ControlPatchOut.prNew(source, group, bus)
 	}
-	*scalar { arg source, group,bus;
-		^ScalarPatchOut.prNew(source, group,bus)
+	*scalar { arg source, group, bus;
+		^ScalarPatchOut.prNew(source, group, bus)
 	}
-	*stream { arg source,group,bus;
-		^ScalarPatchOut.prNew(source, group,bus)
+	*stream { arg source, group, bus;
+		^ScalarPatchOut.prNew(source, group, bus)
 	}
-	*noncontrol { arg source,group,bus;
-		^ObjectPatchOut.prNew(source,group,bus)
+	*noncontrol { arg source, group, bus;
+		^ObjectPatchOut.prNew(source, group, bus)
 	}
 	init {}
 	busses { ^(busses ?? {busses = Dictionary.new}) }
-	connectTo { arg patchIn,needsValueSetNow=true;
+	connectTo { arg patchIn, needsValueSetNow=true;
 		// am i already connected to this client ?
-		if(connectedTo.isNil or: {connectedTo.includes(patchIn).not},{
+		if(connectedTo.isNil or: {connectedTo.includes(patchIn).not}, {
 			connectedTo = connectedTo.add(patchIn);
 		});
 		patchIn.connectedTo = this;
-		this.perform(patchIn.rate,patchIn,needsValueSetNow);// set value, bus etc.
+		this.perform(patchIn.rate, patchIn, needsValueSetNow);// set value, bus etc.
 	}
 	disconnect {
 		connectedTo.do({ |patchIn|
@@ -119,15 +119,15 @@ PatchOut {
 	isPlaying { ^group.isPlaying }
 
 	bus_ { arg b;
-		if(b != bus,{
-			bus = b.asBus(this.rate,source.numChannels,this.server);
+		if(b != bus, {
+			bus = b.asBus(this.rate, source.numChannels, this.server);
 
-			if(bus.numChannels != source.numChannels,{
+			if(bus.numChannels != source.numChannels, {
 				warn("numChannels mismatch ! source:" + source
 					+ source.numChannels + "vs. supplied bus:" + b);
 			});
 
-			BusPool.retain(bus,source,\out);
+			BusPool.retain(bus, source, \out);
 			connectedTo.do({ arg pti;
 				pti.readFromBus(bus);
 			});
@@ -137,26 +137,26 @@ PatchOut {
 
 	// allocate extra outs for custom use
 	// and store them here in the PatchOut
-	allocBus { |name,rate,numChannels|
+	allocBus { |name, rate, numChannels|
 		var b;
-		if(this.busses[name].notNil,{
+		if(this.busses[name].notNil, {
 			Error("Bus for "+name+"already allocated").throw;
 		});
-		b = BusPool.alloc(rate,this.server,numChannels,source,name);
+		b = BusPool.alloc(rate, this.server, numChannels, source, name);
 		this.busses[name] = b;
 		^b
 	}
 	releaseBusses {
 		// main bus
-		if(bus.notNil and: {bus.index.notNil},{
-			BusPool.release(bus,source);
+		if(bus.notNil and: {bus.index.notNil}, {
+			BusPool.release(bus, source);
 		});
 		bus = nil;
 
 		// custom requested busses
-		if(busses.notNil,{
-			busses.keysValuesDo({ |name,bus|
-				BusPool.release(bus,source);
+		if(busses.notNil, {
+			busses.keysValuesDo({ |name, bus|
+				BusPool.release(bus, source);
 			});
 			busses = nil;
 		})
@@ -167,18 +167,18 @@ PatchOut {
 ControlPatchOut : PatchOut { // you are returned from a .kr play
 
 	init {
-		if(bus.isKindOf(BusSpec),{
-			bus = BusPool.makeBusFromSpec(bus,this.server,source,\out)
-		},{
+		if(bus.isKindOf(BusSpec), {
+			bus = BusPool.makeBusFromSpec(bus, this.server, source, \out)
+		}, {
 			// nil : speakers
 			// integer : that out
 			// server : private on that server
 
 			// temp hack until the \scalar problem is corrected
-			if(source.isKindOf(IrNumberEditor).not,{
-				bus = bus.asBus(this.rate,source.numChannels,this.server);
-				BusPool.retain(bus,source,\out);
-			},{
+			if(source.isKindOf(IrNumberEditor).not, {
+				bus = bus.asBus(this.rate, source.numChannels, this.server);
+				BusPool.retain(bus, source, \out);
+			}, {
 				bus = nil;
 			})
 		});
@@ -186,8 +186,8 @@ ControlPatchOut : PatchOut { // you are returned from a .kr play
 	rate { ^\control }
 	synthArg { ^bus.index } //need some initialValue
 
-	control { arg controlPatchIn,needsValueSetNow;
-		if(needsValueSetNow,{
+	control { arg controlPatchIn, needsValueSetNow;
+		if(needsValueSetNow, {
 			// TODO ! check if on same server
 			// dont have to this unless changed
 			controlPatchIn.readFromBus(bus)
@@ -202,8 +202,8 @@ ControlPatchOut : PatchOut { // you are returned from a .kr play
 	scalar { arg scalarPatchIn;
 		// polling of value not yet implemented on scserver
 		// scalarPatchIn.value = bus.poll;
-		//[this,scalarPatchIn,this.source]
-		//	.debug("control -> scalar patch ? this,scalarPatchIn,this.source");
+		//[this, scalarPatchIn, this.source]
+		//	.debug("control -> scalar patch ? this, scalarPatchIn, this.source");
 		thisMethod.notYetImplemented;
 	}
 }
@@ -213,14 +213,14 @@ AudioPatchOut : ControlPatchOut {
 
 	rate { ^\audio }
 	synthArg { ^bus.index }
-	audio { arg audioPatchIn,needsValueSetNow;
-		if(needsValueSetNow,{
+	audio { arg audioPatchIn, needsValueSetNow;
+		if(needsValueSetNow, {
 			// check if on same server
 			audioPatchIn.readFromBus(bus)
 			// create mixer if needed
 		});
 	}
-	control { arg controlPatchIn,needsValueSetNow;
+	control { arg controlPatchIn, needsValueSetNow;
 		//no problem, an audio output into a control input is common
 		// and no action needs to be taken
 	}
@@ -234,10 +234,10 @@ AudioPatchOut : ControlPatchOut {
 
 ScalarPatchOut : PatchOut {
 
-	// floats,NumberEditors, numeric pattern players, midi, wacom
+	// floats, NumberEditors, numeric pattern players, midi, wacom
 	// things that are not ON the server
 	init {
-		if(bus.isKindOf(BusSpec),{ // ignore
+		if(bus.isKindOf(BusSpec), { // ignore
 			bus = nil;
 		});
 	}
@@ -245,13 +245,13 @@ ScalarPatchOut : PatchOut {
 	synthArg {
 	 	^source.synthArg
 	 }
-	audio { arg audioPatchIn,needsValueSetNow=false;
-		if(needsValueSetNow,{
+	audio { arg audioPatchIn, needsValueSetNow=false;
+		if(needsValueSetNow, {
 			audioPatchIn.value = source.value;
 		})
 	}
-	control { arg controlPatchIn,needsValueSetNow=false;
-		if(needsValueSetNow,{
+	control { arg controlPatchIn, needsValueSetNow=false;
+		if(needsValueSetNow, {
 			controlPatchIn.value = source.value;
 		});
 	}
@@ -274,24 +274,24 @@ UpdatingScalarPatchOut : ScalarPatchOut {
 
 	var enabled=false;
 
-	*new { arg source,bus,enabled=true;
-		^this.prNew(source,enabled)
+	*new { arg source, bus, enabled=true;
+		^this.prNew(source, enabled)
 	}
-	*prNew {arg source,enabled; ^super.newCopyArgs(source).init(enabled) }
+	*prNew {arg source, enabled; ^super.newCopyArgs(source).init(enabled) }
 
 	init { arg enabled=true;
-		if(enabled,{
+		if(enabled, {
 			source.addDependant(this)
 		})
 	}
-	audio { arg audioPatchIn,needsValueSetNow=false;
-		if(needsValueSetNow,{
+	audio { arg audioPatchIn, needsValueSetNow=false;
+		if(needsValueSetNow, {
 			audioPatchIn.value = source.value;
 		});
 		this.enable;
 	}
-	control { arg controlPatchIn,needsValueSetNow=false;
-		if(needsValueSetNow,{
+	control { arg controlPatchIn, needsValueSetNow=false;
+		if(needsValueSetNow, {
 			controlPatchIn.value = source.value;
 		});
 		this.enable;
@@ -300,7 +300,7 @@ UpdatingScalarPatchOut : ScalarPatchOut {
 		this.enable;
 	}
 	enable {
-		if(enabled.not,{
+		if(enabled.not, {
 			source.addDependant(this);
 			enabled = true;
 		})

@@ -1,44 +1,45 @@
 /*
  A CV models a value constrained by a ControlSpec. The value can be a single Float or an array of Floats.
- 
- Whenever the CV's value changes, it sends a changed message labeled 'synch'.  This way dependants 
- (such as GUI objects or server value) can be updated with SimpleControllers.  The method 
+
+
+ Whenever the CV's value changes, it sends a changed message labeled 'synch'.  This way dependants
+ (such as GUI objects or server value) can be updated with SimpleControllers.  The method
  		aCV-action_(function)
  creates such a connection.
- 
- A CV's value can be read with the 'value' message. 
- CV can also be used as a Pattern (in Pbind) or in combination with other Streams.  
+
+ A CV's value can be read with the 'value' message.
+ CV can also be used as a Pattern (in Pbind) or in combination with other Streams.
 */
 
 CV : Stream {
 	classvar <>viewDictionary;
-	
+
 	var <value, <spec;
-	
-	*initClass { 
-		StartUp.add ({ CV.buildViewDictionary }) 
+
+	*initClass {
+		StartUp.add ({ CV.buildViewDictionary })
 	}
-	
-	*new { | spec = \unipolar, default | 			
+
+	*new { | spec = \unipolar, default |
 		^super.new.spec_(spec,default);
 	}
 
 	action_ { | function | ^SimpleController(this) .put(\synch, function) }
 
 // reading and writing the CV
-	value_ { | val |	
+	value_ { | val |
 		value = spec.constrain(val);
 		this.changed(\synch, this);
-	}	
+	}
 	input_	{ | in | this.value_(spec.map(in)); }
 	input 	{ ^spec.unmap(value) }
 	asInput 	{ | val | ^spec.unmap(val) }
-	
+
 // setting the ControlSpec
-	spec_ 	{ | s, v | 
-				spec = s.asSpec; 
-				this.value_(v ? spec.default); 
-	}	
+	spec_ 	{ | s, v |
+				spec = s.asSpec;
+				this.value_(v ? spec.default);
+	}
 	sp	{ | default= 0, lo = 0, hi=0, step = 0, warp = 'lin' |
 		this.spec = ControlSpec(lo,hi, warp, step, default);
 	}
@@ -57,7 +58,7 @@ CV : Stream {
 	reset {}
 	embedInStream { ^value.yield }
 
-		
+
 // ConductorGUI support
 	draw { |win, name =">"|
 		if (value.isKindOf(Array) ) {
@@ -66,7 +67,7 @@ CV : Stream {
 			~cvGUI.value(win, name, this);
 		}
 	}
-	
+
 	*buildViewDictionary {
 		var connectDictionary = (
 			numberBox:		CVSyncValue,
@@ -83,26 +84,42 @@ CV : Stream {
 			button:			CVSyncValue,
 		);
 		CV.viewDictionary = IdentityDictionary.new;
-		
-		GUI.schemes.do { | gui|		
-			var class;	
-			#[ 
-			numberBox, slider, rangeSlider, slider2D, multiSliderView, 
-			popUpMenu, listView, 
+
+		GUI.schemes.do { | gui|
+			var class;
+			#[
+			numberBox, slider, rangeSlider, slider2D, multiSliderView,
+			popUpMenu, listView,
 			tabletSlider2D, ezSlider, ezNumber, knob, button].collect { | name |
 				if ( (class = gui.perform(name)).notNil) {
 					CV.viewDictionary.put(class, connectDictionary.at(name))
 				}
 			}
 		};
-	}	
+
+		// for 3.7 and later - make sure CV finds both Slider and QSlider classes
+		CV.viewDictionary.keysValuesDo { |guiClass, syncClass|
+			if (guiClass.superclasses.includes(View)) {
+				[guiClass, guiClass.superclass];
+				CV.viewDictionary.put(guiClass.superclass, syncClass)
+			};
+		};
+	}
+
 	connect { | view |
-		CV.viewDictionary[view.class].new(this, view) ;
-	}	
-	
-	asControlInput { ^value.asControlInput }	
+		var syncClass = CV.viewDictionary[view.class];
+		if (syncClass.isNil) {
+			"% - CV.viewDictionary has no syncClass for %"
+			.format(thisMethod, view.class).warn;
+			^nil
+		};
+		^syncClass.new(this, view);
+	}
+
+	asControlInput { ^value.asControlInput }
+
 	asOSCArgEmbeddedArray { | array| ^value.asOSCArgEmbeddedArray(array) }
-	
+
 	indexedBy { | key |
 		^Pfunc{ | ev | value.at(ev[key] ) }
 	}
@@ -110,10 +127,9 @@ CV : Stream {
 	windex { | key |
 		^Pfunc{ | ev | value.asArray.normalizeSum.windex  }
 	}
-	
+
 	at { | index | ^value.at(index) }
-	put { | index, val | value = value.putt(index, val) }
+	put { | index, val | value = value.put(index, val) }
 	size { ^value.size }
-	
 
 }

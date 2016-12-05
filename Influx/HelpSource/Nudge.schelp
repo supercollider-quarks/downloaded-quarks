@@ -1,0 +1,142 @@
+TITLE:: Nudge
+summary:: change a process parameter by relative steps
+categories:: Concepts/Relativity, Concepts/MetaControl
+related:: Classes/Influx, Reference/Relativity, Overviews/MetaControl
+
+DESCRIPTION::
+Nudge is based on the MetaControl idea of 'Lose Control, Gain Influence'.
+Nontrivial processes always have parameter values already, and rather than
+hard-setting them from the outside, Nudge influences the current parameter value.
+
+It does this with these steps:
+List::
+## ( Process - parameter has a value in the range of its spec )
+## getFunc gets the param's value in unipolar range -> unival
+## map2BiFunc maps unival into internal bipolar range (e.g. +-3) -> bival
+## nudgeFunc applies nudging, bival = bival + delta
+## borderFunc clips, wraps or folds bival in bipolar range
+## unmapFunc unmaps bival to unival
+## setFunc sets param based on unival (using process spec range)
+::
+
+First code examples:
+
+code::
+
+// make a process that can set and get params with getUni / setUni:
+Ndef(\a).set(\freq, 300).gui(1);
+Ndef(\a).getUni(\freq);
+Ndef(\a).setUni(\freq, 0.5);
+
+// make a nudge for it
+n = Nudge(Ndef(\a), \freq);
+
+// nudge by hand
+// by default, internal nudge range is +-1,
+// so a nudge step 0.1 is 1/20th of total range
+n.nudge(0.1);
+
+// nudge permanently to see behavior at borders
+fork { loop { 0.1.wait; n.nudge(0.03); } };
+
+n.useWrap; // wrap at borders
+n.useClip; // or clip at borders
+n.useFold; // default: fold at borders by inverting nudge direction
+
+
+// Shaping the nudge step size inside range:
+
+// sine shaping - nudge is linear in center, small near borders
+n.useSin;
+
+// tangens shaping - nudge is bigger in center, smaller near borders
+n.useTan(1); // rather linear
+n.useTan(2); // compresses toward the borders
+n.useTan(5); // compresses a lot the borders
+
+// biexponential shaping
+// with exp > 1, nudge is bigger in center, smaller near borders
+n.useBipow(2);
+// with exp < 1, nudge is smaller in center
+n.useBipow(0.5);
+
+
+// TODO 1 - support getVal prescale, and setVal rescale
+// e.g. get relative to center 0.7, scale by 0.6,
+// so unipolar is mapped into [0.4 .. 1.0];
+
+// TODO 2 - influx may generate values quite a bit outside +-1,
+// -> figure out how best to compress them a la useTan(5)
+
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+argument:: obj
+argument:: key
+make a Nudge for an object and parameter key
+
+INSTANCEMETHODS::
+
+METHOD:: object
+the object to nudge
+METHOD:: key
+the key for the parameter to nudge
+
+METHOD:: nudge
+argument:: delta
+change the object's parameter at key by a delta value
+
+
+METHOD:: useWrap, useFold, useClip
+setting border strategy - value will wrap, fold or clip when hitting border.
+
+METHOD:: useSin
+set range shaping to sine shape
+
+METHOD:: useTan
+set range shaping to scalable tan
+
+METHOD:: useBipow
+set range shaping to bi-exponential
+
+METHOD:: getFunc, map2BiFunc, nudgeFunc, borderFunc, unmapFunc, setFunc
+The functions to use internally for the nudging process.
+Can also be changed individually if you know what you are doing.
+
+List::
+## getFunc gets the param's value in unipolar range -> unival
+## map2BiFunc maps unival into internal bipolar range (e.g. +-3) -> bival
+## nudgeFunc applies nudging, bival = bival + delta
+## borderFunc clips, wraps or folds bival in bipolar range
+## unmapFunc unmaps bival to unival
+## setFunc sets param based on unival (using process spec range)
+::
+
+subsection:: internal variables and methods
+METHOD:: unival, bival
+nudge's copy of the param value in unipolar and nudge-bipolar range.
+
+METHOD:: state
+a dict for keeping state required for some nudging strategies
+
+private:: init
+
+EXAMPLES::
+
+code::
+
+// pullToward method:
+
+Ndef(\x).set(\amp, 0.25).gui(1);
+n = Nudge(Ndef(\x), \amp);
+
+// move a param toward a target value, maxDelta
+n.pullToward(1.0, 0.02);
+// different aim
+n.pullToward(0.5, 0.02); // target is in unipolar range
+// min value
+n.pullToward(0, 0.02);
+
+::

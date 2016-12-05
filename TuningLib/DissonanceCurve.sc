@@ -42,6 +42,12 @@ DissonanceInterval
 
 	ratio {
 
+
+		(numerator.isNil || denominator.isNil).if({
+			"Not a just interval".warn;
+			^interval
+		});
+
 		^ (numerator / denominator)
 	}
 
@@ -57,6 +63,18 @@ DissonanceInterval
 
 	}
 
+	>= { arg other;
+
+		other.isKindOf(DissonanceInterval).if ({
+
+			^ (interval >= other.interval)
+		}, {
+			^nil
+		});
+
+	}
+
+
 	< { arg other;
 
 		other.isKindOf(DissonanceInterval).if ({
@@ -68,16 +86,37 @@ DissonanceInterval
 
 	}
 
-
-	== { arg other;
+	<= { arg other;
 
 		other.isKindOf(DissonanceInterval).if ({
 
-			^ (interval == other.interval)
+			^ (interval <= other.interval)
 		}, {
 			^nil
 		});
 
+	}
+
+
+	!= { arg other;
+
+		other.isKindOf(DissonanceInterval).if ({
+
+			^ (interval != other.interval)
+		}, {
+			^nil
+		});
+
+	}
+
+	== { arg other;
+		var ret;
+
+		ret = (this != other);
+		ret.notNil.if({
+			^ret.not;
+		});
+		^ret
 	}
 
 
@@ -86,24 +125,24 @@ DissonanceInterval
 
 DissonanceCurve {
 
-/*@
-shortDesc: Analyzes timbres in order to create tunings
-longDesc: Uses Bill Seathares' Dissoncance Curve algorithm in order to compute tunings for a given timbre.
-For more information,
-@*/
+	/*@
+	shortDesc: Analyzes timbres in order to create tunings
+	longDesc: Uses Bill Seathares' Dissoncance Curve algorithm in order to compute tunings for a given timbre.
+	For more information,
+	@*/
 
-//see http://eceserv0.ece.wisc.edu/~sethares/consemi.html
+	//see http://eceserv0.ece.wisc.edu/~sethares/consemi.html
 
 	var <curve, <cents_scale, frequ, ampl, <just_curve, <just_scale, highInterval, <spectrum;
 
 
 	*new { arg freqs, amps, highInterval = 1902;
-	/*@
-	desc: Create a new curve based on arrays of data. This would mostly be used for additive synthesis.
-	freqs: An array of signficant frequencies of a timbre
-	amps: An array of amplitudes for the given frequencies
-	highInterval: The largest interval to compute in cents. For octave-based systems, you would usually use 1200.
-	@*/
+		/*@
+		desc: Create a new curve based on arrays of data. This would mostly be used for additive synthesis.
+		freqs: An array of signficant frequencies of a timbre
+		amps: An array of amplitudes for the given frequencies
+		highInterval: The largest interval to compute in cents. For octave-based systems, you would usually use 1200.
+		@*/
 
 		^super.new.init(freqs, amps, highInterval);
 	}
@@ -121,27 +160,28 @@ For more information,
 
 	*just { arg freqs, amps, highInterval = 1902;
 
+		this.deprecated(thisMethod, DissonanceCurve.findMethod(\new));
 		^super.new.init(freqs, amps, highInterval);
 	}
 
 	*fm { arg carrier, modulator, depth, highInterval = 1902;
-	/*@
-	desc: Create a curve based on the timbre of a given FM specification
-	carrier: The carrier frequency in Hz
-	modulator: The modulation frequency in Hz
-	depth: The depth (or delta range) of the modulator, in Hz
-	highInterval: The largest interval to compute in cents. For octave-based systems, you would usually use 1200.
-	ex:
-	(
+		/*@
+		desc: Create a curve based on the timbre of a given FM specification
+		carrier: The carrier frequency in Hz
+		modulator: The modulation frequency in Hz
+		depth: The depth (or delta range) of the modulator, in Hz
+		highInterval: The largest interval to compute in cents. For octave-based systems, you would usually use 1200.
+		ex:
+		(
 		SynthDef("fm", {arg out, amp, carrier, modulator, depth;
 
-			var sin;
+		var sin;
 
-			sin = SinOsc.ar(SinOsc.ar(modulator, 0, depth, carrier));
-			Out.ar(out, sin * amp);
+		sin = SinOsc.ar(SinOsc.ar(modulator, 0, depth, carrier));
+		Out.ar(out, sin * amp);
 		}).add;
-	)
-	(
+		)
+		(
 		var carrier, modulator, depth, curve, scale;
 
 		carrier = 440;
@@ -151,8 +191,8 @@ For more information,
 		curve = DissonanceCurve.fm(carrier, modulator, depth, 2);
 		scale = curve.scale;
 
-	)
-	@*/
+		)
+		@*/
 
 
 
@@ -160,15 +200,15 @@ For more information,
 
 	}
 
-	* fft { arg buffer, size, cutoff = 0.001, highInterval = 1902, action;
-	/*@
-	desc: Create a curve based on the timbre of a given FFT buffer. THIS IS VERY SLOW and uses a lot of system resources
-	buffer: An FFT Buffer
-	size: The size of the Bufer in Frames
-	cutoff: The lower cutoff amplitude for a bin. Defaults to -60 dB
-	highInterval: The largest interval to compute in cents. For octave-based systems, you would usually use 1200.
-	action: A function to be evaluated once computing the curve is complete.
-	@*/
+	* fft { arg buffer, size, cutoff = -60, highInterval = 1902, action;
+		/*@
+		desc: Create a curve based on the timbre of a given FFT buffer. THIS IS VERY SLOW and uses a lot of system resources
+		buffer: An FFT Buffer
+		size: The size of the Bufer in Frames
+		cutoff: The lower cutoff amplitude for a bin. Defaults to -60 dB
+		highInterval: The largest interval to compute in cents. For octave-based systems, you would usually use 1200.
+		action: A function to be evaluated once computing the curve is complete.
+		@*/
 
 
 		^super.new.initFromFFT(buffer, size, cutoff, highInterval, action);
@@ -191,11 +231,11 @@ For more information,
 
 		{band < bandwidth}.while({
 
-			amp = bessel.jn(n);
-			frequ = [(carrier - band).abs] ++ frequ ++ (carrier + band);
-			ampl = [amp] ++ ampl ++ amp;
-			n = n+1;
-			band = modulator * n;
+		amp = bessel.jn(n);
+		frequ = [(carrier - band).abs] ++ frequ ++ (carrier + band);
+		ampl = [amp] ++ ampl ++ amp;
+		n = n+1;
+		band = modulator * n;
 		});
 
 		this.init(frequ, ampl.normalizeSum, highInterval);
@@ -211,7 +251,7 @@ For more information,
 	}
 
 
-	initFromFFT{ | buffer, size, cutoff = 0.001, highInterval = 1902, action|
+	initFromFFT{ | buffer, size, cutoff = -60, highInterval = 1902, action|
 
 		var act;
 
@@ -222,7 +262,7 @@ For more information,
 			});
 		};
 
-		spectrum = FFTSpectrum(buffer, size, cutoff = 0.001, highInterval = 1902, act);
+		spectrum = FFTSpectrum(buffer, size, cutoff.dbamp, highInterval, act);
 
 
 		/*
@@ -230,50 +270,50 @@ For more information,
 
 		buffer.getn(0, size, {arg buf;
 
-			var spacing, freqs, amps, z, toRemove;
+		var spacing, freqs, amps, z, toRemove;
 
-			z = buf.clump(2).flop;
-			spacing = buffer.sampleRate / (size );
+		z = buf.clump(2).flop;
+		spacing = buffer.sampleRate / (size );
 
-			freqs = [];
-			amps = [];
+		freqs = [];
+		amps = [];
 
-			// get all the magnitudes from the buffer
-			(size /2 ).do({ |index|
+		// get all the magnitudes from the buffer
+		(size /2 ).do({ |index|
 
-				freqs = freqs.add(index * ( 1 + spacing));
-				amps = amps.add(Complex(z[0][index], z[1][index]).magnitude);
-			});
+		freqs = freqs.add(index * ( 1 + spacing));
+		amps = amps.add(Complex(z[0][index], z[1][index]).magnitude);
+		});
 
-			// get rid of everything below a cutoff to make processing go faster
-			toRemove = [];
-			amps.normalize.do({ | amp, index|
-				if ( amp < cutoff, {
-					//amps.removeAt(index);
-					//freqs.removeAt(index);
-					toRemove = toRemove.add(index);
-				});
-			});
+		// get rid of everything below a cutoff to make processing go faster
+		toRemove = [];
+		amps.normalize.do({ | amp, index|
+		if ( amp < cutoff, {
+		//amps.removeAt(index);
+		//freqs.removeAt(index);
+		toRemove = toRemove.add(index);
+		});
+		});
 
-			// ok, so toRemove is full of all the indexes to remove in order
-			// but every time we remove one, the array gets shorter and
-			// all the indexes of go off by one
-			// so the thing to do is remove them in reverse order
+		// ok, so toRemove is full of all the indexes to remove in order
+		// but every time we remove one, the array gets shorter and
+		// all the indexes of go off by one
+		// so the thing to do is remove them in reverse order
 
-			toRemove.reverse.do({ |zap|
-				amps.removeAt(zap);
-				freqs.removeAt(zap);
-			});
-
-
+		toRemove.reverse.do({ |zap|
+		amps.removeAt(zap);
+		freqs.removeAt(zap);
+		});
 
 
-			this.init(freqs, amps.normalizeSum, highInterval);
 
-			action.notNil.if({
 
-				action.value(this)
-			});
+		this.init(freqs, amps.normalizeSum, highInterval);
+
+		action.notNil.if({
+
+		action.value(this)
+		});
 		});
 		*/
 	}
@@ -285,8 +325,8 @@ For more information,
 		// see http://eceserv0.ece.wisc.edu/~sethares/comprog.html
 
 		var dstar, s, s1, s2, c1, c2, a1, a2, fdif, arg1, arg2, dnew, d, exp1, exp2, index,
-			i, j, k, fmin, lowint, highint, intervals, allpartialsatinterval, inc, size,
-			diss, dissvalues, numpartials, interval, find_minima, prev, prever, just;
+		i, j, k, fmin, lowint, highint, intervals, allpartialsatinterval, inc, size,
+		diss, dissvalues, numpartials, interval, find_minima, prev, prever, just;
 
 
 		frequ = freq;
@@ -298,17 +338,17 @@ For more information,
 		numpartials = frequ.size;
 
 		dstar= 0.24;  // this is the point of maximum dissonance - the value is derived from a model
-			// of the Plomp-Levelt dissonance  curves for all frequencies.
+		// of the Plomp-Levelt dissonance  curves for all frequencies.
 		s1 = 0.0207;// s1 and s2 are used to allow a single functional form to interpolate beween
 		s2 = 18.96;  //  the various P&L curves of different frequencies by sliding, stretching/compressing
 		//  the curve so that its max dissonance occurse at dstar. A least-square-fit was made
-							// to determine the values.
+		// to determine the values.
 
 		c1 = 5;       // these parameters have values to fit the experimental data of Plomp and Levelt
 		c2 = -5;
 		a1 = -3.51; // theses values determine the rates at which the function rises and falls and
 		a2 = -5.75; // and are based on a gradient minimisation of the squared error between
-						  //  Plomp and Levelt's averaged data and the curve
+		//  Plomp and Levelt's averaged data and the curve
 
 		// If the point of maximum dissonance for a base frequency f occurs at dstar, then the dissonance between
 		// f1 with amp1 and f2 with amp2, is - amp1*amp2(e^-a1s[f2-f1] - e^-a2s[f2-f1]) where s = dstar/(s1f1+f2).....
@@ -342,13 +382,13 @@ For more information,
 				if (curve[index -1].ratio != diss.ratio, {
 
 					just_curve = just_curve.add(
-								this.pr_compute_partial_just(diss.numerator, diss.denominator,
-											numpartials));
+						this.pr_compute_partial_just(diss.numerator, diss.denominator,
+							numpartials));
 				});
 			}, {
 				just_curve = just_curve.add(
-							this.pr_compute_partial_just(diss.numerator, diss.denominator,
-											numpartials));
+					this.pr_compute_partial_just(diss.numerator, diss.denominator,
+						numpartials));
 
 			});
 
@@ -371,9 +411,9 @@ For more information,
 
 
 	tuning{
-	/*@
-	desc: Return a Tuning based on the minima of the Dissonance Curve
-	@*/
+		/*@
+		desc: Return a Tuning based on the minima of the Dissonance Curve
+		@*/
 		var tuning;
 
 		tuning = [];
@@ -389,11 +429,11 @@ For more information,
 	}
 
 	scale{ |size = inf|
-	/*@
-	desc: Returns a scale in which the Tuning is the minima of the curve.  Every degree of the Tuning is a Scale degree.
-	size: The number of degrees of the scale. For size n, it pickes the n most consonant degrees. Defaults to inf, which makes a Scale degree for every degree of the Tuning.
+		/*@
+		desc: Returns a scale in which the Tuning is the minima of the curve.  Every degree of the Tuning is a Scale degree.
+		size: The number of degrees of the scale. For size n, it pickes the n most consonant degrees. Defaults to inf, which makes a Scale degree for every degree of the Tuning.
 
-	@*/
+		@*/
 		var tuning, degrees, scale, tune, tuning_cents, index;
 
 		tuning = this.tuning;
@@ -427,16 +467,16 @@ For more information,
 
 	plot {
 
-	/*@
-	desc: Plot the DissonanceCurve
-	ex:
+		/*@
+		desc: Plot the DissonanceCurve
+		ex:
 
-	(
+		(
 		d = DissonanceCurve.fm(1563, 560, 1200, 2400);
 		d.plot;
-	)
+		)
 
-	@*/
+		@*/
 
 		var dissonances;
 
@@ -446,12 +486,12 @@ For more information,
 
 
 	digestibleTuning { |window = 100|
-	/*@
-	desc: Returns a Tuning related to Sethares' algorithm, but calculated using a modification of
-	Clarence Barlow's Digestibility Formula.  Basically, it does a comparison of every partial at
-	every tuning, but instead of looking at Plomp and Levit's ideas of local consonance, it
-	compares the ratio relationships between the partials.  The numerator and denominator of this
-	ratio is summed and then multiplied by the amplitude of the quieter partial.
+		/*@
+		desc: Returns a Tuning related to Sethares' algorithm, but calculated using a modification of
+		Clarence Barlow's Digestibility Formula.  Basically, it does a comparison of every partial at
+		every tuning, but instead of looking at Plomp and Levit's ideas of local consonance, it
+		compares the ratio relationships between the partials.  The numerator and denominator of this
+		ratio is summed and then multiplied by the amplitude of the quieter partial.
 		@*/
 		//DeprecatedError(this, this.digestibleTuning, this.justTuning, DissonanceCurve).throw;
 		this.deprecated(thisMethod, DissonanceCurve.findMethod(\justTuning));
@@ -461,7 +501,7 @@ For more information,
 	justTuning { |window = 100|
 		/*@
 		desc: Returns a Tuning related to Sethares' algorithm, but calculated using a just tuning.
-		Basically, it does a comparison of every partial at
+		This does a comparison of every partial at
 		every tuning, but instead of looking at Plomp and Levit's ideas of local consonance, it
 		compares the ratio relationships between the partials.  The numerator and denominator of this
 		ratio is summed and then multiplied by the amplitude of the quieter partial.
@@ -499,7 +539,56 @@ For more information,
 
 		tuning = tuning.sort;
 
-		^Tuning(tuning, highInterval, "Dissonance Curve");
+		^Tuning(tuning, highInterval, "Just Dissonance Curve");
+	}
+
+	limitedJustTuning {|limit=31, size=11|
+
+		var tuning;
+
+		tuning = [];
+
+		this.pr_find_just_limit(limit, size);
+
+		just_scale.do({|item|
+
+			tuning = tuning ++ (item.cents / 100);
+		});
+
+		tuning = tuning.sort;
+
+		^Tuning(tuning, highInterval, "Just Dissonance Curve %-limit".format(limit));
+	}
+
+	limitedJustScale{|limit=31, tuningSize=11, scaleSize=inf|
+		var tuning, degrees, tuning_cents, scale, tune, index;
+
+		tuning = this.limitedJustTuning(limit, tuningSize);
+
+		(scaleSize < tuning.size). if({
+
+			"smaller scale".postln;
+			// pick the scaleSize most consontant degrees
+			degrees = [];
+			tuning_cents = tuning.cents;
+			scale = just_scale.sort({|a, b| a.dissonance < b.dissonance});
+
+			scaleSize.do({ |i|
+
+				tune = scale[i].cents;
+				index = tuning_cents.indexInBetween(tune);
+				index = index.round.asInt;
+				degrees = degrees ++ index;
+			});
+
+			degrees = degrees.sort;
+
+		} , {
+		degrees = Array.series(tuning.size, 0, 1);
+		});
+
+		^Scale(degrees, tuning.size, tuning: tuning, name: tuning.name);
+
 	}
 
 	postJust {
@@ -527,11 +616,11 @@ For more information,
 	}
 
 	justScale{ |window = 100, size = inf|
-	/*@
-	desc: Returns a scale based on the justTuning.
-	window: The window size used to compute the justTuning
-	size: The number of degrees of the scale. For size n, it pickes the n most consonant degrees. Defaults to inf, which makes a Scale degree for every degree of the Tuning.
-	@*/
+		/*@
+		desc: Returns a scale based on the justTuning.
+		window: The window size used to compute the justTuning
+		size: The number of degrees of the scale. For size n, it pickes the n most consonant degrees. Defaults to inf, which makes a Scale degree for every degree of the Tuning.
+		@*/
 		var tuning, degrees, scale, tune, tuning_cents, index;
 
 		tuning = this.justTuning(window);
@@ -566,7 +655,7 @@ For more information,
 	+ {|other|
 
 		/*@
-		desc: Adding two scales together in a meaningful way
+		desc: Adding two scales together in a meaningful way. This would be useful to figure out a scale that works for two different timbres.
 		other: a Spectrum or a Dissonance Curve
 		@*/
 
@@ -581,7 +670,7 @@ For more information,
 			newspec = this.spectrum + other;
 			^DissonanceCurve.spectrum(newspec, this.highInterval);
 		}, {
-				BinaryOpFailureError(this, "+", other).throw;
+			BinaryOpFailureError(this, "+", other).throw;
 		});
 	}
 
@@ -591,22 +680,22 @@ For more information,
 	pr_compute_partial_sethares{ |interval, numpartials|
 
 		var s1, s2, c1, c2, d, allpartialsatinterval,fmin, s, fdif,
-			arg1, arg2, exp1, exp2, dnew, dstar, a1, a2;
+		arg1, arg2, exp1, exp2, dnew, dstar, a1, a2;
 
 		numpartials.isNil.if({ numpartials = frequ.size; });
 
 		dstar= 0.24;  // this is the point of maximum dissonance - the value is derived from a model
-			// of the Plomp-Levelt dissonance  curves for all frequencies.
+		// of the Plomp-Levelt dissonance  curves for all frequencies.
 		s1 = 0.0207;// s1 and s2 are used to allow a single functional form to interpolate beween
 		s2 = 18.96;  //  the various P&L curves of different frequencies by sliding, stretching/compressing
 		//  the curve so that its max dissonance occurse at dstar. A least-square-fit was made
-							// to determine the values.
+		// to determine the values.
 
 		c1 = 5;       // these parameters have values to fit the experimental data of Plomp and Levelt
 		c2 = -5;
 		a1 = -3.51; // theses values determine the rates at which the function rises and falls and
 		a2 = -5.75; // and are based on a gradient minimisation of the squared error between
-						  //  Plomp and Levelt's averaged data and the curve
+		//  Plomp and Levelt's averaged data and the curve
 
 
 
@@ -622,14 +711,14 @@ For more information,
 				// if an element of allpartials is less than this element of freq
 				// then give its value to fmin
 				//(allpartialsatinterval[j]<frequ[i]).if(//if 1.x by each fq component is less than the current component
-					//	{
+				//	{
 
-					//		fmin = allpartialsatinterval[j] ;
-							//fmin takes on the lesser of freq*1.x and frequ
-					//	}, { //else
-							// fmin takes on the current frequ value
-					//		fmin = frequ[i] ;
-					//	});
+				//		fmin = allpartialsatinterval[j] ;
+				//fmin takes on the lesser of freq*1.x and frequ
+				//	}, { //else
+				// fmin takes on the current frequ value
+				//		fmin = frequ[i] ;
+				//	});
 
 				fmin = partial.min(freq);
 
@@ -651,7 +740,7 @@ For more information,
 					dnew=ampl[i]*((c1*exp1)+(c2*exp2));//  The lesser of amp(i) and amp(j) is used
 					//the idea is to give larger dissonance for louder sounds
 				}, // and to smoothly go to zero as one of the partials disappears
-					//else
+				//else
 				{
 					dnew=ampl[j]*((c1*exp1)+(c2*exp2)); // use ampl(j) if it is smaller
 				});
@@ -726,29 +815,29 @@ For more information,
 
 					((item.dissonance > prev.dissonance) &&
 						(prev.dissonance < prever.dissonance)).if ({ // minima
-							//sc = sc.add(prev);
-							// find the one with the better ratio
-							prev_sum = prev.numerator + prev.denominator;
-							//postf("% / %\t", prev.numerator, prev.denominator);
-							prever_sum = prever.numerator + prever.denominator;
-							//postf("% / %\t", prever.numerator, prever.denominator);
-							item_sum = item.numerator + item.denominator;
-							//postf("% / %\n", item.numerator, item.denominator);
+						//sc = sc.add(prev);
+						// find the one with the better ratio
+						prev_sum = prev.numerator + prev.denominator;
+						//postf("% / %\t", prev.numerator, prev.denominator);
+						prever_sum = prever.numerator + prever.denominator;
+						//postf("% / %\t", prever.numerator, prever.denominator);
+						item_sum = item.numerator + item.denominator;
+						//postf("% / %\n", item.numerator, item.denominator);
 
-							((prever_sum < prev_sum) && (prever_sum < item_sum)).if({
-								sc = sc.add(prever);
-							} , { ((item_sum < prever_sum) && (item_sum < prev_sum)).if({
-								sc = sc.add(item);
-							} , { //((prev_sum < prever_sum) && (prev_sum < item_sum)).if({
-								// the middle one is the default case
-								sc = sc.add(prev);
-							})})//});
+						((prever_sum < prev_sum) && (prever_sum < item_sum)).if({
+							sc = sc.add(prever);
+						} , { ((item_sum < prever_sum) && (item_sum < prev_sum)).if({
+							sc = sc.add(item);
+						} , { //((prev_sum < prever_sum) && (prev_sum < item_sum)).if({
+							// the middle one is the default case
+							sc = sc.add(prev);
+						})})//});
 
-						});
+					});
 
 					prever = prev;
 					prev = item;
-				})});
+			})});
 		});
 
 		// check for last one
@@ -816,6 +905,34 @@ For more information,
 
 	}
 
+	pr_find_just_limit { |limit=31, size=8|
+
+		var under_limit;
+
+		under_limit = [];
+
+		just_curve.do({|d, index|
+			((d.numerator <= limit) && (d.denominator <= limit) && (under_limit.includes(d).not)).if({
+
+				under_limit = under_limit.add(d);
+			});
+		});
+
+		under_limit.sort({|a, b|
+			a.dissonance < b.dissonance;
+		});
+
+		(under_limit.size > size).if({
+			just_scale = under_limit[0..(size-1)];
+		}, {
+			just_scale=under_limit;
+		});
+
+		just_scale = just_scale.sort;
+	}
+
+
+
+
 
 }
-		

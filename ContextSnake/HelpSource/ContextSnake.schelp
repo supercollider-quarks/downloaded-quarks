@@ -1,0 +1,217 @@
+TITLE:: ContextSnake
+summary:: A grammatical inference value pattern
+categories:: Undocumented classes
+related:: Classes/MarkovSet, Classes/Pattern
+
+DESCRIPTION::
+ContextSnake is a Markov chain/generative grammar approach with self-adjusting context depth.
+
+Based on a corpus of examples, a ContextSnake creates a stream of values:
+For each next value, a number of previous values define the context depth; the longer the context considered, the less likely the context is to occur in its full length.
+The snake extends the context until it becomes unique, i.e. until it only occurs at a single location in the corpus; then it reduces context depth again so that more than one option becomes available, and picks the next item from these options. (Like a gourmet, it insists on choices.)
+
+Two parameters influence these choices further: code::minDepth:: is the minimum context depth below which single choices are accepted), and code::acceptSingleCond:: is a flag or function returning a boolean whether to accept single choices even when above minimum depth.
+
+Concept by Gerhard Nierhaus, implementation Alberto de Campo.
+Comments and suggestions welcome!
+
+Fairytales and poetry can make good material, e.g. we experimented with
+Schneewittchen (Snow white), Erlkoenig, and others, see ContextSnake_3texts.html. Formulaic segments can become points of 'modulation' between sections.
+
+
+First code examples:
+
+code::
+ 	// Demonstrate the algorithm by hand first:
+ 	// a corpus of two example strings - text sequences are easiest to follow.
+a = [ "was it a car or a cat i saw", "warsaw" ];
+
+	// and a context snake with that corpus.
+c = ContextSnake(a);
+
+	// find all locations of the sublist given in corpus;
+	// returns list of index pairs [which example in corpus, starting where in example]
+c.find("cat");	// "cat" is unique, i.e. only found once in corpus:
+				// in example 0, starting at index 9
+c.find("ca");		// "ca" occurs twice, so two locations
+
+	// do context-snake decisions by hand:
+
+c.find("w");		// 4 locations, pick first of them as next (here, by hand):
+				// at [0, 0], next letter is "a"; so the context is now "wa".
+c.find("wa");		// still 2 locations, pick first
+c.find("was");	// 1 unique location; reduce context - drop the oldest character
+c.find("as");		// 1 unique location; reduce context again
+c.find("s");		// 3 locations; pick the last one
+c.find("sa");		// 2 locations; pick the latter
+c.find("saw");	// still 2 locations; but both have no next letter -> end.
+
+// The entire string produced by now is: "wasaw".
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+argument:: corpus
+the corpus from which to generate new streams
+argument:: starter
+an optional start sequence (usually the beginning of a corpus specimen)
+argument:: minDepth
+the minimum context depth below which single choices are also accepted
+argument:: acceptSingleCond
+a flag or test function whether to accept a next value when there is only a single option.
+argument:: starterLength
+optional, used when no starter list is given.
+
+INSTANCEMETHODS::
+
+private:: init
+
+METHOD:: corpus
+the corpus used
+
+METHOD:: starter
+the list to use as starter
+
+METHOD:: minDepth
+the minimum depth
+
+METHOD:: acceptSingleCond
+the flag or test func whether to accept a single option
+
+METHOD:: verbose
+flag whether to post info or not
+
+METHOD:: starterLength
+the starterLength to use when no starter list is given
+
+METHOD:: find
+argument:: sublist
+find all locations of a given sublist in the corpus
+
+METHOD:: randStarter
+generate a random starter list
+
+METHOD:: embedInStream
+argument:: inval
+method to yield values from the pattern. see link::Classes/Pattern::
+
+subsection:: Analysis
+ContextSnakes can analyse a sample for different criteria, for example, what the longest sequences are that occur verbatim in the corpus. If the found sequences overlap, then the sample is a possible production from the given corpus. Other methods test whether the sample is valid output of the snake, and whether it is new or not.
+
+code::
+(
+a = [
+	"ContextSnakes can analyse a sample for different criteria, for example, what the longest sequences are that occur verbatim in the corpus.",
+	"If the found sequences overlap, the sample is a possible production from the given corpus.", 	"Other methods test whether the sample is valid output, and whether it is new or not."
+];
+c = ContextSnake(a, minDepth: 4);
+)
+
+10.do { c.randStarter.asStream.all.join.postcs }; // produce something
+
+b = "If the given corpus.";	// a short possible production;
+::
+
+METHOD:: isValidOutput
+argument:: sample
+argument:: snippets
+
+test whether a sample is possible output of the ContextSnake.
+If you have the snippets already, you can pass them in for efficiency.
+This also posts the amounts of overlap, in effect telling you the likely minimum context depth.
+
+code::
+c.isValidOutput(b);				// yes
+c.isValidOutput("longest samples");	// yes
+c.isValidOutput("shortest samples");	// zeroes show that no overlap, though all the letters are OK.
+c.isValidOutput("context XYZ impossible.");	// negative numbers show non-occurring letters.
+::
+
+METHOD:: vocabulary
+all the elements occurring in the corpus.
+code::
+c.vocabulary.postcs;
+c.vocabulary.includesAll(b);
+c.vocabulary.includesAll("shortest samples");
+c.vocabulary.includesAll("context XYZ impossible.");
+::
+
+METHOD:: longestSnippets
+argument:: sample
+finds the indices of longest snippets that come from one continuous  source section.
+code::
+c.longestSnippets(b).printcsAll // where the segments are;
+::
+
+METHOD:: isNew
+argument:: sample
+test whether a sample occurs in the corpus or is a new production of the pattern.
+(Sometimes the snake may regenerate long parts of the corpus, which should be identified as not new.)
+
+EXAMPLES::
+
+code::
+
+c = ContextSnake(a, "ca", 1).verbose_(true); // a snake, posting all its decisions.
+e = c.asStream;
+e.next; 		// get a next value; do this several times!
+e.next;
+e.next;
+
+e.nextN(5).join.postcs;	// get several values at once, stream may end and only return nils.
+
+c.verbose_(false);		// turn off long posting
+
+	// collect all next values until stream ends with nil;
+	// for strings, .join makes them more readable.
+c.asStream.all.join;
+
+5.do { c.asStream.all.join.postcs };
+
+c = ContextSnake(a, "w", 2);	// try longer minimum context
+c.asStream.all.join;
+
+		// slightly different corpus
+a = [ "was it a car or a cat i saw", "there once was a saw in warsaw" ];
+c = ContextSnake(a, "s", 4);	// try longer context again
+c.asStream.all.join;			// collect all next values until stream ends
+::
+
+subsection:: A very simple music example:
+
+For a musical example with Palestrina melodies, see
+code::
+(
+(thisProcess.nowExecutingPath.dirname.dirname
++/+ "CS_examples/ContextSnake_Palestrina.scd").openOS;
+)
+code::
+	// A melody which can go up only in steps, and down only in thirds;
+	// can begin with 0, 7, or 6; can end with 7, 4 or 0.
+b = [ (0..7), [7, 5, 3, 1, 2, 3, 4], [6, 4, 2, 0]];
+c = ContextSnake(b, minDepth: 1, starterLength: 1);
+10.do { c.asStream.all.postln };
+
+	// add pauses between new starts
+Pbind(\degree, Pseq([Plazy({ c.randStarter }), \_, \_], inf), \dur, 0.2).trace(\degree).play;
+
+s.boot;
+
+// Add special markers for the beginning and ending to each phrase;
+// this can be helpful for doing special things on segment borders.
+
+(
+b = [ (0..7), [7, 5, 3, 1, 2, 3, 4], [6, 4, 2, 0]];
+d = b.collect { |ex| ['<'] ++ ex ++ ['>'] };	// add
+c = ContextSnake(d, minDepth: 1, starterLength: 1);
+)
+
+(	// beginning and ending symbols create pauses
+Pbind(
+	\degree, Pn(Plazy({ c.randStarter }), inf),
+	\dur, 0.2
+).trace(\degree).play;
+)
+::
+

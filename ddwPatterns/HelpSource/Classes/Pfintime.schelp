@@ -1,0 +1,38 @@
+TITLE:: Pfintime
+summary:: Constrain a value pattern according to the time on the clock
+categories:: Streams-Patterns-Events>Patterns>Constraint
+related:: Classes/Pfindur
+
+DESCRIPTION::
+
+link::Classes/Pfindur:: limits the total duration of a stream of events, based on the timing stored within each event. This does not work for value patterns (returning numbers, arrays, symbols etc.), because these values contain no internal timing information.
+
+code::Pfintime:: limits the duration of a value stream, based on the timing of the parent event pattern. Additionally, if the filtered pattern doesn't yield enough values to fill the required time, code::Pfintime:: will output rests until the duration is reached.
+
+
+CLASSMETHODS::
+method::new
+Embeds elements of the strong::pattern:: into the stream until the enclosing event pattern's duration comes close enough to strong::dur::.
+
+EXAMPLES::
+
+code::
+// stops after 2 beats
+a = Pbind(
+	\degree, Pfintime(2.0, Pseries(0, 1, inf)),
+	\dur, 0.25
+).play;
+
+// Pseries plays 5 notes.
+// Then, Pfintime pads with enough rests to reach 2.0 beats,
+// before Pn repeats the Pbind.
+a = Pn(
+	Pbind(
+		\degree, Pfintime(2.0, Pseries(0, 1, 5)),
+		\dur, 0.25
+	),
+	inf
+).play;
+
+a.stop;
+::

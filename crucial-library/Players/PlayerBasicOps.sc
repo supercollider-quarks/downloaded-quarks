@@ -9,20 +9,20 @@ PlayerUnop : AbstractPlayer {
 	}
 	asSynthDef {
 		^thisMethod.notYetImplemented
-		//^a.value.perform(operator,b.value)
+		//^a.value.perform(operator, b.value)
 	}
 	/*
 	asSynthDef {
-		if(a.rate == \audio,{
-			^SynthDef(this.defName,{ arg abus=0,out=0;
+		if(a.rate == \audio, {
+			^SynthDef(this.defName, { arg abus=0, out=0;
 				Out.ar(out,
-					In.ar(abus,a.numChannels).perform(operator)
+					In.ar(abus, a.numChannels).perform(operator)
 				)
 			})
-		},{
-			^SynthDef(this.defName,{ arg abus,out=0;
+		}, {
+			^SynthDef(this.defName, { arg abus, out=0;
 				Out.kr(out,
-					In.kr(abus,a.numChannels).perform(operator)
+					In.kr(abus, a.numChannels).perform(operator)
 				)
 			})
 		})
@@ -32,7 +32,7 @@ PlayerUnop : AbstractPlayer {
 					++ a.numChannels.asString ++ a.rate.asString) }
 	children { ^[a] }
 	rate { ^a.rate }
-	storeArgs { ^[operator,a] }
+	storeArgs { ^[operator, a] }
 
 
 	guiClass { ^PlayerUnopGui }
@@ -44,16 +44,16 @@ PlayerBinop : AbstractPlayer{
 	*new { arg operator, a, b;
 		a = a.loadDocument;
 		b = b.loadDocument;
-		if(operator == '*',{
-			if(a.isNumber,{ ^PlayerAmp(b,a) });
-			if(b.isNumber,{ ^PlayerAmp(a,b) });
+		if(operator == '*', {
+			if(a.isNumber, { ^PlayerAmp(b, a) });
+			if(b.isNumber, { ^PlayerAmp(a, b) });
 		});
 		^super.new.a_(a).b_(b).operator_(operator)
 	}
 	ar {
-		^a.ar.perform(operator,b.ar)
+		^a.ar.perform(operator, b.ar)
 	}
-	storeArgs { ^[operator,a,b] }
+	storeArgs { ^[operator, a, b] }
 
 	guiClass { ^PlayerBinopGui }
 }

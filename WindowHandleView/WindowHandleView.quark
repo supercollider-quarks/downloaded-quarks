@@ -1,0 +1,14 @@
+(
+name:		"WindowHandleView",
+summary:	"A custom view that enables dragging of it's parent window.",
+author:		"scott@artificia.org",
+copyright:	"Frank Scott Carver, 2013",
+license:	"MIT",
+version: 	"1.0.0",
+schelp: 	"WindowHandleView",
+url:		"https://github.com/scztt/WindowHandleView.quark",
+dependencies:	[],
+isCompatible:	true,
+since:		"2013"
+)
+

@@ -25,7 +25,7 @@ z.hatval;
 */
 
 StickView {
-	var <uview, <point, <>hatval = 0;
+	var <uview, <point, <>hatval = 0, <>action;
 
 	*new { |parent, bounds|
 		^super.new.init(parent, bounds);
@@ -39,15 +39,21 @@ StickView {
 	y_		{ |val| point.y = val }
 
 	polar 	{ ^point.asPolar }
-	rho 		{ ^point.rho }
-	angle 	{ ^point.angle }
+	rho 	{ ^point.rho }
+	angle 	{ ^point.theta }
 
 		// interface ... hmm, point is [-1, 1]!
 	value 	{ ^[point.x, point.y, hatval] }
 	value_ 	{ |val|
 		point.x = val[0];
 		point.y = val[1];
-		hatval = val[2];
+		hatval = val[2] ? hatval;
+		uview.refresh;
+	}
+
+	doAction { action.value(this) }
+	valueAction_ { |val|
+		this.value_(val).doAction
 	}
 
 	init { |parent, bounds|
@@ -72,11 +78,11 @@ StickView {
 			point.y = y / halfWidth - 1;
 			hatval = if (mod.isAlt, 1, 0);
 			uview.refresh;
-
+			this.doAction;
 		};
 
 		uview.drawFunc = {
-			var angle = point.angle;
+			var angle = point.theta;
 			var rho = point.rho;
 
 			var stAngle = angle + 0.5pi;

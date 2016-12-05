@@ -1,0 +1,175 @@
+TITLE:: ddwMIDI Guide
+CATEGORIES:: External Control>MIDI
+SUMMARY:: General notes on ddwMIDI usage
+
+SECTION:: Overview
+
+The ddwMIDI Quark provides two main ways of working with MIDI information:
+
+DEFINITIONLIST::
+## Sockets and controllers || Respond to MIDI note and controller data.
+## MIDIRecBuf and MIDIBufManager || Record, store and manipulate MIDI note data.
+::
+
+This document is intended to cover the main usage patterns. Implementation details may be found in the class references, linked in the text below.
+
+STRONG::Why another responder hierarchy?::
+
+The standard MIDI responders (link::Classes/MIDIFunc::, link::Classes/MIDIdef::) are organized around the incoming message type. The ddwMIDI responders are organized around what you want to do with the information. For example, if you want to play notes using a MIDI keyboard:
+
+LIST::
+## Standard MIDI responders: Create link::Classes/MIDIFunc::s or link::Classes/MIDIdef::s, one for note-on messages and another for note-off, containing functions to handle the note onset and release logic.
+## ddwMIDI responders: Create a link::Classes/Voicer:: to play the notes, and a link::Classes/VoicerMIDISocket:: to connect MIDI messages to the Voicer.
+::
+
+For another example, ddwChucklib can trigger processes using note-on messages. MTSocket makes the connection. Thus, the class of the responder explains how the incoming messages will behave (while, in the standard MIDI responders, you would have to inspect a function definition -- error prone, to say the least).
+
+
+SECTION:: Sockets and controllers
+
+ddwMIDI responders divide into two categories:
+
+DEFINITIONLIST::
+## Sockets || Sockets handle note-on and note-off messages. Every socket is expected to respond to both on and off messages; that is, there is no need to create separate responders for them.
+LIST::
+## strong::AbstractMIDISocket:: is the parent of all MIDI sockets. If you need a custom socket, inherit from this class.
+## link::Classes/BasicMIDISocket:: installs two functions (note-on and note-off), to handle any logic you like. The functions are passed code::|note, velocity|:: as arguments.
+## link::Classes/VoicerMIDISocket:: directs note-on and note-off messages to a link::Classes/Voicer::. The Voicer handles node allocation and voice-stealing.
+## strong::MIDIThruSocket:: passes note messages to another MIDI channel, with optional pre-processing. The forwarded messages are sent through link::Classes/MIDIIn::, so they can be received by MIDIFunc/MIDIdef as well as other ddwMIDI responders.
+## strong::MIDI2OSCSocket:: transmits note messages over OSC to SuperCollider running on a remote machine. Not extensively tested.
+## strong::MIDIRecSocket:: records note data into a MIDIRecBuf.
+::
+
+## Controllers || Controllers handle continuous-control, pitch-bend and aftertouch messages.
+LIST::
+## strong::AbstractMIDIControl:: is the parent of all MIDI controller classes.
+## link::Classes/BasicMIDIControl:: installs a function. The function receives code::|value, divisor, ccnum|:: as arguments.
+## link::Classes/VoicerMIDIController:: connects control messages to a VoicerGlobalControl, which represents a control input that should apply to all synths played by the Voicer.
+## link::Classes/VoicerSusPedal:: makes a Voicer respond to the sustain footswitch.
+## strong::MixerMIDIControl:: connects control messages to a link::Classes/MixerChannel::'s level control.
+## strong::MIDIThruControl:: passes note messages to another MIDI channel.
+## strong::MIDI2OSCControl:: transmits note messages over OSC to SuperCollider running on a remote machine. Not extensively tested.
+::
+::
+
+SUBSECTION:: Identifying MIDI channels
+
+In ddwMIDI, specify the source of incoming messages in the following ways:
+
+table::
+## strong::OBJECT:: || strong::MEANING::
+## code::nil:: || Default MIDI device, channel 0
+## Integer || Channel number, assuming default MIDI device
+## code::\omni:: || Default MIDI device, any channel
+## Array code::[device, channel]:: || The specified device and channel
+## Array code::[device, \omni]:: || The specified device, any channel
+## Array code::[\all, channel]:: || Any device, given channel
+## Array code::[\all, \omni]:: || Any device, any channel
+::
+
+strong::Notes:::
+list::
+## SuperCollider indexes MIDI channels as 0-15. Most devices index them 1-16. If you specify channel 0 in SC, expect to use channel 1 on the device.
+## Devices are identified by the integer index into code::MIDIPort.sources::. Device 0 is the first in this array, and so on. Normally this is copied from code::MIDIClient.sources:: upon the first use of any socket or controller.
+## The default MIDI device is index 0 in code::MIDIPort.sources::. By default, this is the first device listed by code::MIDIClient.sources::. You can override the default device, by initializing MIDIPort explicitly: code::MIDIPort.init([defaultDeviceIndex])::. This assumes you know the index into the code::MIDIClient.sources:: array. Typically, then, you will initialize link::Classes/MIDIClient:: first, and search the array for the device you want. See link::#Selecting a default MIDI device::.
+::
+
+SUBSECTION:: Controller numbers
+
+Controller numbers may be specified as follows:
+
+table::
+## strong::OBJECT:: || strong::MEANING::
+## Integer || The controller number itself
+## code::\pb:: || Pitch-bend wheel
+## code::\touch:: || Aftertouch
+## code::\omni:: || Any controller
+## code::\ptouch:: || Poly-aftertouch
+## code::CControl:: instance || Encapsulate a physical control and an attached button
+::
+
+Time doesn't permit a full explanation of CControl in this draft. Soon...
+
+Note::
+By default, continuous controllers do not respond until the incoming controller value either comes close to, or crosses, the existing value. This is to prevent the value in SuperCollider from jumping suddenly to a physical controller value that may be quite distant. You can disable this behavior globally by setting code::AbstractMIDIControl.syncByDefault = false::. It is currently not supported to choose this behavior per responder.
+::
+
+SECTION:: Buffers of MIDI data
+
+To be written later.
+
+EXAMPLES::
+subsection:: Basic usage of VoicerMIDISocket
+code::
+s.boot;
+
+v = Voicer(20, \default);
+k = VoicerMIDISocket([\all, \omni], v);  // any device, any channel
+
+// connect modwheel to pan
+k.addControl(1, \pan, 0, \bipolar);
+
+// connect velocity to amp
+k.noteOnArgsPat = Pbind(
+	\amp, Pkey(\velocity).linlin(0, 127, 0.05, 0.25)
+);
+
+// play awhile...
+
+k.free;
+
+k = VoicerMIDISocket(0, v);  // default device, channel 0
+k.free;
+
+// Pitch-bend requires the SynthDef to support it
+(
+SynthDef(\pb, { |out, freq = 440, gate = 1, pb = 1, amp = 0.1|
+	var sig = Mix(Saw.ar(freq * pb * [1, 1.003])) * amp,
+	eg = EnvGen.kr(Env.adsr(0.01, 0.1, 0.5, 0.15), gate, doneAction: 2),
+	filt_eg = EnvGen.kr(Env(#[8000, 2000], #[0.15], \exp));
+	sig = LPF.ar(sig, filt_eg);
+	Out.ar(out, (sig * eg).dup)
+}).add;
+)
+
+v = Voicer(20, \pb);
+v.gui;
+
+k = VoicerMIDISocket(0, v);
+
+// Here, "spec" is 3 (i.e., semitones)
+// The addControl method automatically sets up the spec properly
+k.addControl(\pb, \pb, 1, 3);
+
+// unmap
+k.removeControl(\pb);
+v.unmapGlobal(\pb);
+
+// To do it manually: the spec should turn semitones into midiratio
+v.mapGlobal(\pb, nil, 1, [-3, 3].midiratio);
+k.addControl(\pb, \pb);  // use the mapping just created
+
+k.free;
+
+::
+
+subsection:: Selecting a default MIDI device
+code::
+// Init the MIDIClient, to get the available devices.
+MIDIClient.init;
+
+// I'm looking for my FastTrack Pro.
+// Substitute your own device here
+i = MIDIClient.sources.detectIndex { |endpoint|
+	endpoint.name.contains("FastTrack")
+};
+
+MIDIPort.init([i]);
+
+// Now MIDIPort places the FastTrack in slot 0 -- the default device
+MIDIPort.sources[0];
+// prints: MIDIEndPoint("FastTrack Pro", "FastTrack Pro MIDI 1")
+
+nil.asChannelIndex  // default device
+// prints: MIDIChannelIndex('FastTrack Pro' : 'FastTrack Pro MIDI 1', 0)
+::

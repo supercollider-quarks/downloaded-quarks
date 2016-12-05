@@ -105,6 +105,10 @@ Tuple2{
 		stream << "(" << at1 << ", " << at2 << ")"
 	}
 
+	storeArgs {
+		^[at1, at2]
+	}
+
     at1_{ |v|
         ^Tuple2(v,this.at2)
     }
@@ -113,7 +117,9 @@ Tuple2{
         ^Tuple2(this.at1,v)
     }
 
-
+	bicollect { |f,g|
+		^Tuple2( f.(at1), g.(at2) )
+	}
 //Functor
 	collect { |f|
 		^Tuple2( f.(at1), f.(at2) )
@@ -137,6 +143,7 @@ Tuple2{
 	asTuple2{
 		^this
 	}
+
 }
 
 Tuple3{
@@ -156,6 +163,10 @@ Tuple3{
 
 	printOn { arg stream;
 		stream << "(" << at1 << ", " << at2 << ", " << at3 <<")"
+	}
+
+	storeArgs {
+		^[at1, at2, at3]
 	}
 
     at1_{ |v|
@@ -197,6 +208,10 @@ Tuple4{
 
 	printOn { arg stream;
 		stream << "(" << at1 << ", " << at2 << ", " << at3 << ", " << at4 <<")"
+	}
+
+	storeArgs {
+		^[at1, at2, at3, at4]
 	}
 
 //Functor

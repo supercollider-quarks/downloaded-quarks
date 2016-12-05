@@ -1,0 +1,16 @@
+(
+          name: "Singleton",
+       summary: "Base class that provides singleton-like behaviors.",
+        author: "scott@artificia.org",
+     copyright: "Frank Scott Carver, 2013",
+       license: "MIT",
+       version: "1.0.2",
+        schelp: "Singleton",
+          test: "Test/Singleton_unittest.scd",
+           url: "https://github.com/scztt/singleton.quark",
+  dependencies: [
+              		"UnitTesting@2a8f5e18aaa7cd25968ec094bbfa75a7fb3094b6"
+                ],
+  isCompatible: true ,
+         since: "2013"
+)

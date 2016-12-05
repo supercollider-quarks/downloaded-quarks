@@ -3,10 +3,10 @@ Tempo  {
 
 	classvar <default;
 
-	var <tempo=1.0,<beatsPerBar=4.0;
-	var tempor,beatsPerBarr,tempoClock,clocks,owners;
+	var <tempo=1.0, <beatsPerBar=4.0;
+	var tempor, beatsPerBarr, tempoClock, clocks, owners;
 
-	*new { arg tempo=1.0,tempoClock;
+	*new { arg tempo=1.0, tempoClock;
 		^super.new.init(tempoClock).tempo_(tempo)
 	}
 	init { arg t;

@@ -57,14 +57,15 @@ PR(\abstractModeSeg).v.clone({
 		~useOwnMode = parms.atBackup(\useOwnMode, currentEnvironment);
 		currentEnvironment
 	};
-	
+
 	~mapToMode = #{ |mode|
-		var	bestMode, bestFit = -1e10, bestMap, modeFit, notesTemp, modeObj;
+		var	bestMode, bestFit = -1e10, bestMap, modeFit, notesTemp/*, modeObj*/;
 			// is it a single mode, or a mode pool?
 		mode = mode ? \default;
-		modeObj = mode.asMode.value;
-		if(modeObj.size > 0) {
-			modeObj.do({ |mode, i|
+		// modeObj = mode.asMode.value;
+		if(mode.size > 0) {
+			mode.value.do({ |mode, i|
+				mode = mode.asMode;
 				notesTemp = ~rawNotes.mapMode(mode);
 				((modeFit = Func(\chModeFit).doAction(notesTemp)) > bestFit).if({
 					bestMode = mode;
@@ -223,8 +224,8 @@ PR(\abstractProcess).v.clone({
 		argPairs = ~argPairs.(inEvent);		// if simple array, this will have no effect
 		// argPairs.debug("argPairs");
 		case
-		{ argPairs.isPattern } {
-			out = argPairs <> out
+		{ argPairs.isPattern or: { argPairs.isKindOf(Routine) } } {
+			out = Pchain(argPairs, out)
 		}
 		{ argPairs.size > 0 } {
 // 			out = Pbindf(out, \argKeys, argPairs[0, 2..], *argPairs);

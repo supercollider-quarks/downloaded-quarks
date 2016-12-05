@@ -1,5 +1,5 @@
 TITLE:: CVSyncText
-summary:: A class that makes various text-related GUI-classes CV-comatible
+summary:: A class that makes various text-related GUI-classes CV-compatible
 categories:: GUI, Conductor
 related:: Classes/CV, Classes/CVSync, Classes/TextField, Classes/TextView, Classes/StaticText
 
@@ -23,15 +23,15 @@ private:: initClass
 INSTANCEMETHODS::
 
 METHOD:: update
-update the view when the model has changed 
+update the view when the model has changed
 
 argument:: changer
 the model
 
 argument:: what
-the message - here code::\synch::. 
+the message - here code::\synch::.
 
-argument::  ... moreArgs
+argument::  ... moreArgs
 
 returns:: this (a code::CVSyncText::)
 
@@ -43,7 +43,7 @@ returns:: this (a code::CVSyncText::)
 EXAMPLES::
 
 code::
-c = CV([0!5, 10!5].asSpec) 
+c = CV([0!5, 10!5].asSpec)
 
 (
 w = Window("CVSyncText");

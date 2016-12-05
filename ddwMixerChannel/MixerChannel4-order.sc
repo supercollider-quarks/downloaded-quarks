@@ -50,20 +50,21 @@ MixerChannel {
 			// mixers that have a direct link to this one
 			// e.g., if A --> B, B is a descendent of A and A is an antecedent of B
 			// A --> B --> C, A is antecedent of B but NOT of C
-		<antecedents, <descendents;
+		<antecedents, <descendents,
+		<parallelSynthGroup = false;  // set only at init time
 
 ///////////////////// CREATION AND INITIALIZATION /////////////////////
 
 	*new { arg 	name = nil, server, inChannels = 1, outChannels = 2,
 				level = 0.75, pan = 0, /*postSendReady = false,*/ inbus, outbus,
-				completionFunc;
+				completionFunc, parallel = false;
 
 		^this.newFromDef(name, "mix%x%".format(inChannels, outChannels).asSymbol,
-			server, (level:level, pan:pan), /*postSendReady,*/ inbus, outbus, completionFunc);
+			server, (level:level, pan:pan), /*postSendReady,*/ inbus, outbus, completionFunc, parallel);
 	}
 
 	*newFromDef {	|name, defname, server, initValues, /*postSendReady = false,*/
-			inbus, outbus, completionFunc|
+			inbus, outbus, completionFunc, parallel = false|
 		var new;
 		server = server ? Server.default;
 
@@ -75,7 +76,7 @@ MixerChannel {
 		});
 
 		new = super.newCopyArgs(name, MixerChannelDef.at(defname), server, inbus, nil)
-			.init(outbus, initValues, completionFunc);
+			.init(outbus, initValues, completionFunc, parallel);
 		this.changed(\newMixer, new);
 		^new
 	}
@@ -92,15 +93,15 @@ MixerChannel {
 		});
 	}
 
-	init { |bus, initValues, completionFunc|
+	init { |bus, initValues, completionFunc, parallel = false|
 		server.serverRunning.not.if({
 			Error("Server must be booted before creating MixerChannels.").throw;
 		}, {
-			this.fixParms(bus, initValues, completionFunc)
+			this.fixParms(bus, initValues, completionFunc, parallel)
 		});
 	}
 
-	fixParms { |bus, initValues, completionFunc|	// make all parameters consistent; allows for
+	fixParms { |bus, initValues, completionFunc, parallel|	// make all parameters consistent; allows for
 				// missing arguments
 				// also adds mixer synth object to server in a new group
 				// default outbus is standard output
@@ -109,6 +110,7 @@ MixerChannel {
 
 		antecedents = IdentitySet.new;
 		descendents = IdentitySet.new;
+		parallelSynthGroup = parallel;
 
 		argOutbus = outbus;	// save to determine if order-of-execution will have to be
 							// adjusted
@@ -207,7 +209,8 @@ MixerChannel {
 				fadergroup.nodeID = server.nodeAllocator.allocPerm;
 			};
 			if(synthgroup.isNil) {
-				synthgroup = Group.basicNew(server,
+				synthgroup = if(parallelSynthGroup) { ParGroup } { Group }
+				.basicNew(server,
 					server.nodeAllocator.allocPerm).isRunning_(true);
 			} {
 				synthgroup.nodeID = server.nodeAllocator.allocPerm;

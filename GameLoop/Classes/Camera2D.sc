@@ -3,12 +3,12 @@ Camera2D : Vehicle {
 
   classvar <>fwd, <>back, <>rotLeft, <>rotRight, <>instance;
   var <>arrive, <>rotation, <>friction = 0.6,
-  >motionAmount = 30, >rotationAmount= 0.01pi;
+  >motionAmount = 1.6, >rotationAmount= 0.01pi;
 
 
-  *new{ arg world, position= RealVector2D[15,15], radius = 1.0, mass = 0.05,
+  *new{ arg world, position= RealVector2D[15,15], radius = 0.2, mass = 0.05,
         velocity = RealVector2D[0, 0], collisionType = \mobile, heading,
-        side, maxSpeed = 3.4, maxForce = 10, maxTurnRate = 2;
+        side, maxSpeed = 83, maxForce = 10, maxTurnRate = 2;
 
       if(instance.isNil,
         {
@@ -38,7 +38,7 @@ Camera2D : Vehicle {
     this.collisionFunc_({arg entity, entList, additionalInfo;
       entList.do{ arg obstacle;
         case
-        {obstacle.isKindOf(Wall)} {NonPenetrationConstrainWall(entity, obstacle, 0.05)};
+        {obstacle.isKindOf(Wall)} {NonPenetrationConstrainWall(entity, obstacle, 0.1)};
       }
     });
   }
@@ -140,6 +140,27 @@ Camera2D : Vehicle {
     x = (xMinusx * thetaCos) - (yMinusy * thetaSin);
     y = (xMinusx * thetaSin) + (yMinusy * thetaCos);
     ^RealVector2D[x,y];
+  }
+
+  //hack only for when we are at the middle of a side of the space (within a metre) with 0 rotation
+  //TODO: fix the rotation with vectors to be able to use proper math
+  rotateTowardsCenter{ var halfOfXSide, halfOfYSide;
+    halfOfXSide = world.sceneWidth*0.5;
+    halfOfYSide = world.sceneHeight*0.5;
+    case
+    {( position.x < (halfOfXSide + 0.5) ) && ( position.x > (halfOfXSide - 0.5) ) && ( position.y < 0.5) } {rotation = 0}
+    {( position.x < (halfOfXSide + 0.5) ) && ( position.x > (halfOfXSide - 0.5) ) && ( position.y > (world.sceneHeight - 0.5)) } {rotation = 3.14}
+    {( position.y < (halfOfYSide + 0.5) ) && ( position.y > (halfOfYSide - 0.5) ) && ( position.x < 0.5) } {rotation = 1.57}
+    {( position.y < (halfOfYSide + 0.5) ) && ( position.y > (halfOfYSide - 0.5) ) && ( position.x > (world.sceneWidth - 0.5)) } {rotation = 4.71};
+                                    
+
+    /* var angle, normHeading; */ 
+    /* normHeading = this.heading.normalize; */
+    /* angle = atan2(point.y - normHeading.y, point.x - normHeading.x ); */
+    /* angle.debug("place 1"); */
+    /* /1* angle = angle * (180/pi); *1/ */
+    /* /1* angle.debug("place 2"); *1/ */
+    /* this.rotation = angle; */
   }
 
 }

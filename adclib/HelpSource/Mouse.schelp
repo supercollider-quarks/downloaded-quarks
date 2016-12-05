@@ -1,0 +1,112 @@
+TITLE:: Mouse
+summary:: A language side Mouse
+categories:: Control
+related:: Classes/MouseX
+
+DESCRIPTION::
+Sketch for having an equivalent to MouseX in the language, on guis etc.
+
+First code examples:
+
+code::
+// use just the Mouse class (no polling needed):
+Mouse.pos
+Mouse.x
+Mouse.y
+
+// start polling - more efficient with multiple instances
+Mouse.start;
+
+// use instances with independent actions:
+// args are mouse, xval, yval, xraw, yraw
+Mouse(\a, { |...args| args.postln });
+
+// post just x
+Mouse(\a, { |mouse, x| x.round(0.0001).postln });
+
+// try to post x and y - but forgot y -> error
+// -> posts "Mouse(\a).action failed."
+Mouse(\a, { |mouse, x| [x, y].round(0.0001).postln });
+
+// see the error
+Mouse(\a).doAction;
+
+// fix it
+Mouse(\a, { |mouse, x, y| [x, y].round(0.0001).postln });
+
+// second mouse instance, use spec for x
+Mouse(\b, { |mouse, x| x.round(0.01).postln }, [20, 2000, \exp]);
+
+Mouse(\a).free;
+// b remains
+Mouse(\b).free;
+
+Mouse.free;
+*/
+::
+
+CLASSMETHODS::
+
+METHOD:: prevPos
+
+METHOD:: screenSize
+
+METHOD:: x
+
+METHOD:: all
+
+METHOD:: initClass
+
+METHOD:: start
+
+METHOD:: doActions
+
+METHOD:: free
+
+METHOD:: y
+
+METHOD:: pos
+
+METHOD:: new
+argument:: name
+argument:: action
+argument:: xspec
+argument:: yspec
+
+METHOD:: initTask
+
+METHOD:: stop
+
+METHOD:: task
+
+METHOD:: xuni
+
+METHOD:: yuni
+
+
+INSTANCEMETHODS::
+
+METHOD:: prAdd
+
+METHOD:: xspec
+
+METHOD:: yspec
+
+METHOD:: doAction
+
+METHOD:: printOn
+argument:: str
+
+METHOD:: storeArgs
+
+METHOD:: xval
+
+METHOD:: free
+
+METHOD:: name
+
+METHOD:: yval
+
+METHOD:: action
+
+METHOD:: init

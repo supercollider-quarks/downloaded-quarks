@@ -1,0 +1,198 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf470
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 HelveticaNeue;\f2\fnil\fcharset0 Monaco;
+}
+{\colortbl;\red255\green255\blue255;\red204\green0\blue102;\red96\green96\blue96;\red0\green77\blue204;
+}
+\paperw12240\paperh15840\vieww18000\viewh8400\viewkind0
+\deftab560
+\pard\pardeftab560
+
+\f0\i\b\fs576 \cf0 nl4sc
+\fs140 \
+\
+\
+\
+\pard\pardeftab560
+
+\f1\b0\fs132 \cf2 //Logistic Map\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+\cf2 //Coupled Map Lattice\cf0 \
+\cf2 //Globally Coupled Map\cf0 \
+\cf2 //HyperCubic Map\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\i0\fs56 \cf0 \
+all implement the logistic equation.\
+\pard\pardeftab560
+
+\f2\fs144 \cf0 \
+\pard\pardeftab560
+
+\f1\i\fs132 \cf2 //Logist\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+\cf0 x
+\fs64 n+\cf3 1
+\fs132  \cf0 = \cf3 1 \cf0 - rx
+\fs64 n
+\f0\i0\fs72 \super 2
+\f1\i\fs132 \nosupersub \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\i0\fs144 \cf0 [\cf4 Logist0\cf0 ]\
+[\cf4 Logist1\cf0 ]\
+[\cf4 Logist3\cf0 ]\
+\
+[\cf4 TLogist\cf0 ]\
+[\cf4 Plogist\cf0 ]\
+\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f1\i\fs132 \cf3 "From a Descriptive to Constructive Approach of Nature"\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\fs72 \cf2 // in the book by Kaneko & Tsuda\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f0\i0\fs24 \cf0 {{\NeXTGraphic Pasted Graphic 1.tiff \width3200 \height4820
+}¬}\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\fs94 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\fs144 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f1\i\fs132 \cf0 lattice\
+\
+chaotic equations are connected\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\i0\fs126 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f1\i\fs132 \cf0 cellular automata\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\fs48 \cf0 instead of the elements being states, they are chaotic equations.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\i0\fs126 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f1\i\fs132 \cf2 //Coupled Map Lattice\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\i0\fs144 \cf0 [\cf4 CML0\cf0 ]\
+[\cf4 CML1\cf0 ]\
+[\cf4 CML3\cf0 ]\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f1\i\fs132 \cf2 //Globally Coupled Map\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\i0\fs144 \cf0 [\cf4 GCM0\cf0 ]\
+[\cf4 GCM1\cf0 ]\
+[\cf4 GCM3\cf0 ]\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f1\i\fs132 \cf2 //Hypercubic Map\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\fs48 \cf0 mimics gene mutation by single point bit flip-flop\
+the values of the logistic equations in lattice are subject to the mutation\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\i0\fs144 \cf0 [\cf4 HCM0\cf0 ]\
+[\cf4 HCM1\cf0 ]\
+[\cf4 HCM3\cf0 ]
+\fs18 \
+\
+
+\fs144 \
+\
+\
+[\cf4 FIS\cf0 ]		
+\f1\i\fs132 \cf3 "Functional Iteration Synthesis"\cf0  - agostino di scipio\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\fs68 \cf0 uses chaotic sine map\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\i0\fs96 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\fs18 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f0\fs24 \cf0 {{\NeXTGraphic Pasted Graphic 2.tiff \width19200 \height7860
+}¬}\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\fs144 \cf0 \
+\
+\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f1\i \cf0 deterministic chaos\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\i0\fs56 \cf0 the same set of parameters generate an \ul identical\ulnone  result.\
+the output is \ul reproducible\ulnone  be it sound or control signal.\
+\
+although the output being nonlinear and chaotic, \
+you can control and design gestures. \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\b \cf0 \
+you can compose them.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\b0 \cf0 		
+\fs144 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\i \cf0 nl4sc\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\i0 \cf0 		
+\fs56 implements different \cf4 UGens\cf0 \
+		but the similarity in the parametric space \
+		makes it useful to connect them musically.
+\fs144 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\i \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\i0 \cf0 (\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f1\fs56 \cf2 //I'm about to finishing...
+\i\fs144 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\i0 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f1\i\b\fs174 \cf3 "Thank you!"\cf0 .speak;\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\i0\b0\fs144 \cf0 )\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f1\i\fs132 \cf0 yota morimoto\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f2\i0\fs108 \cf0 http:\cf2 //yota.tehis.net/\cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+
+\f1\fs56 \cf2 //2 do\cf0 \
+list pattern implementation of \cf4 CML\cf0 , \cf4 GCM\cf0 , \cf4 HCM\cf0  \
+(arbitrary number of lattice elements)\
+my homework from jmc (multioutugen)}

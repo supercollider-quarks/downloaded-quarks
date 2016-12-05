@@ -8,30 +8,30 @@
 
 BusPool {
 
-	classvar <counts,<annotations;
+	classvar <counts, <annotations;
 
-	*alloc { |rate=\audio,server,numChannels=1,client,name|
-		var prev,bus;
-		bus = Bus.alloc(rate,server,numChannels);
-		this.retain(bus,client,name);
+	*alloc { |rate=\audio, server, numChannels=1, client, name|
+		var prev, bus;
+		bus = Bus.alloc(rate, server, numChannels);
+		this.retain(bus, client, name);
 		^bus
 	}
-	*retain { |bus,client,name|
+	*retain { |bus, client, name|
 		counts.add(bus);
-		if(annotations.at(bus,client).notNil,{
+		if(annotations.at(bus, client).notNil, {
 			Error("A client may only retain a bus once").throw;
 		});
-		annotations.put(bus,client,name);
+		annotations.put(bus, client, name);
 		this.watchServer(bus.server);
 	}
-	*release { |bus,client|
+	*release { |bus, client|
 		var dict;
-		if(bus.index.isNil,{
-			("Bus already freed" + bus + client + annotations.at(bus,client)).warn
+		if(bus.index.isNil, {
+			("Bus already freed" + bus + client + annotations.at(bus, client)).warn
 		});
 		counts.remove(bus);
-		annotations.removeAt(bus,client);
-		if(counts.itemCount(bus) == 0 and: {bus.index.notNil},{
+		annotations.removeAt(bus, client);
+		if(counts.itemCount(bus) == 0 and: {bus.index.notNil}, {
 			bus.free;
 		})
 	}
@@ -40,15 +40,15 @@ BusPool {
 		this.reset;
 	}
 	*reset {
-		if(counts.notNil,{
-			counts.contents.keysValuesDo({ |bus,count| bus.free });
+		if(counts.notNil, {
+			counts.contents.keysValuesDo({ |bus, count| bus.free });
 		});
 		counts = Bag.new;
 		annotations = MultiLevelIdentityDictionary.new;
 	}
 	*watchServer { |server|
-		if(NotificationCenter.registrationExists(server,\newAllocators,this).not,{
-			NotificationCenter.register(server,\newAllocators,this,{
+		if(NotificationCenter.registrationExists(server, \newAllocators, this).not, {
+			NotificationCenter.register(server, \newAllocators, this, {
 				this.reset;
 			});
 		});
@@ -58,7 +58,7 @@ BusPool {
 	*gui {
 		Sheet({ |f|
 			var sortedBusses;
-			sortedBusses = counts.contents.keys.as(Array).sort({ |a,b| (a.index?0) < (b.index?0) });
+			sortedBusses = counts.contents.keys.as(Array).sort({ |a, b| (a.index?0) < (b.index?0) });
 			sortedBusses.do({ |bus|
 				var count;
 				count = this.itemCount(bus);
@@ -66,37 +66,37 @@ BusPool {
 				bus.gui(f);
 				count.gui(f);
 				f.flow({ |f|
-					annotations[bus].keysValuesDo({ |client,name|
+					annotations[bus].keysValuesDo({ |client, name|
 						f.startRow;
-						Tile(client,f);
-						CXLabel(f,":"++name);
+						Tile(client, f);
+						CXLabel(f, ":"++name);
 					});
 				})
 			});
-			if(counts.contents.size == 0,{
-				CXLabel(f,"No Busses allocated in BusPool");
+			if(counts.contents.size == 0, {
+				CXLabel(f, "No Busses allocated in BusPool");
 			});
 		})
 	}
 	*getAnnotations { |bus|
 		^annotations[bus]
 	}
-	*findBus { |server,index|
+	*findBus { |server, index|
 		^counts.detect({ |bus|
 			bus.index == index and: {bus.server === server}
 		})
 	}
-	*makeBusFromSpec { |busSpec,server,client,name|
+	*makeBusFromSpec { |busSpec, server, client, name|
 		var bus;
-		if(busSpec.rate == \audio,{
-			if(busSpec.private,{
-				bus = this.alloc(\audio,server,busSpec.numChannels,client,name)
-			},{
-				bus = Bus.new(\audio,0,busSpec.numChannels,server);
-				this.retain(bus,client,name)
+		if(busSpec.rate == \audio, {
+			if(busSpec.private, {
+				bus = this.alloc(\audio, server, busSpec.numChannels, client, name)
+			}, {
+				bus = Bus.new(\audio, 0, busSpec.numChannels, server);
+				this.retain(bus, client, name)
 			})
-		},{
-			bus = this.alloc(\control,server,busSpec.numChannels,client,name)
+		}, {
+			bus = this.alloc(\control, server, busSpec.numChannels, client, name)
 		});
 		^bus
 	}

@@ -1,0 +1,81 @@
+class:: BandSplitter4
+summary:: Split signal into 4 phase-coherent bands
+categories:: UGens>Filters
+related:: Classes/BandSplitter2, Classes/BandSplitter8
+
+DESCRIPTION::
+This UGen uses a sequence of parallel Linkwitz–Riley crossover filters to split the input signal into 4 bands that can be summed back to an allpass of the original signal. Each band has the same phase with respect to the others, though all are offset from the original signal (so, summing bands is safe, but mixing with the original signal can result in phase interactions).
+
+image::bandsplitter4.png::
+
+classmethods::
+method:: ar
+
+argument:: sig
+Input signal
+
+argument:: f1
+Frequency of first crossover.
+
+argument:: f2
+Frequency of second crossover.
+
+argument:: f3
+Frequency of third crossover.
+
+argument:: order
+Order of crossover filters (2, 4, 6, or 8)
+
+
+
+EXAMPLES::
+
+code::
+(
+n = {
+	var sig = PinkNoise.ar() * Decay.ar(Impulse.ar(1), 0.5);
+	var a, b, c, d;
+	#a, b, c, d = BandSplitter4.ar(sig, 200, 600, 1000);
+	SelectX.ar(MouseX.kr(0, 3), [a, b, c, d]);
+}.play;
+)
+
+n.free;
+
+(
+n = {
+	var sig = PinkNoise.ar() * Decay.ar(Impulse.ar(0.25), 0.5);
+	var bands;
+	bands = BandSplitter4.ar(sig, 400, 900, 2000);
+	bands = bands + CombC.ar(bands, 2, [0.5, 0.333, 1.02, 0.5], 4);
+	sig = Splay.ar(bands);
+	sig = Rotate2.ar(sig[0], sig[1], SinOsc.kr(0.01));
+}.play;
+)
+
+n.free;
+
+(
+n = {
+	var trig, sig;
+	var bands, freqs;
+	trig = Impulse.ar(0.25);
+	sig = PinkNoise.ar() * Decay.ar(trig, 0.5);
+	freqs = Demand.kr(
+		Impulse.kr(0.25),
+		0,
+		Dseq([50, 55, 55, 48, 44, 40], inf)
+	);
+	freqs = ([4, 7, 10, 0] + freqs).poll.midicps;
+
+	bands = BandSplitter4.ar(sig, 200, 700, 1000);
+	bands = bands + Streson.ar(bands, freqs.reciprocal, 0.99);
+	bands = bands + CombC.ar(bands, 2, [0.5, 0.333, 3.02, 0.5], 8);
+	sig = Splay.ar(bands);
+	sig = Rotate2.ar(sig[0], sig[1], SinOsc.kr(0.01));
+}.play;
+)
+
+n.free;
+
+::

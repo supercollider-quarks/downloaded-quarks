@@ -1,0 +1,9 @@
+(
+	name:		"ddwChucklib-livecode",
+	summary:		"Mini-language to supply live-coded patterns to chucklib BP processes.",
+	author:		"James Harkins",
+	version:		0.3,
+//	helpdoc:		"Help/ChuckOverview.html",
+	url:			"http://www.dewdrop-world.net/display.php?src=sc.md",
+	dependencies:	["ddwChucklib"]
+)

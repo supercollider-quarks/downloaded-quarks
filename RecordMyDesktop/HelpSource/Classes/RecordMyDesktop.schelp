@@ -1,0 +1,53 @@
+TITLE:: RecordMyDesktop
+summary:: invoke recordmydesktop to create a screencast
+CATEGORIES:: Libraries>RecordMyDesktop
+
+DESCRIPTION::
+
+This invokes recordmydesktop to record what is going on on the screen and capture SuperCollider's audio output. Make sure you have the server booted when starting this. You need to have the external Linux program 'recordmydesktop' in order to make succesful use of this class. See http://recordmydesktop.sourceforge.net. It is also available in some Linux distributions.
+
+CLASSMETHODS::
+
+METHOD:: new
+Start a new screencast.
+
+ARGUMENT:: name
+The filename of the screencast. The file extension is automatically added.
+
+ARGUMENT:: v
+Video quality from 0 to 63. This becomes the code::--v_quality:: command-line option.
+
+ARGUMENT:: s
+Audio quality from -1 to 10. This becomes the code::--s_quality:: command-line option.
+
+ARGUMENT:: n
+Number of channels to record.
+
+METHOD:: all
+A collector for all running instance variables.
+
+INSTANCEMETHODS::
+
+METHOD:: stop
+Stop the recording.
+
+METHOD:: name
+The name of the session. The name is also the key with which the instance is stored in the code::all:: classvar.
+
+METHOD:: pid
+The process id of the running recordmydesktop program.
+
+EXAMPLES::
+
+code::
+s.boot;
+z = RecordMyDesktop.new( "helpfile_example");
+
+{ SinOsc.ar( [200,400],0,0.3 )}.play;
+
+{ SinOsc.ar( [230,400],0,0.3 )}.play;
+
+z.stop;
+
+"vlc helpfile_example.ogv".unixCmd;
+::

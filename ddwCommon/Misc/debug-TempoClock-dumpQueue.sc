@@ -3,9 +3,10 @@
 		// for debugging purposes
 		// this will generate A LOT of information!
 	dumpQueue {
-		queue.clump(2).do({ |pair|
-			("\n" ++ pair[0]).postln;
-			pair[1].dumpFromQueue;
+		queue.clump(3).do({ |pair|
+			// ("\n" ++ pair[0]).postln;
+			"\n%, priority %\n".postf(pair[1], pair[0]);
+			pair[2].dumpFromQueue;
 		});
 	}
 }

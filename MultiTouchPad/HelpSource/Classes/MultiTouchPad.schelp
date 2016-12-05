@@ -1,0 +1,206 @@
+TITLE:: MultiTouchPad
+summary:: use multitouch MacBook trackpads on OSX as controllers.
+categories:: Interfaces
+related:: Classes/MTP, Guides/OSC_communication
+
+DESCRIPTION::
+MultiTouchPad is a quark and class written by Batuhan Bozkurt which allows using multitouch enabled touchpads on current MacBook models.
+MTP is a variant with some extensions by Alberto de Campo.
+MultiTouchPad is a Singleton class, so there are only class methods.
+
+note:: strong:: MultiTouchPad requires installation! ::
+
+Touchpad support is not integrated into SC at this time, so you need to download, compile and install tongsengmod (an application forked from the tongseng project to be used with SC) to make use of this class. This class handles the execution and termination of the tongsengmod application behind the scenes, so all you need to do is to compile and install it once:
+
+code::
+* Make sure you have Apple Developer Tools installed.
+
+* Download tongsengmod source from: http://github.com/batuhan/tongsengmod (or download via https://github.com/batuhan/tongsengmod.git ).
+
+* Extract the source archive (for example, to the desktop).
+
+* From terminal:
+
+$ cd ~/Desktop
+
+$ cd <extracted folder name>
+
+$ make
+
+$ sudo make install
+::
+This puts the tongsengmod program file in /usr/local/bin, where SC finds it.
+MultiTouchPad.progpath = "/usr/local/bin";
+
+For standalones, it is best to put it in the app's resource directory,
+and tell MultiTouchPad to look there:
+code::
+String.scDir.openOS;
+MultiTouchPad.progpath = String.scDir;
+::
+
+::
+
+Works with OSX versions from Leopard (10.5) up to El Capitan (10.11).
+
+
+First code examples:
+
+code::
+_some_example_code_
+::
+
+CLASSMETHODS::
+
+METHOD:: start
+argument:: force
+Starts the tongsengmod client and registers the responder to receive multitouch messages.
+
+METHOD:: stop
+Terminates the tongsengmod client and unregisters the responder.
+
+METHOD:: gui
+argument:: force
+A simple GUI to see if things are working fine.
+code::
+MultiTouchPad.start;
+MultiTouchPad.gui;
+MultiTouchPad.stop; //don't forget to stop
+::
+
+METHOD:: setDevice
+argument:: argDevice
+
+argDevice is \internal for internal trackpad (default) and \external for external trackpad.
+
+METHOD:: progpath
+the path where MultiTouchPad expects to find the tongsengmod program file.
+By default this is code::"/usr/local/bin"::, which is where the installer puts it.
+For standalones, it is best to put it in the app's resource directory,
+and tell MultiTouchPad to look there:
+code::
+String.scDir.openOS;
+MultiTouchPad.progpath = String.scDir.postcs;
+::
+
+subsection:: Accessing variables
+
+METHOD:: touchAction
+
+A function to be executed when a new finger touch is detected. The function is passed in two arguments: curID and xys. curID is a unique integer for the lifetime of a finger on the touchpad. xys is an array with three elements: [x position, y position, blob size]
+
+code::
+MultiTouchPad.start;
+MultiTouchPad.resetActions;
+MultiTouchPad.touchAction = {|curID, xys| curID.postln; xys.postln; };
+MultiTouchPad.stop; //don't forget to stop
+::
+
+METHOD:: untouchAction
+A function to be executed when a finger leaves the touchpad. The function is passed in the ID of the raised finger that was previously registered with touchAction.
+
+code::
+MultiTouchPad.start;
+MultiTouchPad.resetActions;
+MultiTouchPad.untouchAction = {|curID| curID.postln; };
+
+MultiTouchPad.stop; //don't forget to stop
+::
+
+METHOD:: setAction
+
+A function to be executed when fingers move on the touchpad surface. The function is passed in two arguments: curID and xys. curID is a unique integer for the lifetime of a finger on the touchpad. xys is an array with three elements: [x position, y position, blob size]
+code::
+MultiTouchPad.start;
+MultiTouchPad.resetActions;
+MultiTouchPad.touchAction = {|curID, xys| "set: id %, xys %\nxys".postf(curID, xys); };
+MultiTouchPad.stop; //don't forget to stop
+::
+
+METHOD:: resetActions
+
+MultiTouchPad.resetActions;
+Resets all actions to empty functions. Handy to make sure all actions are cleared as you can't create new instances of this class.
+
+
+subsection:: Internal variables and methods
+
+private:: stopFunc, pid
+
+METHOD:: guiWin
+get the gui window if there is one
+METHOD:: guiOn
+check whetehr the gui is on.
+
+METHOD:: isRunning
+check whether the tongsengmod program is running.
+
+METHOD:: device
+get and set the device to code::\internal or \external::.
+
+METHOD:: responder
+the OSCresponder used by MultiTouchPad
+
+METHOD:: processOSC
+processes incoming OSC messages from tongsengmod process
+
+METHOD:: fingersDict, activeBlobs
+a dict and a list with the currently active finger touchpoints.
+
+METHOD:: pid
+get the pid number of the currently running tongsengmod process
+
+METHOD:: stopFunc
+get the function to run when tongsengmod stops.
+
+EXAMPLES::
+code::
+(
+SynthDef(\mtFun, { arg impulseFreq, oscFreq, mul, pan, distort, decay;
+
+	var trig = Impulse.ar(impulseFreq);
+	var snd = SinOsc.ar(oscFreq, 0, Decay2.ar(trig, 0.01, 0.2 * decay));
+
+	Out.ar(0, Pan2.ar((tanh(snd * distort) / distort) * mul.lag(0.1), pan.lag(0.1)));
+}).add;
+)
+
+
+(
+var sDict = Dictionary.new;
+MultiTouchPad.resetActions.start;
+MultiTouchPad.touchAction = { |curID, xys|
+
+	sDict.put(curID,
+		Synth(\mtFun, [
+			\impulseFreq, [1,2,3,4,6,8,9].choose,
+			\oscFreq, rrand(80, 880),
+			\mul, 1 - xys[1],
+			\pan, (xys[0] * 2) - 1,
+			\distort, xys[2] * 8,
+			\decay, xys[2]
+		])
+
+	);
+
+};
+
+MultiTouchPad.untouchAction = { |curID|
+	sDict.at(curID).free;
+	sDict.removeAt(curID);
+};
+
+MultiTouchPad.setAction = { |curID, xys|
+	sDict.at(curID).set(
+		\mul, 1 - xys[1],
+		\pan, (xys[0] * 2) - 1,
+		\distort, xys[2] * 8,
+		\decay, xys[2]
+	);
+};
+
+MultiTouchPad.gui;
+)
+
+MultiTouchPad.stop;
+::

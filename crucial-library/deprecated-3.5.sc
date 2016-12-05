@@ -1,6 +1,6 @@
 
 
-MultiPageLayout : PageLayout { 
+MultiPageLayout : PageLayout {
 
 	*new { arg ... args;
 		this.deprecated(thisMethod);
@@ -12,10 +12,10 @@ MultiPageLayout : PageLayout {
 // move these to main pending-deprecated-3.6.sc
 
 + PageLayout {
-	
-	layRight { arg w,h; 
+
+	layRight { arg w, h;
 		this.deprecated(thisMethod)
-		^Rect(0,0,w,h) 
+		^Rect(0, 0, w, h)
 	}
 }
 
@@ -25,13 +25,13 @@ MultiPageLayout : PageLayout {
 
 + Point {
 	asPageLayout {
-		^PageLayout("",this.asRect ).front
+		^PageLayout("", this.asRect ).front
 	}
 }
 
 + Rect {
 	asPageLayout {
-		^PageLayout("",this ).front
+		^PageLayout("", this ).front
 	}
 }
 
@@ -41,8 +41,8 @@ MultiPageLayout : PageLayout {
 	asSingleName {
 		this.deprecated(thisMethod);
 		^String.streamContents({ arg s;
-			name.do({ arg n,i;
-				if(i > 0,{ s << $~ });
+			name.do({ arg n, i;
+				if(i > 0, { s << $~ });
 				s << n;
 			})
 		})
@@ -57,15 +57,13 @@ MultiPageLayout : PageLayout {
 + Object {
 	die { arg ... culprits;
 		"\n\nFATAL ERROR:\n".postln;
-		culprits.do({ arg c; if(c.isString,{c.postln},{c.dump}) });
+		culprits.do({ arg c; if(c.isString, {c.postln}, {c.dump}) });
 		this.dump;
 		Error("FATAL ERROR").throw;
 	}
 	checkKind { arg shouldBeKindOf;
-		if(this.isKindOf(shouldBeKindOf).not,{
+		if(this.isKindOf(shouldBeKindOf).not, {
 			Error("Type check failed:" + this + "should be kind of:" + shouldBeKindOf).throw;
 		})
 	}
 }
-
-

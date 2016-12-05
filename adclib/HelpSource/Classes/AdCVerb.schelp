@@ -1,7 +1,7 @@
 TITLE:: AdCVerb
 SUMMARY:: basic reverb based on Schroeder and Moorer-Loy
 CATEGORIES:: UGens
-RELATED:: DelayN, CombL, AllPassN
+RELATED:: Classes/DelayN, Classes/CombL, Classes/AllPassN
 
 DESCRIPTION::
 AdCVerb is a bank of comb filters going through a bank of allpass filters, with optional predelay. Basic input filtering is provided (high rolloff, DC removal), and it is easy and efficient to use for multichannel systems.
@@ -48,6 +48,9 @@ if true, post the random-generated allpass times for precise rebuilding of speci
 METHOD:: maxTime
 get and set the maximum delay time for predelay, combs and allpasses. When maxTime is changed, the next instance of AdCVerb will have this maxdelaytime for combs, allpasses and predelay. Default value is 0.2.
 
+method:: defaultCombTimes
+get the default delay times for the comb filters
+
 METHOD:: ar
 create an ar instance of AdCVerb.
 
@@ -89,6 +92,8 @@ an optional list of prime numbers for the allpass filters; providing them overri
 
 returns:: an instance of AdCVerb
 
+method:: makeMonoIn, makeCombTimes, makeCombs, makeAllpasses
+Internal methods to create all components of the verb, factored to allow building variants like AdCVerb2.
 
 
 EXAMPLES::

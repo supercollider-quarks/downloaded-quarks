@@ -28,7 +28,7 @@ NodeProxyPreset : ProxyPreset {
 	}
 
 	// DIFFERENT FROM other ProxyPresets
-	getFromProxy { |except| ^proxy.getKeysValues(except) }
+	getFromProxy { |except| ^proxy.getKeysValues(namesToStore, except) }
 
 }
 

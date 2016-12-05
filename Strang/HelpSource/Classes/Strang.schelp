@@ -1,0 +1,157 @@
+TITLE:: Strang
+summary:: Experimental nested String and UTF-8 support for SuperCollider
+categories:: Core
+related:: Classes/String
+
+DESCRIPTION::
+The link::Classes/String:: class doesn't support UTF-8 (http://en.wikipedia.org/wiki/UTF-8), while most editors that are in use with SuperCollider allow strings to be written in unicode. Such strings are internally represented in a way that doesn't split the string into correct characters. This class makes it easier to use UTF-8 encodings.
+
+note::this works well in many cases, but is experimental. Improvements welcome!::
+
+Thanks to Laureano López.
+
+SECTION::Etymology
+"Strang" is German for string, rope, strand, cord, skein.
+
+The Deutsches Wörterbuch von Jacob Grimm und Wilhelm Grimm writes:
+
+"strang, m. , dickes, gedrehtes seil. herkunft und form.
+altnord. strengr, ags. streng, engl. string, fries. stringe, mnl. strenge, stringe, strenc, nl. streng, stranc. das deutsche hat formen der a-, i- und n-declination sowie masc. und fem. genus nebeneinander: im ahd. sg. nom. stranc, strangi, strengi, strenki, pl. nom. strangun, dat. strangon, strengin, s. Graff ahd. sprachsch. 6, 755; im mhd. st. masc. stranc neben sw. masc. und fem. strange; im mnd. sg. strank, strange, pl. nom. strenge, dat. strengen, acc. strengen, strenge. […]"
+
+http://woerterbuchnetz.de/DWB/?sigle=DWB&mode=Vernetzung&lemid=GS50779#XGS50779
+
+
+
+CLASSMETHODS::
+
+METHOD:: newFrom
+Create a new instance from another collection, typically a link::Classes/String::. This method is used by the message call link::Classes/Object#-as::.
+
+ARGUMENT:: string
+The string in usual encoding.
+
+CODE::
+a = "hölloßå'°".as(Strang); // asStrang is the short form
+a.scramble;
+::
+
+INSTANCEMETHODS::
+
+METHOD::find
+
+Find a substring.
+
+ARGUMENT::string
+string or strang to search for.
+
+ARGUMENT::ignoreCase
+not yet supported
+
+ARGUMENT::offset
+initial offset into the receiver string.
+
+CODE::
+"hggỔh❤iii".asStrang.find("❤");
+"❤".asStrang.find("❤");
+"aber".asStrang.find("❤");
+"hggỔhs❤iii".asStrang.find("Ổh");
+::
+
+
+METHOD:: normalize
+Make all elements of the strang (characters or other strangs) compatible, which effectively means to convert all substrings into a Strang.
+
+CODE::
+a = "hölloßå'°".asStrang;
+b = a.collect { |x| x ++ "zzz" };
+b = b.normalize; // make everything a strang.
+::
+
+METHOD::deepFormat
+
+Format as a link::Classes/String::, adding delimters for nested strings.
+
+CODE::
+a = "hölloßå'°".asStrang;
+a[3] = "123".asStrang; // put a strang into a strang
+a.deepFormat;
+a.deepFormat(" >> ", " << ");
+::
+
+EXAMPLES::
+
+code::
+a = "hölloßå'°".asStrang;
+
+a.split($l);
+a.curdle(0.2).choose.class;
+
+a.array;
+a[5]
+a[1]
+
+x = "ǾĲ";
+a.addAll(x);
+
+// some operations
+a.scramble;
+a.rotate(2);
+a.pyramid(2);
+a.scramble;
+a.class;
+a.array;
+
+Pseq(a).asStream.all;
+
+a.addAll("rr");
+a.as(Array).at(1).class; // -> BigChar
+
+a + "text";
+a + a
+b = a ++ "xyz" ++ "ÄÖÜ";
+b.scramble;
+b[3..6]
+b.keep(-4);
+b.drop(3);
+
+z = "hello" ++ a;
+z.class; // string, this is OK.
+z.asStrang; // reconvert
+
+// higher ascii
+x = "⊙";
+x.ascii
+
+[ -30, -118, -103 ].asAscii.asStrang
+
+a ++ x
+
+a = "bėglys".asStrang;
+a.scramble;
+
+
+
+
+// nested strings
+
+a = "hölloßå'°".asStrang;
+a[3] = "123".asStrang; // put a strang into a strang
+a.scramble; // 123 remains together
+a.scramble; // 123 remains together
+a[3]; // still a substring
+a[3][2] = "hello".asStrang; // another level
+a.scramble;
+a[3].scramble; // "hello" remains together
+a[3].scramble; // "hello" remains together
+a.deepFormat;
+a.scramble.deepFormat;
+
+// use in GUI:
+(
+a = "∉☛❒❤⨗⊙⋱⋰Ổ".asStrang;
+a.scramble;
+w = Window(a.asString).front;
+t = TextView(w, w.view.bounds).string_(a.asString).font_(Font("Helvetiva", 67));
+fork({ loop { 1.wait; t.string = t.string.asStrang.scramble.asString }}, AppClock)
+)
+::

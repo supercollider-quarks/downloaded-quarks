@@ -3,43 +3,45 @@
 /******* Uses TabbedViewTab  *******/
 
 TabbedView2{
+
 	var
-		<view,
-		<>alwaysOnTop=true, // for the popup window
-		<tabPosition = \top,
-		<>lockPosition = false,  // disables position changing
-		<followEdges=true,
-		<>lockEdges = false, // disables edge following
-		<>dragTabs=true,
-		<labelColors, // default array of Colors. can be overriden by individual ta
-		<unfocusedColors, // default array of Colors. can be overriden by individual tabs
-		<backgrounds,  // default array of Colors. can be overriden by individual tabs
-		<stringColors,  // default array of Colors. can be overriden by individual tabs
-		<stringFocusedColors,  // default array of Colors. can be overriden by individual tabs
-		<focusFrameColor,  // normally Color.clear
-		<labelPadding = 20,
-		>clickbox=15,
-		>swingFactor, // for swing only
-		<>unfocusTabs=false, // for swing only
-		tabWidth = \auto, // default scheme. cviewan be overriden by individual tabs
-		<tabHeight=\auto, // cannot be overriden by individual tabs
-		tbht, // the calculated  or set tab height
-		tabCurve = 3, // default value. cannot be overriden by individual tabs
-		<>tabViews, // array of TabbbedViewTab instances
-		<font, // default Font. cannot be overriden by individual tabs
-		<resize = 1,
-		<>detachedClosable=true,
-		<activeTab,
-	<>refreshAction,
-		focusHistory,
-		<window,
-		<context, // thu GUI COntext
-		<pen,
-		>closeIcon,
-		>detachIcon,
-		left = 0, // probably obsolete
-		top  = 0 // probably obsolete
-		;
+	<view,
+	<>alwaysOnTop=true, // for the popup window
+	<tabPosition = \top,
+	<>lockPosition = false,  // disables position changing
+	<followEdges=true,
+	<>lockEdges = false, // disables edge following
+	<>dragTabs=true,
+	<labelColors, // default array of Colors. can be overriden by individual ta
+	<unfocusedColors, // default array of Colors. can be overriden by individual tabs
+	<backgrounds,  // default array of Colors. can be overriden by individual tabs
+	<stringColors,  // default array of Colors. can be overriden by individual tabs
+	<stringFocusedColors,  // default array of Colors. can be overriden by individual tabs
+	<focusFrameColor,  // normally Color.clear
+	<labelPadding = 20,
+	>clickbox=15,
+	>swingFactor, // for swing only
+	<>unfocusTabs=false, // for swing only
+	tabWidth = \auto, // default scheme. cviewan be overriden by individual tabs
+	<tabHeight=\auto, // cannot be overriden by individual tabs
+	tbht, // the calculated  or set tab height
+	tabCurve = 3, // default value. cannot be overriden by individual tabs
+	<>tabViews, // array of TabbbedViewTab instances
+	<font, // default Font. cannot be overriden by individual tabs
+	<resize = 1,
+	<>detachedClosable=true,
+	<>archiveKeys,
+	<activeTab,
+	<>changeAction, // execute on changes to the tab positions and orders
+	focusHistory,
+	<window,
+	<context, // thu GUI COntext
+	<pen,
+	>closeIcon,
+	>detachIcon,
+	left = 0, // probably obsolete
+	top  = 0 // probably obsolete
+	;
 
 	*new{ arg parent, bounds;
 		^super.new.init(parent, bounds);
@@ -71,16 +73,16 @@ TabbedView2{
 		/*** Set some defaults ***/
 		focusFrameColor=Color.clear;
 		font=Font.default;
+		archiveKeys = [\indexes,\followEdges,\tabPosition,\tabFocus];
 		swingFactor = Point(0.52146, 1.25);
 		stringFocusedColors=[Color.white]	;
 		stringColors=[Color.black]	;
-
 		labelColors = [Color(0.85,0.85,0.85)];
 		unfocusedColors = [Color(0.75,0.75,0.75,1)];
 		backgrounds = [Color(0.85,0.85,0.85)];
 		if( GUI.id == \swing)  {
 			unfocusTabs=true; // unfocus Tabs if not Cocoa;
-			};
+		};
 		tabViews = [];
 
 		this.defineIcons;
@@ -117,11 +119,11 @@ TabbedView2{
 
 	resetColors{
 		tabViews.do{|tab,index|
-		tab.labelColor=labelColors[ index%labelColors.size ];
-		tab.background=backgrounds[ index%backgrounds.size ];
-		tab.unfocusedColor=unfocusedColors[ index%unfocusedColors.size ];
-		tab.stringColor=stringColors[ index%stringColors.size ];
-		tab.stringFocusedColor=stringFocusedColors[ index%stringFocusedColors.size ];
+			tab.labelColor=labelColors[ index%labelColors.size ];
+			tab.background=backgrounds[ index%backgrounds.size ];
+			tab.unfocusedColor=unfocusedColors[ index%unfocusedColors.size ];
+			tab.stringColor=stringColors[ index%stringColors.size ];
+			tab.stringFocusedColor=stringFocusedColors[ index%stringFocusedColors.size ];
 
 		};
 		this.refresh
@@ -136,28 +138,28 @@ TabbedView2{
 	/** this paints the tabs with rounded edges **/
 	paintTab{ arg tab, labelColor, strColor;
 		var drawCenter,drawLeft,drawTop,drawRect,drawRight,
-			drawBottom,rotPoint,moveBy,rotPointText,drawRectText,
-			drawRectText2,rot1=pi/2,rot2=0, tabLabelView=tab.widget, label=tab.label;
+		drawBottom,rotPoint,moveBy,rotPointText,drawRectText,
+		drawRectText2,rot1=pi/2,rot2=0, tabLabelView=tab.widget, label=tab.label;
 
 		followEdges.if{
 			switch(tabPosition)
-				{\top}{rot1=0;rot2=0}
-				{\left}{rot1=pi;rot2=pi/2}
-				{\bottom}{rot1=pi;rot2=pi}
-				{\right}{rot1=0;rot2=pi/2};
+			{\top}{rot1=0;rot2=0}
+			{\left}{rot1=pi;rot2=pi/2}
+			{\bottom}{rot1=pi;rot2=pi}
+			{\right}{rot1=0;rot2=pi/2};
 		}{
 			switch(tabPosition)
-				{\top}{rot1=0;rot2=pi/2.neg}
-				{\left}{rot1=pi;rot2=pi}
-				{\bottom}{rot1=pi;rot2=pi/2}
-				{\right}{rot1=0;rot2=0};
+			{\top}{rot1=0;rot2=pi/2.neg}
+			{\left}{rot1=pi;rot2=pi}
+			{\bottom}{rot1=pi;rot2=pi/2}
+			{\right}{rot1=0;rot2=0};
 		};
 
 
 		tabLabelView.drawFunc = { arg tview;
 			var drawCenter,drawLeft,drawTop,drawRect,drawRight,
-				drawBottom,rotPoint,moveBy,rotPointText,
-				drawRectText,drawRectText2, closable,useDetachIcon,offset=0;
+			drawBottom,rotPoint,moveBy,rotPointText,
+			drawRectText,drawRectText2, closable,useDetachIcon,offset=0;
 
 			closable= tab.closable;//tabLabelView.mouseUpAction.notNil;
 			useDetachIcon = tab.useDetachIcon;
@@ -166,14 +168,14 @@ TabbedView2{
 			drawCenter=Point(drawRect.left+(drawRect.width/2),drawRect.top+(drawRect.height/2));
 
 			if ([\top,\bottom].occurrencesOf(tabPosition)>0)
-				{drawRectText=Rect(drawRect.left-((drawRect.height-drawRect.width)/2),
-					drawRect.top+((drawRect.height-drawRect.width)/2),drawRect.height,drawRect.width);}
-				{drawRectText=drawRect};
+			{drawRectText=Rect(drawRect.left-((drawRect.height-drawRect.width)/2),
+				drawRect.top+((drawRect.height-drawRect.width)/2),drawRect.height,drawRect.width);}
+			{drawRectText=drawRect};
 
 			if ([\right,\left].occurrencesOf(tabPosition)>0)
-				{drawRectText2=Rect(drawRect.left-((drawRect.height-drawRect.width)/2),
-					drawRect.top+((drawRect.height-drawRect.width)/2),drawRect.height,drawRect.width);}
-				{drawRectText2=drawRect};
+			{drawRectText2=Rect(drawRect.left-((drawRect.height-drawRect.width)/2),
+				drawRect.top+((drawRect.height-drawRect.width)/2),drawRect.height,drawRect.width);}
+			{drawRectText2=drawRect};
 
 			drawLeft  =drawCenter.x-(drawRect.width/2);
 			drawTop   =drawCenter.y-(drawRect.height/2);
@@ -191,15 +193,15 @@ TabbedView2{
 						tabCurve, 0, (pi/2).neg);
 
 					pen.addRect( Rect(drawLeft + tabCurve,
-								drawTop,
-								drawRect.width - tabCurve - tabCurve,
-								tabCurve)
-								);
+						drawTop,
+						drawRect.width - tabCurve - tabCurve,
+						tabCurve)
+					);
 					pen.addRect( Rect(drawLeft,
-								drawTop+tabCurve,
-								drawRect.width,
-								drawRect.height-tabCurve)
-							);
+						drawTop+tabCurve,
+						drawRect.width,
+						drawRect.height-tabCurve)
+					);
 				}{
 					pen.addWedge( (drawLeft+drawRect.width - tabCurve)
 						@(drawTop + tabCurve),
@@ -209,15 +211,15 @@ TabbedView2{
 						tabCurve, 0, pi/2);
 
 					pen.addRect( Rect(drawLeft+drawRect.width - tabCurve ,
-								drawTop + tabCurve,
-								tabCurve,
-								drawRect.height - tabCurve - tabCurve)
-								);
+						drawTop + tabCurve,
+						tabCurve,
+						drawRect.height - tabCurve - tabCurve)
+					);
 					pen.addRect( Rect(drawLeft,
-								drawTop,
-								drawRect.width-tabCurve,
-								drawRect.height)
-							);
+						drawTop,
+						drawRect.width-tabCurve,
+						drawRect.height)
+					);
 				};
 				pen.draw;
 
@@ -225,33 +227,33 @@ TabbedView2{
 				pen.font_(font);
 				pen.color_ (strColor);
 				followEdges.if{
- 					pen.stringCenteredIn(label,
- 						drawRectText2.moveBy(0,if(tabPosition==\top){1}{0};));
- 						tab.userDrawFunction.value(pen,drawRectText2,tabPosition,followEdges);
-		 				closable.if{
-			 				closeIcon.value(pen, Rect(drawRectText2.right-clickbox,
-			 					drawRectText2.top,clickbox,clickbox));
-			 				offset=(clickbox).neg;
-		 				};
-		 				useDetachIcon.if{
-			 				detachIcon.value(pen, Rect(drawRectText2.right-clickbox+offset,
-			 					drawRectText2.top,clickbox,clickbox));
-		 				};
- 					}{
- 					pen.stringLeftJustIn(label,
- 						drawRectText.insetAll((labelPadding/2)-2,0,0,0).moveBy(0,1));
- 						tab.userDrawFunction.value(pen,drawRectText,tabPosition,followEdges);
-		 				closable.if{
-		 					closeIcon.value( pen,
-		 					  Rect(drawRectText.right-clickbox,drawRectText.top,clickbox,clickbox));
-		 					  offset=(clickbox).neg;
-		 				};
-		 				useDetachIcon.if{
-		 					detachIcon.value( pen,
-		 					  Rect(drawRectText.right-clickbox+offset,
-		 					  	drawRectText.top,clickbox,clickbox));
-		 				};
- 				};
+					pen.stringCenteredIn(label,
+						drawRectText2.moveBy(0,if(tabPosition==\top){1}{0};));
+					tab.userDrawFunction.value(pen,drawRectText2,tabPosition,followEdges);
+					closable.if{
+						closeIcon.value(pen, Rect(drawRectText2.right-clickbox,
+							drawRectText2.top,clickbox,clickbox));
+						offset=(clickbox).neg;
+					};
+					useDetachIcon.if{
+						detachIcon.value(pen, Rect(drawRectText2.right-clickbox+offset,
+							drawRectText2.top,clickbox,clickbox));
+					};
+				}{
+					pen.stringLeftJustIn(label,
+						drawRectText.insetAll((labelPadding/2)-2,0,0,0).moveBy(0,1));
+					tab.userDrawFunction.value(pen,drawRectText,tabPosition,followEdges);
+					closable.if{
+						closeIcon.value( pen,
+							Rect(drawRectText.right-clickbox,drawRectText.top,clickbox,clickbox));
+						offset=(clickbox).neg;
+					};
+					useDetachIcon.if{
+						detachIcon.value( pen,
+							Rect(drawRectText.right-clickbox+offset,
+								drawRectText.top,clickbox,clickbox));
+					};
+				};
 			};
 		};
 		tabLabelView.refresh;
@@ -271,7 +273,7 @@ TabbedView2{
 					tab.unfocusedColor,
 					tab.stringColor );// unfocus colors
 				tab.view.visible_(false);
-					//do the user unfocusAction only on unfocus
+				//do the user unfocusAction only on unfocus
 			};
 		};
 	}
@@ -292,9 +294,9 @@ TabbedView2{
 
 	stringBounds { |string, font|
 		(context.id === \swing).if{
-		^Rect(0, 0, string.size * font.size * swingFactor.x, font.size * swingFactor.y);
+			^Rect(0, 0, string.size * font.size * swingFactor.x, font.size * swingFactor.y);
 		}{
-		^context.stringBounds(string, font);
+			^context.stringBounds(string, font);
 		}
 	}
 
@@ -312,8 +314,8 @@ TabbedView2{
 			// calculate space for icons
 			if(useDetachIcon ||closable ){padding = (closepadding + detachpadding)};
 			if ( tab.tabWidth.asSymbol == \auto )
-				{tab.tbwdth = (this.stringBounds(tab.label.asString,font).width + labelPadding+padding);}
-				{tab.tbwdth=tab.tabWidth};
+			{tab.tbwdth = (this.stringBounds(tab.label.asString,font).width + labelPadding+padding);}
+			{tab.tbwdth=tab.tabWidth};
 
 		};
 
@@ -333,7 +335,6 @@ TabbedView2{
 				};
 			};
 		};
-		refreshAction.value(this);
 
 	}
 
@@ -345,29 +346,29 @@ TabbedView2{
 		tabViews.do{ arg tab, i;
 			followEdges.if{
 				tab.widget.bounds_( Rect(
-						left + ( ([0]++this.tabWidths).integrate.at(i) ) + i,
-						top,
-						tab.tbwdth,
-						tbht)
-					);
+					left + ( ([0]++this.tabWidths).integrate.at(i) ) + i,
+					top,
+					tab.tbwdth,
+					tbht)
+				);
 			}{
 				tab.widget.bounds_( Rect(
-						left + (i*tbht) + i,
-						top ,
-						tbht,
-						this.tabWidths.maxItem)
-					);
+					left + (i*tbht) + i,
+					top ,
+					tbht,
+					this.tabWidths.maxItem)
+				);
 			};
 			tab.widget.resize = switch(resize)
-				{1}{1}
-				{2}{1}
-				{3}{3}
-				{4}{1}
-				{5}{1}
-				{6}{3}
-				{7}{7}
-				{8}{7}
-				{9}{9};
+			{1}{1}
+			{2}{1}
+			{3}{3}
+			{4}{1}
+			{5}{1}
+			{6}{3}
+			{7}{7}
+			{8}{7}
+			{9}{9};
 		};
 		followEdges.if{
 			tabViews.do{ arg tab, i;
@@ -379,7 +380,7 @@ TabbedView2{
 
 				tab.closeRect=Rect(tab.widget.bounds.width-clickbox, 0, clickbox, clickbox);
 				tab.closable.if{tab.detRect=Rect(tab.widget.bounds.width-clickbox-clickbox, 0, clickbox, clickbox)}
-					{tab.detRect=Rect(tab.widget.bounds.width-clickbox, 0, clickbox, clickbox)};
+				{tab.detRect=Rect(tab.widget.bounds.width-clickbox, 0, clickbox, clickbox)};
 			};
 
 		}{
@@ -391,7 +392,7 @@ TabbedView2{
 					view.bounds.height-this.tabWidths.maxItem);
 				tab.closeRect=Rect(0,0,clickbox,clickbox);
 				tab.closable.if{tab.detRect=Rect(0,clickbox.neg,clickbox,clickbox)}
-					{tab.detRect=Rect(0,0,clickbox,clickbox)};
+				{tab.detRect=Rect(0,0,clickbox,clickbox)};
 			};
 		};
 		this.updateFocus;
@@ -401,30 +402,30 @@ TabbedView2{
 		tabViews.do{ arg tab, i;
 			followEdges.not.if{
 				tab.widget.bounds_( Rect(
-						left,
-						top + (i*tbht) + i,
-						this.tabWidths.maxItem,
-						tbht)
-					);
+					left,
+					top + (i*tbht) + i,
+					this.tabWidths.maxItem,
+					tbht)
+				);
 			}{
 				tab.widget.bounds_( Rect(
-						left,
-						top + ( ([0]++this.tabWidths).integrate.at(i) )  + i,
-						tbht,
-						tab.tbwdth)
-					);
+					left,
+					top + ( ([0]++this.tabWidths).integrate.at(i) )  + i,
+					tbht,
+					tab.tbwdth)
+				);
 			};
 
 			tab.widget.resize = switch(resize)
-				{1}{1}
-				{2}{1}
-				{3}{3}
-				{4}{1}
-				{5}{1}
-				{6}{3}
-				{7}{7}
-				{8}{7}
-				{9}{9};
+			{1}{1}
+			{2}{1}
+			{3}{3}
+			{4}{1}
+			{5}{1}
+			{6}{3}
+			{7}{7}
+			{8}{7}
+			{9}{9};
 		};
 
 		followEdges.not.if{
@@ -434,20 +435,20 @@ TabbedView2{
 					top,
 					view.bounds.width-this.tabWidths.maxItem,
 					view.bounds.height);
-					tab.closeRect=Rect(tab.widget.bounds.width-clickbox, 0, clickbox, clickbox);
-					tab.closable.if{tab.detRect=Rect(tab.widget.bounds.width-clickbox-clickbox, 0, clickbox, clickbox)}
-						{tab.detRect=Rect(tab.widget.bounds.width-clickbox, 0, clickbox, clickbox)};
+				tab.closeRect=Rect(tab.widget.bounds.width-clickbox, 0, clickbox, clickbox);
+				tab.closable.if{tab.detRect=Rect(tab.widget.bounds.width-clickbox-clickbox, 0, clickbox, clickbox)}
+				{tab.detRect=Rect(tab.widget.bounds.width-clickbox, 0, clickbox, clickbox)};
 			};
 		}{
 			tabViews.do{arg tab, i;
-			tab.view.bounds = Rect(
-				left + tbht,
-				top,
-				view.bounds.width-tbht,
-				view.bounds.height);
+				tab.view.bounds = Rect(
+					left + tbht,
+					top,
+					view.bounds.width-tbht,
+					view.bounds.height);
 				tab.closeRect=Rect(0, 0, clickbox, clickbox);
-					tab.closable.if{tab.detRect=Rect(0, clickbox.neg, clickbox, clickbox)}
-						{tab.detRect=Rect(0, 0, clickbox, clickbox)};
+				tab.closable.if{tab.detRect=Rect(0, clickbox.neg, clickbox, clickbox)}
+				{tab.detRect=Rect(0, 0, clickbox, clickbox)};
 			};
 		};
 
@@ -459,30 +460,30 @@ TabbedView2{
 			followEdges.if{
 
 				tab.widget.bounds_( Rect(
-						left + ( ([0]++this.tabWidths).integrate.at(i) ) + i,
-						top+view.bounds.height-tbht,
-						tab.tbwdth,
-						tbht)
-					);
+					left + ( ([0]++this.tabWidths).integrate.at(i) ) + i,
+					top+view.bounds.height-tbht,
+					tab.tbwdth,
+					tbht)
+				);
 			}{
 				tab.widget.bounds_( Rect(
-						left + (i*tbht) + i,
-						top+view.bounds.height-this.tabWidths.maxItem ,
-						tbht,
-						this.tabWidths.maxItem)
-					);
+					left + (i*tbht) + i,
+					top+view.bounds.height-this.tabWidths.maxItem ,
+					tbht,
+					this.tabWidths.maxItem)
+				);
 			};
 
 			tab.widget.resize = switch(resize)
-				{1}{1}
-				{2}{1}
-				{3}{3}
-				{4}{7}
-				{5}{7}
-				{6}{9}
-				{7}{7}
-				{8}{7}
-				{9}{9};
+			{1}{1}
+			{2}{1}
+			{3}{3}
+			{4}{7}
+			{5}{7}
+			{6}{9}
+			{7}{7}
+			{8}{7}
+			{9}{9};
 		};
 
 		followEdges.if{
@@ -492,9 +493,9 @@ TabbedView2{
 					top,
 					view.bounds.width,
 					view.bounds.height-tbht);
-					tab.closeRect=Rect(tab.widget.bounds.width-clickbox, 0, clickbox, clickbox);
-					tab.closable.if{tab.detRect=Rect(tab.widget.bounds.width-clickbox-clickbox, 0, clickbox, clickbox)}
-						{tab.detRect=Rect(tab.widget.bounds.width-clickbox, 0, clickbox, clickbox)};
+				tab.closeRect=Rect(tab.widget.bounds.width-clickbox, 0, clickbox, clickbox);
+				tab.closable.if{tab.detRect=Rect(tab.widget.bounds.width-clickbox-clickbox, 0, clickbox, clickbox)}
+				{tab.detRect=Rect(tab.widget.bounds.width-clickbox, 0, clickbox, clickbox)};
 			};
 		}{
 			tabViews.do{ arg tab, i;
@@ -503,9 +504,9 @@ TabbedView2{
 					top ,
 					view.bounds.width,
 					view.bounds.height-this.tabWidths.maxItem);
-					tab.closeRect=Rect(0, 0, clickbox, clickbox);
-					tab.closable.if{tab.detRect=Rect(0, 0, clickbox, clickbox)}
-						{tab.detRect=Rect(0, clickbox.neg, clickbox, clickbox)};
+				tab.closeRect=Rect(0, 0, clickbox, clickbox);
+				tab.closable.if{tab.detRect=Rect(0, 0, clickbox, clickbox)}
+				{tab.detRect=Rect(0, clickbox.neg, clickbox, clickbox)};
 			};
 		};
 
@@ -517,30 +518,30 @@ TabbedView2{
 		tabViews.do{ arg tab, i;
 			followEdges.not.if{
 				tab.widget.bounds_( Rect(
-						view.bounds.width + left - this.tabWidths.maxItem,
-						top + (i*tbht) + i,
-						this.tabWidths.maxItem,
-						tbht)
-					);
+					view.bounds.width + left - this.tabWidths.maxItem,
+					top + (i*tbht) + i,
+					this.tabWidths.maxItem,
+					tbht)
+				);
 			}{
 				tab.widget.bounds_( Rect(
-						view.bounds.width + left - tbht,
-						top + ( ([0]++this.tabWidths).integrate.at(i) )  + i,
-						tbht,
-						tab.tbwdth)
-					);
+					view.bounds.width + left - tbht,
+					top + ( ([0]++this.tabWidths).integrate.at(i) )  + i,
+					tbht,
+					tab.tbwdth)
+				);
 			};
 
 			tab.widget.resize = switch(resize)
-				{1}{1}
-				{2}{3}
-				{3}{3}
-				{4}{3}
-				{5}{3}
-				{6}{3}
-				{7}{9}
-				{8}{9}
-				{9}{9};
+			{1}{1}
+			{2}{3}
+			{3}{3}
+			{4}{3}
+			{5}{3}
+			{6}{3}
+			{7}{9}
+			{8}{9}
+			{9}{9};
 		};
 		followEdges.not.if{
 			tabViews.do{arg tab, i;
@@ -549,9 +550,9 @@ TabbedView2{
 					top,
 					view.bounds.width-this.tabWidths.maxItem,
 					view.bounds.height);
-					tab.closeRect=Rect(tab.widget.bounds.width-clickbox,0, clickbox, clickbox);
-					tab.closable.if{tab.detRect=Rect(tab.widget.bounds.width-clickbox-clickbox,0, clickbox, clickbox)}
-						{tab.detRect=Rect(tab.widget.bounds.width-clickbox,0, clickbox, clickbox)};
+				tab.closeRect=Rect(tab.widget.bounds.width-clickbox,0, clickbox, clickbox);
+				tab.closable.if{tab.detRect=Rect(tab.widget.bounds.width-clickbox-clickbox,0, clickbox, clickbox)}
+				{tab.detRect=Rect(tab.widget.bounds.width-clickbox,0, clickbox, clickbox)};
 			};
 		}{
 			tabViews.do{arg tab, i;
@@ -560,11 +561,11 @@ TabbedView2{
 					top,
 					view.bounds.width-tbht,
 					view.bounds.height
-					);
-					tab.closeRect=Rect(tab.widget.bounds.width-clickbox, tab.widget.bounds.height-clickbox, clickbox, clickbox);
-					tab.closable.if{tab.detRect=Rect(tab.widget.bounds.width-clickbox,
-							tab.widget.bounds.height-clickbox-clickbox, clickbox, clickbox)}
-						{tab.detRect=Rect(tab.widget.bounds.width-clickbox, tab.widget.bounds.height-clickbox, clickbox, clickbox)};
+				);
+				tab.closeRect=Rect(tab.widget.bounds.width-clickbox, tab.widget.bounds.height-clickbox, clickbox, clickbox);
+				tab.closable.if{tab.detRect=Rect(tab.widget.bounds.width-clickbox,
+					tab.widget.bounds.height-clickbox-clickbox, clickbox, clickbox)}
+				{tab.detRect=Rect(tab.widget.bounds.width-clickbox, tab.widget.bounds.height-clickbox, clickbox, clickbox)};
 			};
 		};
 
@@ -578,15 +579,16 @@ TabbedView2{
 	}
 
 	tabPosition_{arg symbol; // \left, \top, \right, or \bottom
-	 	tabPosition=symbol;
+		tabPosition=symbol;
 		this.refresh();
+		changeAction.value(this);
 
 	}
 
 	followEdges_{arg bool;
-	 	followEdges=bool;
+		followEdges=bool;
 		this.refresh();
-
+		changeAction.value(this);
 	}
 
 	resize_{arg int;
@@ -601,6 +603,7 @@ TabbedView2{
 		this.updateFocus;
 		this.doActions;
 		focusHistory = activeTab;
+		changeAction.value(this);
 	}
 
 	labelColors_{arg colorArray;
@@ -608,10 +611,10 @@ TabbedView2{
 		this.refresh();
 	}
 
- 	unfocusedColors_{arg colorArray;
- 		unfocusedColors = colorArray;
- 		this.refresh();
- 	}
+	unfocusedColors_{arg colorArray;
+		unfocusedColors = colorArray;
+		this.refresh();
+	}
 
 	backgrounds_{arg colorArray;
 		backgrounds = colorArray;
@@ -648,8 +651,8 @@ TabbedView2{
 	}
 
 	font_{ arg fnt;
-		 font = fnt;
-		 this.refresh();
+		font = fnt;
+		this.refresh();
 
 	}
 
@@ -666,21 +669,27 @@ TabbedView2{
 		tabViews.removeAt(index);
 		this.pr_refreshIndex;
 		if(tabViews.size>0){
-		this.focus(min(tabViews.size-1,focusHistory.index));
-
-		focusHistory=tabViews.at(max(tabViews.size-1,index-1));
+			this.focus(min(tabViews.size-1,focusHistory.index));
+			focusHistory=tabViews.at(max(tabViews.size-1,index-1));
 		};
 		this.refresh();
 		view.refresh;
-
 	}
+
+	clearAll{
+		tabViews.size.do{ arg x,i;
+			this.removeAt(x)
+		};
+		tabViews=[];
+	}
+
 
 	pr_refreshIndex{
 
 		tabViews.do{arg tab, i;
 			tab.pr_setIndex(i);
 		};
-
+		changeAction.value(this);
 	}
 
 	pr_setHandlers{
@@ -731,7 +740,7 @@ TabbedView2{
 
 	// this makes icons easier to overide
 	defineIcons{
-		 detachIcon = {|pen,bounds|
+		detachIcon = {|pen,bounds|
 			var rect=Rect.fromRect(bounds).insetBy(2,2);
 			pen.width=0.3;
 			pen.color_(Color.grey.alpha_(0.2));
@@ -762,7 +771,7 @@ TabbedView2{
 		var t = this.class.new(parent, view.bounds);
 		parent.isNil.if{
 			t.window.setTopLeftBounds(Rect(view.absoluteBounds.left+20,view.absoluteBounds.top+20,
-			view.bounds.width,view.bounds.height).moveBy(x,y));
+				view.bounds.width,view.bounds.height).moveBy(x,y));
 			t.window.alwaysOnTop=alwaysOnTop;
 			t.window.userCanClose=detachedClosable;
 			( \TabbedViewView.asClass.notNil ).if{
@@ -812,4 +821,87 @@ TabbedView2{
 		^tabViews;
 	}
 
+
+
+	autoArchive{|...args|
+		this.restoreStateFromArchive(*args);
+		this.changeAction={
+			this.saveStateToArchive(*args);
+		};
+	}
+
+	hasDuplicates{
+		var labelarray = [];
+		this.tabViews.do{|tview|
+			labelarray= labelarray.add(tview.label);
+		};
+		^ labelarray.size != labelarray.copy.as(Set).size;
+	}
+
+	saveStateToArchive{|...args|
+		var temp=[], tempargs;
+
+		this.tabViews.do{arg tab,i; // re-index the tabs
+			//tab.pr_setIndex(i);
+			tab.closable.not.if{
+				temp=temp.add(tab.label);
+				//tab.pr_setIndex(e.storeTabIndex.at(tab.label))
+			}
+		};
+		tempargs= args.copy.add(());
+
+		archiveKeys.includes(\indexes).if{
+			Archive.put(*tempargs);
+			if(this.hasDuplicates.not){
+				Archive.at(*args).put(\indexes,temp);
+			}{
+				"Can't' save Tab order, because there are duplicate labels.".error;
+			};
+		};
+		archiveKeys.includes(\followEdges).if{Archive.at(*args).put(\followEdges,followEdges);};
+		archiveKeys.includes(\tabPosition).if{Archive.at(*args).put(\tabPosition,tabPosition);};
+		archiveKeys.includes(\tabFocus).if{Archive.at(*args).put(\tabFocus,activeTab.index);};
+
+		Archive.write();
+	}
+
+
+
+
+	restoreStateFromArchive{|...args|
+		var tempargs;
+		Archive.at(*args).notNil.if{
+			var temp=[];
+			// if the size of tabs has changed, then reset
+			tempargs= args.copy.add(\indexes); // add \indexes to args
+			if (Archive.at(*tempargs).size != this.tabViews.size){
+				Archive.at(*args).put(nil) ;
+				Archive.write();
+			}{
+				// load the prefs from the archive
+				// only set order if there are no duplicates
+				if(this.hasDuplicates.not){
+					Archive.at(*tempargs).do{|label|
+						this.tabViews.do{arg tab,i;
+							(label==tab.label).if{temp=temp.add(tab)}
+						};
+					};
+					this.tabViews=temp;
+					this.tabViews.do{arg tab,i; // re-index the tabs
+						tab.pr_setIndex(i);
+					};
+
+				}{
+					"Can't' load Tab order, because there are duplicate labels.".error;
+				};
+
+				this.tabPosition=Archive.at(*args).at(\tabPosition) ? \top;
+				this.followEdges=Archive.at(*args).at(\followEdges) ? true;
+				this.focus(Archive.at(*args).at(\tabFocus) ? 0);
+
+				this.refresh;
+			};
+		};
+
+	}
 }

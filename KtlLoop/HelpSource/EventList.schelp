@@ -4,12 +4,12 @@ categories:: Libraries>Modality
 related:: Classes/EventLoop, Classes/KeyPlayer,  Classes/TaskProxy
 
 DESCRIPTION::
-EventList is a list of Events, each of which has a required entry for absTime, the absolute time at which the event was recorded.
-An EventList always starts with a start event - usually (absTime: 0, type: \start); 
-then some events with ascending values for absTime, and an end event, which is usually 
-(type: \end, absTime: <loopEndTime>). 
+EventList is a list of Events which is usually recorded and used for playback.
+EventLists are used in EventLoop, KeyPlayer and other related classes for capturing various forms of user gestures in time.
 
-EventLists are used in KeyPlayer and other related classes that record various forms of user gestures in time.
+Each event has a required entry for code::\absTime::, i.e. the absolute time at which the event was recorded, plus any other key/value combinations that are needed to describe the event fully in semantically rich form.
+An EventList always starts with a start event - usually code::(absTime: 0, type: \start);:: then some events with ascending values for absTime, and an end event, which is usually code::(type: \end, absTime: <loopEndTime>);::.
+
 
 code::
 
@@ -17,28 +17,41 @@ code::
 a = EventList[];
 
 // add some time-stamped events to it
-a.start;
-a.addEvent((absTime: 0, deg: 0));    // events should begin with time 0;
+a.start;			// create a start event at time 0
+a.addEvent((absTime: 0, deg: 0));    // first event should begin with time 0;
 a.addEvent((absTime: 0.3, deg: 1));
 a.addEvent((absTime: 0.52, deg: 2));
 a.addEvent((absTime: 0.72, deg: 3));
 a.addEvent((absTime: 0.93, deg: 4));
-a.finish(1.88);
+a.finish(1.88);		// create an end event at an end time
+
+// before using this list, calculate its relative durations:
+a.calcRelDurs;
+
+// this creates some reserved keys - overwrite these at your own risk:
+   relDur: used for storing delta-time between events,
+   dur: used to calculate actual logical duration,
+        e.g. when soft-quantizing an EventList to a time grid.
+
 
 // printing is quite flexible:
-a.print;
-a.print([\dur]);
-a.print([\dur], false);
-a.print([\absTime, \dur], false);
+a.print; "";
+// name the keys to post first:
+a.print([\dur]); "";
+// and post the rest or not:
+a.print([\dur]);"";
+a.print([\absTime, \dur], true);"";
+a.print([\absTime, \dur], false);"";
 
+// one can quatize the relative durations
 a.quantizeDurs(0.25, 2).printAll;"";
 a.totalDur;
 a.playingDur;
 
-// play the list by hand 
+// play the list by hand
 // ( usually one would use EventLoop )
 (
-fork { 
+fork {
 	a.do { |ev|
 		var deg = ev[\deg];
 		ev.postln;
@@ -70,7 +83,7 @@ METHOD:: addEvent
 add an event with a value for absTime, plus any other key/value pairs
 
 METHOD:: finish
-add an 'end' event, like (type: \end, absTime: <loopEndTime>). 
+add an 'end' event, like (type: \end, absTime: <loopEndTime>).
 
 private:: setDeltaInPrev
 

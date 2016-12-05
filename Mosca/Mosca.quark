@@ -1,0 +1,12 @@
+(
+	\name:    "Mosca",
+    	\path:    "Mosca",
+    	\summary: "GUI-assisted authoring of dynamic ambisonic sound fields",
+    	\author:  "mott@escuta.org",
+    	\url:     "http://github.com/escuta/mosca",
+    	\helpdoc: "moscaHelp.scd",
+    	\since:   "2016",
+    	\version:	"0.1", // must be a float,
+    	// or (3) arrays with info in this order: [name, version, repositoryBaseUrl]
+	\dependencies:	[["Ctk"], ["MathLib"], ["Automation"], ["XML"]]
+)

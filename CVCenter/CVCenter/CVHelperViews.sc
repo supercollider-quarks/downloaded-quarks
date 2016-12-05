@@ -68,12 +68,13 @@ CVMidiEditGroup {
 
 		// "flow, bounds: %, %\n".postf(flow, bounds);
 
-		midiHead = Button(cview, flow.bounds.width-(flow.bounds.height/3*1.1)-1@(flow.bounds.height/3*1.1))
+		midiHead = Button(cview, Point(flow.bounds.width-(flow.bounds.height/3*1.1)-1, flow.bounds.height/3*1.1))
 			.font_(staticTextFont)
 			.action_({ |mh|
 				if(widget.class == CVWidgetMS, { tabIndex = 0 }, { tabIndex = 1 });
 				if(editor.isNil or:{ editor.isClosed }, {
-					editor = CVWidgetEditor(widget, widget.label.states[0][0], tabIndex, thisSlot);
+
+					editor = CVWidgetEditor(widget, /*widget.label.states[0][0], */tabIndex, thisSlot);
 					switch(widget.class,
 						CVWidget2D, {
 							widget.editor.put(thisSlot, editor);

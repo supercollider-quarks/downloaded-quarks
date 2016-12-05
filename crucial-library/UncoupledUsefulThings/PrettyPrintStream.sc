@@ -8,11 +8,11 @@ PrettyPrintStream : CollStream { // well prettier anyway
 		tabs.do({		this.tab; });
 	}
 
-	storeArgs { arg  args,itemsPerLine=1;
+	storeArgs { arg  args, itemsPerLine=1;
 		this << "(";
 		tabs = tabs + 1;
 		this.nl;
-		args.storeItemsOn(this,itemsPerLine);
+		args.storeItemsOn(this, itemsPerLine);
 		tabs = tabs - 1;
 		this.nl;
 		this << ")";

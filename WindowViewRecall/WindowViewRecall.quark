@@ -1,0 +1,17 @@
+(
+          name: "WindowViewRecall",
+       summary: "Automatically remember, store, and recall positions of Windows and Views.",
+        author: "scott@artificia.org",
+     copyright: "Frank Scott Carver, 2015",
+       license: "MIT",
+       version: "1.0.1",
+        schelp: "Window:autoRememberPosition",
+          test: "Test/WindowViewRecall_unittest.scd",
+           url: "https://github.com/scztt/WindowViewRecall.quark",
+  dependencies: [
+              		"Collapse@1.0.0",
+              		"UnitTesting@2a8f5e18aaa7cd25968ec094bbfa75a7fb3094b6"
+                ],
+  isCompatible: true ,
+         since: "2015"
+)

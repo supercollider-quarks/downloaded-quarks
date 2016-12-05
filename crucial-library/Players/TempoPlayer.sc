@@ -3,7 +3,7 @@
 // my initDefArg is the tempo bus index
 
 TempoPlayer : KrPlayer { //Synthless
-	var tempoBus,<>tempo;
+	var tempoBus, <>tempo;
 
 	*new { arg tempo;
 		^super.new.tempo_(tempo ?? {Tempo.default})
@@ -17,12 +17,12 @@ TempoPlayer : KrPlayer { //Synthless
 
 	synthArg { ^tempoBus.index }
 	makeResourcesToBundle { arg bundle;
-		tempoBus = TempoBus(server,tempo);
-		this.annotate(tempoBus,"Tempo Bus");
-		tempoBus.prepareToBundle(group,bundle);
+		tempoBus = TempoBus(server, tempo);
+		this.annotate(tempoBus, "Tempo Bus");
+		tempoBus.prepareToBundle(group, bundle);
 	}
 	makePatchOut {
-		patchOut = PatchOut.control(this,group,tempoBus);
+		patchOut = PatchOut.control(this, group, tempoBus);
 	}
 	freeResourcesToBundle { arg bundle;
 		bundle.addFunction({

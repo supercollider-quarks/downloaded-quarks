@@ -1,0 +1,25 @@
+! zeus7tri.scl
+!
+Trivalent scale in zeus temperament; thirds are all {7/6, 6/5, 5/4}; 99-tET tuning; aabacab
+! Zeus7tri is the 11-limit patent val elf of zeus
+ 7
+! x^7-20*x^5-60*x^4-75*x^3-44*x^2-10*x
+157.57576
+387.87879
+545.45455
+703.03030
+933.33333
+1090.90909
+2/1
+!
+!! zeus7tritrans.scl
+! Transversal of zeustri
+! 7
+!!
+! 11/10
+! 5/4
+! 11/8
+! 3/2
+! 12/7
+! 15/8
+! 2/1

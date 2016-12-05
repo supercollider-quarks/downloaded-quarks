@@ -1,0 +1,142 @@
+TITLE:: Safety
+summary:: protect users from risky sound signals
+categories:: Utilities
+related:: Classes/ReplaceBadValues, Classes/Server
+
+DESCRIPTION::
+Safety protects users from risky sound signals in two respects:
+It replaces bad values before they leave the software and enter the sound device,
+and it keeps the signal within +-1 by clipping, limiting, or other methods.
+
+It is on by default so that newbie users are safe; can be turned off if desired.
+It puts itself at the tail of the rootnode; scope will be added after it, master volume goes before it.
+
+In link::Classes/ReplaceBadValues:: see esp. the method ugen.zap for suppressing bad numbers individually per synth. 
+
+First code examples:
+
+code::
+s.reboot; // Safety informs by posting:
+
+// -> Safety('localhost') added synth safeClip.
+
+// Safety installs a Safety object for every server:
+Safety.all
+// which can be accessed with:
+Safety(\localhost);
+
+// Safety reinstates protection when stooping all sounds with Cmd-Period:
+CmdPeriod.run;
+
+// -> also posts Safety('localhost') etc
+
+// disable Safety if desired:
+Safety(s).disable;
+s.queryAllNodes; // gone
+CmdPeriod.run; // -> no post after  cmd-.
+
+// enable again
+Safety(s).enable;  // posts Safety... again
+CmdPeriod.run; // posts
+::
+
+CLASSMETHODS::
+
+METHOD:: all
+dict for all Safety objects
+
+METHOD:: defaultDefName
+get and set the name the default synthdef to use
+
+METHOD:: new
+make a new Safety, e.g. when creating a custom server.
+argument:: server
+the server for which to make the safety
+argument:: defName
+the name of the synthdef it should use
+
+private:: initClass
+
+INSTANCEMETHODS::
+
+METHOD:: server
+the server for this safety
+
+METHOD:: initSynthDefs
+argument:: numChans
+remake list of default synthdefs for a given number of channels
+
+METHOD:: synthDefs
+the synthdefs which can be used
+
+METHOD:: defName
+get and set the name of the synthdef to use for this safety
+
+METHOD:: addDef
+add a synthDef that can be used by this safety
+
+METHOD:: synth
+the synth started by this safety
+
+METHOD:: treeFunc
+the function in ServerTree used to send safety synth when booting or after cmd-period.
+
+METHOD:: numChannels
+
+METHOD:: enable, disable
+enable and disable safety.
+
+private:: printOn, storeArgs, init
+
+EXAMPLES::
+
+code::
+
+
+// Tests - see where Safety goes in the node tree :
+s.boot;
+s.queryAllNodes;   // safety is there
+
+// add a source
+x = { RLPF.ar(PinkNoise.ar(1), \freq.kr(1000), 0.1, \amp.kr(0.25)) }.play;
+s.queryAllNodes;  // temp before safety
+
+s.scope;
+s.queryAllNodes; // correct: safety, then scope
+
+s.volume.volume = 0.2;
+s.queryAllNodes; // correct: vol, safety, scope
+
+x.set(\freq, -1.sqrt);  // signal gets bad -> mutes and posts info
+x.set(\freq, 550);      // recovers
+
+// try with second source
+y = { SinOsc.ar([220, 330], 0, 0.2) }.play;
+x.set(\freq, -1.sqrt);  // signal on ch 1 goes bad -> silent, ch2 remains
+x.set(\freq, 550);      // recovers
+
+// test limiting: now with safeClip
+x.set(\amp, 5); // gets clipped
+// -------------- turn volume down on system output - gets softer
+x.set(\amp, 0.5); // fine again
+Safety(s).synth.set(\limit, 0.5); // set limit lower
+x.set(\amp, 5); // gets clipped at 0.5;
+x.set(\amp, 0.5); // fine again
+
+// test with other safeDef - safeLimit
+Safety(s).defName = \safeLimit;
+Safety(s).enable;
+
+// same sources
+x = { RLPF.ar(PinkNoise.ar(1), \freq.kr(1000), 0.1, \amp.kr(0.25)) }.play;
+y = { SinOsc.ar([220, 330], 0, 0.2) }.play;
+
+x.set(\freq, -1.sqrt);  // signal on ch 1 goes bad -> silent, ch2 remains
+x.set(\freq, 550);      // recovers
+x.set(\amp, 5); // gets limited
+x.set(\amp, 0.5); // fine again
+Safety(s).synth.set(\limit, 0.5); // set limit lower
+x.set(\amp, 5); // gets limited at 0.5;
+x.set(\amp, 0.5); // fine again
+
+::

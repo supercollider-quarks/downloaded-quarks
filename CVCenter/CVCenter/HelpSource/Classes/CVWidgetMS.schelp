@@ -24,7 +24,7 @@ argument:: bounds
 a link::Classes/Rect:: - optional. If none is given the widget will be created with a default size.
 
 argument:: defaultAction
-optional - a link::Classes/Function:: or a link::Classes/String:: that compiles to one when link::Classes/String#-interpret#interpret:: is called on it. If an argument is added to the function it will provide the widget's link::Classes/CV::. E.g.: code::{ arg cv; cv.value.postln }:: 
+optional - a link::Classes/Function:: or a link::Classes/String:: that compiles to one when link::Classes/String#-interpret#interpret:: is called on it. If an argument is added to the function it will provide the widget's link::Classes/CV::. E.g.: code::{ arg cv; cv.value.postln }::
 
 argument:: setup
 optional - an link::Classes/Event:: containing the following optional keys:
@@ -57,6 +57,23 @@ returns:: this (a code::CVWidgetMS::)
 
 
 INSTANCEMETHODS::
+
+METHOD:: split
+Split the internal multi-dimensional link::Classes/CV:: into an array of one-dimensional CVs. This is especially useful for the usage in link::Classes/Pattern::s. Once a CV has been split, it will return the split CVs in a variable code::cvArray::. Calling the method repeatedly will not try to split the CV again. Hence, it should be save to call code::split:: within Pattern code.
+
+code::
+// a CVWidgetMS holding a 5-dimensional CV
+w = CVWidgetMS(nil, CV([20!5, 20000!5, \exp].asSpec, 200!5), "freq", true, true).front;
+// we cannot insert the internal CV in w directly into the Pattern
+// as a Pseq requires an array. Hence, we split the CV into an array of CVs
+s.waitForBoot { p = Pbind(\freq, Pseq(w.split, inf)).play };
+p.stop;
+w.close;
+::
+
+COPYMETHOD:: CVWidget -msSize
+
+COPYMETHOD:: CVWidget -cvArray
 
 METHOD:: open
 If a widget has been created with the argument code::persistent:: set to true the user may reopen the widget with this method. This is basically a workaround due to the fact that GUIs in SuperCollider usually can't be opened again once they have been closed (even though executing the variable storing the the regarding object still returns the object). However, rather than reopening the old widget this method will create a new one, holding all properties, the CV and MIDI-/OSC-responders. In order to make this work as desired one should apply the following syntax where code::x:: holds the instance of the initially created widget:
@@ -106,14 +123,15 @@ A link::Classes/Button:: that opens the Actions-tab of the widget's link::Classe
 returns:: a link::Classes/Button::
 
 METHOD:: calibViews
-A link::Classes/List:: of link::Classes/View::s, each displaying the current link::Classes/CVWidget#getCalibration#(OSC) calibration::-status of one slider within the multi-slider of the widget: green means calibration is active, red means it's currently off. The views are displayed as a bar beneath the multi-slider of the widget. 
+A link::Classes/List:: of link::Classes/View::s, each displaying the current link::Classes/CVWidget#getCalibration#(OSC) calibration::-status of one slider within the multi-slider of the widget: green means calibration is active, red means it's currently off. The views are displayed as a bar beneath the multi-slider of the widget.
 
 returns:: a link::Classes/List:: of link::Classes/View::s
 
 private:: init
+private:: midiOscRememberBatchConnection
 
 METHOD:: background
-Get or set the background-color of the widget. Tne setter for this method is implemented within CVWidgetMS while the getter is implemented as a global getter for all CVWidgets in link::Classes/CVWidget::. 
+Get or set the background-color of the widget. Tne setter for this method is implemented within CVWidgetMS while the getter is implemented as a global getter for all CVWidgets in link::Classes/CVWidget::.
 
 argument:: color
 a link::Classes/Color::
@@ -121,7 +139,7 @@ a link::Classes/Color::
 returns:: a link::Classes/Color:: (getter) or code::this:: (a code::CVWidgetMS::) (setter)
 
 METHOD:: stringColor
-Get or set the string-color of the widget. Tne setter for this method is implemented within CVWidgetMS while the getter is implemented as a global getter for all CVWidgets in link::Classes/CVWidget::. 
+Get or set the string-color of the widget. Tne setter for this method is implemented within CVWidgetMS while the getter is implemented as a global getter for all CVWidgets in link::Classes/CVWidget::.
 
 argument:: color
 a link::Classes/Color::

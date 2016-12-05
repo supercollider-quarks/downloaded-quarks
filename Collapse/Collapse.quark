@@ -1,0 +1,17 @@
+(
+name:		"Collapse",
+summary:	"A class for collapsing multiple function calls into a single one.",
+author:		"Hanns Holger Rutz (contact@sciss.de)",
+copyright:	"(C)opyright 2006-2007 Hanns Holger Rutz. All rights reserved.",
+license:	"GPL",
+version: 	"1.0.0",
+schelp: 	"Collapse",
+test:		"Test/Collapse_unittest.scd",
+url:		"https://github.com/scztt/Collapse.quark",
+dependencies:	[
+	"UnitTesting@2a8f5e18aaa7cd25968ec094bbfa75a7fb3094b6"
+],
+isCompatible:	true,
+since:		"30-01-2007"
+)
+

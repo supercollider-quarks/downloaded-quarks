@@ -184,6 +184,8 @@ GameLoopVisualiser{
     };
   }
 
+  //override the following to setup KeyActions
+
   setWindowKeyActions{
       //Specific mainview setting and keyboard controls
       mainView.view.keyDownAction =

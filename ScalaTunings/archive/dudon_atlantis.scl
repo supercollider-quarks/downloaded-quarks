@@ -1,0 +1,22 @@
+! dudon_atlantis.scl
+!
+Triple equal-beating of minor triads + septimal sevenths  meantone sequence
+ 12
+!
+ 327/314
+ 1403/1256
+ 188/157
+ 12547/10048
+ 210/157
+ 3497/2512
+ 469/314
+ 1955/1256
+ 4191/2512
+ 281/157
+ 37399/20096
+ 2/1
+! Sequence of 8 Michemine fifths from Eb (exact value 695.8095676 c.)
+! followed by 3 Saptlante fifths from B (exact value 695.8315214 c.)
+! Triple equal-beating of all minor triads :  3x^3 - 10 = (3/2)x^3 - x^4 = 10 - 2x^4
+! and with the two last 7/4 chords  : 12 - 8x = (56 - x^10)/8  (Eb G Bb C#, Bb D F G#) 
+! Dudon 2008

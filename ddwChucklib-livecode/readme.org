@@ -1,0 +1,48 @@
+* chucklib-livecode
+
+An framework for live-coding using ddwChucklib objects in the
+SuperCollider programming language.
+
+** Design overview
+
+In /chucklib/, =BP= objects play patterns to make sounds. Using this
+framework, =BPs= inherit from a specific process prototype,
+=PR(\abstractLiveCode)=, which provides hooks that accept new patterns
+from chucklib-livecode. Instances of this process can play any
+SuperCollider SynthDefs or Voicers, with a flexible default system.
+
+Chucklib-livecode installs a =preProcessor= into the SuperCollider
+interpreter, which translates compact livecoding commands into full SC
+syntax. The most important of these commands divides a bar's worth of
+musical time into events, generally indicated by single characters,
+which may also be grouped into subdivisions. This style of notation is
+inspired by http://www.ixi-audio.net/ixilang/ and is fairly
+straightforward to correlate to the sounding rhythm. /Generator/
+functions may produce new content in every bar.
+
+#+begin_example
+/kik = "xxxx";   // 4otf
+
+/kik.fill1 = "x|x|x|x  x";  // trailing 16th-note
+
+/kik.triple = "xxx";  // 3 divided over the bar
+
+/hh = ".-.-.-.-";  // normal offbeats
+
+/hh = ".-|. -^| ^- |.-";  // extra emphasis on 2-a and 3-e
+
+/kik/hh/snr+  // play
+/kik/hh/snr+4  // play on next quant = 4
+/kik/hh/snr-  // stop
+#+end_example
+
+Full documentation is in PDF form: https://github.com/jamshark70/chucklib-livecode/blob/master/cl-manual.pdf
+
+* License
+
+chucklib-livecode is licensed this under Creative Commons CC-BY-NC-SA
+4.0. You may create a derivative project, provided you don't use the
+code commercially and, if you release your code, you should credit me
+and license it under CC-BY-NC-SA or a more permissive license.
+
+[[http://creativecommons.org/licenses/by-nc-sa/4.0/]]

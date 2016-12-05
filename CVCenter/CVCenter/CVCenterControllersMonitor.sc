@@ -18,10 +18,6 @@
 CVCenterControllersMonitor {
 	classvar <window, <tabs;
 
-	*initClass {
-		Class.initClassTree(KeyDownActions);
-	}
-
 	*new { |focus|
 		var ctrlrs;
 		var midiOrder, orderedMidiCtrlrs;
@@ -81,15 +77,23 @@ CVCenterControllersMonitor {
 				Point(tabs.views[1].view.bounds.width, tabs.views[1].view.bounds.height)
 			);
 
-			tabView0.decorator = flow0 = FlowLayout(window.view.bounds, 7@7, 3@3);
-			tabView1.decorator = flow1 = FlowLayout(window.view.bounds, 7@7, 3@3);
+			tabView0.decorator = flow0 = FlowLayout(window.view.bounds, Point(7, 7), Point(3, 3));
+			tabView1.decorator = flow1 = FlowLayout(window.view.bounds, Point(7, 7), Point(3, 3));
 
 			tabs.view.keyDownAction_({ |view, char, modifiers, unicode, keycode|
-				switch(keycode,
-					KeyDownActions.keyCodes[$o], { tabs.focus(1) }, // key "o" -> osc
-					KeyDownActions.keyCodes[$m], { tabs.focus(0) }, // key "m" -> midi
-					KeyDownActions.keyCodes[\esc], { window.close } // key "esc" -> close window
-				)
+				if (\KeyDownActions.asClass.notNil) {
+					switch (keycode,
+						\KeyDownActions.asClass.keyCodes[$o], { tabs.focus(1) }, // key "o" -> osc
+						\KeyDownActions.asClass.keyCodes[$m], { tabs.focus(0) }, // key "m" -> midi
+						\KeyDownActions.asClass.keyCodes[\esc], { window.close } // key "esc" -> close window
+					)
+				} {
+					switch (keycode,
+						79, { tabs.focus(1) },
+						77, { tabs.focus(0) },
+						16777216, { window.close }
+					)
+				}
 			});
 
 			midiOrder = ctrlrs.midiCtrlrs.order;

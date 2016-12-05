@@ -1,0 +1,8 @@
+(
+	\name: 			"Audacity Labels",
+	\summary:		"Import label information from the Audacity Sound Editor",
+	\author: 		"Julian Rohrhuber",
+	\organisation:	"IMM Düsseldorf",
+	\since: 		"2014",
+	\version:		"0.1"
+)

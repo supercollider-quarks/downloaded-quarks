@@ -1,0 +1,42 @@
+TITLE:: ISdef
+summary:: a named InfluxSpread
+categories:: Control
+related:: Classes/Influx, Classes/InfluxSpread
+
+DESCRIPTION::
+a named variant of InfluxSpread, creation and lookup by name with
+ISdef(<name>), like OSCdef, Ndef, Tdef, etc. Other named influx variants are IMdef and Idef.
+
+For detailed examples, see link::Classes/Influx:: and link::Classes/InfluxSpread::.
+
+code::
+x = ISdef(\x, 4, 8);
+x.dump;
+::
+
+CLASSMETHODS::
+
+METHOD:: at
+argument:: key
+get ISdef with name <key>.
+
+METHOD:: new
+create or lookup new ISdef by name. If ISdef exists, other args are ignored.
+argument:: key
+argument:: inNames
+number or list of inNames
+argument:: outNames
+number or list of inNames
+argument:: inValDict
+
+
+METHOD:: all
+all ISdefs by name
+private:: initClass
+
+
+INSTANCEMETHODS::
+
+METHOD:: key
+get the key of this ISdef
+private:: prAdd, storeArgs

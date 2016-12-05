@@ -20,14 +20,14 @@ HasSubject : AbstractPlayer {
 AbstractPlayerEffect : HasSubject {
 	// has two groups so the subject and effect can both respawn at will
 
-	var <subjectGroup,<effectGroup;
+	var <subjectGroup, <effectGroup;
 
 	makeResourcesToBundle { arg bundle;
 		//move to children make patch out ?
 		subjectGroup = Group.basicNew;
-		this.annotate(subjectGroup,"subjectGroup");
+		this.annotate(subjectGroup, "subjectGroup");
 		effectGroup = Group.basicNew;
-		this.annotate(effectGroup,"effectGroup");
+		this.annotate(effectGroup, "effectGroup");
 
 		NodeWatcher.register(subjectGroup);
 		NodeWatcher.register(effectGroup);
@@ -47,17 +47,17 @@ AbstractPlayerEffect : HasSubject {
 		this.children.do({ arg child;
 			child.spawnToBundle(bundle);
 		});
-		synth = Synth.basicNew(this.defName,server);
-		this.annotate(synth,"synth");
+		synth = Synth.basicNew(this.defName, server);
+		this.annotate(synth, "synth");
 		NodeWatcher.register(synth);
 		bundle.add(
-			synth.addToTailMsg(effectGroup,this.synthDefArgs)
+			synth.addToTailMsg(effectGroup, this.synthDefArgs)
 		);
-		bundle.addMessage(this,\didSpawn);
+		bundle.addMessage(this, \didSpawn);
 	}
-	preparePlayer { arg player,bus;
-		//if(this.bus != bus,{ "Buses are different !".warn; });
-		^player.prepareForPlay(subjectGroup,true,bus);
+	preparePlayer { arg player, bus;
+		//if(this.bus != bus, { "Buses are different !".warn; });
+		^player.prepareForPlay(subjectGroup, true, bus);
 	}
 }
 

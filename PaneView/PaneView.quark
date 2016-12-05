@@ -1,0 +1,7 @@
+(
+name: "PaneView",
+summary: "Resizable View with arbitrary number of resizable horizontal/vertical panes(aka tiles)",
+version: "0.0.1",
+schelp: "PaneView.html",
+author: "vividsnow"
+)

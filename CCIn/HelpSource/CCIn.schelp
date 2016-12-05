@@ -1,0 +1,155 @@
+TITLE:: CCIn
+summary:: CC-Responder MIDI-In wrapper for easy plugging into Synths
+categories:: External Control>MIDI
+
+DESCRIPTION::
+This class makes it quick to send MIDI control values to UGen arguments. It initialises a CCResponder and maps the received data onto control busses. Those can be read out by the class itself.
+
+
+CLASSMETHODS::
+
+METHOD:: softWithin
+Input withinin range is allowed to set bus (useful if controller has multiple scenes) range - defaul is 0.05, 1 always sets bus.
+
+METHOD:: verbose
+Post source, channel and number.
+
+METHOD:: new
+Create a CCIn object, start the MIDI initialization.
+
+ARGUMENT:: server
+Busses will be created on this server (default nil uses Server.default).
+
+ARGUMENT:: source
+ID of midi controller (default nil uses all controllers).
+
+
+INSTANCEMETHODS::
+
+METHOD:: free
+
+
+
+
+METHOD:: responder
+
+
+
+
+METHOD:: server
+
+
+
+
+METHOD:: source
+
+
+
+
+METHOD:: init
+
+
+ARGUMENT:: serverArg
+
+
+ARGUMENT:: sourceArg
+
+
+
+
+METHOD:: prSetBusValue
+
+
+ARGUMENT:: chan
+
+
+ARGUMENT:: num
+
+
+ARGUMENT:: value
+
+
+ARGUMENT:: last
+
+
+
+
+METHOD:: prGetBus
+
+
+ARGUMENT:: chan
+
+
+ARGUMENT:: num
+
+
+
+
+METHOD:: busses
+
+
+
+
+METHOD:: kr
+
+
+ARGUMENT:: chan
+MIDI channel, 0 to 15.
+
+ARGUMENT:: num
+CC number, 0 to 127.
+
+ARGUMENT:: spec
+A Spec, i.e. \freq, \amp, [5, 50], [1, 100, \exp].
+
+ARGUMENT:: lag
+lag3 time, default is 0.05.
+
+
+
+EXAMPLES::
+
+code::
+// simple example
+m = CCIn.new;									// listen to all midi in ports and all midichannels
+x = {SinOsc.ar(m.kr(0, 0, \freq), 0, 0.2)}.play 	// MIDI Chan = 0, CC = 0, Range 20-20000 Hz
+m.free; 										// loosing control
+x.free;										// free synth
+
+
+// using two CCIns for different Controllers
+m = CCIn.new;
+m.source_(enterYourDeviceOneID); // controller 1 eg.(945434460)
+x = {SinOsc.ar(m.kr(0, 0, \freq), 0, 0.2)}.play;
+
+n = CCIn.new;
+n.source_(enterYourDeviceTwoID); // controller 2
+y = {Saw.ar(m.kr(0,0,\freq), m.kr(0,1))}.play(outbus:1);
+
+x.free;
+y.free;
+m.free;
+n.free;
+
+
+// using specific range/spec for frequency
+m = CCIn.new;
+v = [300, 700, \exp].asSpec;
+x = {Saw.ar(m.kr(0, 0, v), m.kr(0, 1, [0,0.7].asSpec ))}.play; // CC00 = freq, CC01 = amp
+x.free;
+m.free;
+
+
+// using it in Proxies: Ch=0, CC00 = freq, CC01 = amp
+m = CCIn();
+Ndef(\o, { Saw.ar(m.kr(0, 0, \freq), m.kr(0, 1) ) }).play(1);
+Ndef(\o).fadeTime=1;
+Ndef(\o, { RLPF.ar(Pulse.ar(m.kr(0, 0, \freq), 0.3 ,m.kr(0, 1)), 300, 0.2 ) }).play(1);
+// add CC02 to control filter frequency
+Ndef(\o, { RLPF.ar(Pulse.ar(m.kr(0, 0, \freq), 0.3 ,m.kr(0, 1)), m.kr(0, 2, \freq), 0.2 ) }).play(1);
+Ndef(\o).clear(1);
+m.free;
+
+// wohoo: mutichannel expansion thankes alberto & fredrik
+Ndef(\p { SinOsc.ar( m.kr(0, [0,1,2], \freq), 0, m.kr(0,3) ) }).play //controlling three sine-freqs with three CC's
+::

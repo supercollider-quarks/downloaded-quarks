@@ -335,7 +335,7 @@
 			defer {
 				var	result = FloatArray.new(v.size div: 2);
 				v.pairsDo({ |a, b| result.add(a+b) });
-				result.plot;
+				result.plot(name, bounds);
 			}
 		});
 	}

@@ -163,7 +163,6 @@ FPSignal {
     //For these methods this should be signal with the time value
     integral { |tsig|
 		var check = this.checkArgs(FPSignal, "integral", [tsig], [FPSignal] );
-		var a1 = "a1".postln;
 		var x = T(_,_) <%> this <@> tsig.changes; //only updates when tsig updates
 
 		var y = x.inject(nil, {|state, x|
@@ -288,37 +287,56 @@ FPSignal {
 
 
     //*************************
+	/*limit recalculations. there is no loss of speed by carefully setting up the order of evaluation
+	x = Var(2.0);
+	y = Var(10.0);
+	x.value_(1)
+	y.value_(2)
+	z = Var(0.5)
+	z.value_(0.4)
+	r = z.nlin(x,y).do(_.postln)
+	*/
 
     linlin { |inMin, inMax, outMin, outMax, clip=\minmax|
-        ^this.collect( _.linlin(inMin, inMax, outMin, outMax, clip) )
+		^{ |inMin, inMax,outMin,outMax,val| val.linlin(inMin, inMax, outMin, outMax, clip) }
+		.lift.(inMin.asFPSignal, inMax.asFPSignal, outMin.asFPSignal,outMax.asFPSignal,this)
+
     }
 
     linexp { |inMin, inMax, outMin, outMax, clip=\minmax|
-        ^this.collect( _.linexp(inMin, inMax, outMin, outMax, clip) )
+		^{ |inMin, inMax,outMin,outMax,val| val.linexp(inMin, inMax, outMin, outMax, clip) }
+		.lift.(inMin.asFPSignal, inMax.asFPSignal, outMin.asFPSignal,outMax.asFPSignal,this)
     }
 
     nlin { |outMin, outMax, clip=\minmax|
-        ^this.collect( _.linlin(0.0, 1.0, outMin, outMax, clip) )
+		^{ |outMin,outMax,val| val.linlin(0.0, 1.0, outMin, outMax, clip) }
+		.lift.(outMin.asFPSignal,outMax.asFPSignal,this)
     }
 
     nexp { |outMin, outMax, clip=\minmax|
-        ^this.collect( _.linexp(0.0, 1.0, outMin, outMax, clip) )
+		^{ |outMin,outMax,val| val.linexp(0.0, 1.0, outMin, outMax, clip) }
+		.lift.(outMin.asFPSignal,outMax.asFPSignal,this)
     }
 
     explin { |inMin, inMax, outMin, outMax, clip=\minmax|
-        ^this.collect( _.explin(inMin, inMax, outMin, outMax, clip) )
+		^{ |inMin, inMax,outMin,outMax,val| val.explin(inMin, inMax, outMin, outMax, clip) }
+		.lift.(inMin.asFPSignal, inMax.asFPSignal, outMin.asFPSignal,outMax.asFPSignal,this)
     }
 
     expexp { |inMin, inMax, outMin, outMax, clip=\minmax|
-        ^this.collect( _.expexp(inMin, inMax, outMin, outMax, clip) )
+		^{ |inMin, inMax,outMin,outMax,val| val.expexp(inMin, inMax, outMin, outMax, clip) }
+		.lift.(inMin.asFPSignal, inMax.asFPSignal, outMin.asFPSignal,outMax.asFPSignal,this)
     }
 
     lincurve { |inMin = 0, inMax = 1, outMin = 0, outMax = 1, curve = -4, clip = \minmax|
-        ^this.collect( _.expexp(inMin, inMax, outMin, outMax, curve, clip) )
+		^{ |inMin, inMax,outMin,outMax,curve,val| val.lincurve(inMin, inMax, outMin, outMax, curve, clip) }
+		.lift.(inMin.asFPSignal, inMax.asFPSignal, outMin.asFPSignal, outMax.asFPSignal, curve.asFPSignal, this)
+
     }
 
     curvelin { |inMin = 0, inMax = 1, outMin = 0, outMax = 1, curve = -4, clip = \minmax|
-        ^this.collect( _.expexp(inMin, inMax, outMin, outMax, curve, clip) )
+		^{ |inMin, inMax,outMin,outMax,curve,val| val.curvelin(inMin, inMax, outMin, outMax, curve, clip) }
+		.lift.(inMin.asFPSignal, inMax.asFPSignal, outMin.asFPSignal, outMax.asFPSignal, curve.asFPSignal, this)
     }
 
     + { |signal|
@@ -362,20 +380,20 @@ FPSignal {
 
      <@ { |es|
 		this.checkArgs(FPSignal, "<@", [es], [EventStream] );
-        //apply a signal with a function to every incoming event
+        //sample signal at every incoming event
         ^es.collect{ |x| this.now }
     }
 
 	//alias
 	sampleOn { |es|
 		this.checkArgs(FPSignal, "sampleOn", [es], [EventStream] );
-        //apply a signal with a function to every incoming event
+        //sample signal at every incoming event
         ^es.collect{ |x| this.now }
     }
 
 
     switchTo { |f, initialSignal|
-		this.checkArgs(FPSignal, "switch", [f], [Function] );
+		this.checkArgs(FPSignal, "switchTo", [f], [Function] );
         ^FlatCollectedFPSignal( this, f, initialSignal)
     }
 

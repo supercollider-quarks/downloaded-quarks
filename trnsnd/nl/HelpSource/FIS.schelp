@@ -1,0 +1,49 @@
+title:: FIS
+summary:: ugen functional iteration synthesis (agostino di scipio)
+categories:: transnd>ugen
+
+description::
+note:: both r & xi assume audio rate UGen! ::
+
+CLASSMETHODS::
+
+METHOD:: ar
+
+argument:: r
+equation variable [1.0, 4.0]
+
+argument:: xi
+initial value of x [0.0, 1.0]
+
+argument:: n
+n-th iterate [integer, the higher the more noisy]
+
+returns:: values of xn in range  [-1.0, 1.0]
+
+
+EXAMPLES::
+
+code::
+s.boot;
+
+//r = periodic, xi = noise
+{ FIS.ar(LinExp.ar(LFTri.ar(0.1), -1, 1, 1, 4), LFNoise2.ar(300).range(0, 1), 3, 0.1) }.play;
+
+//r = mouseY, xi = noise
+{ FIS.ar(K2A.ar(MouseY.kr(1, 4)), LFNoise2.ar(300).range(0, 1), 8, 0.1) }.play;
+
+//r = mouseY, xi = periodic
+{ FIS.ar(K2A.ar(MouseY.kr(1, 4)), SinOsc.ar(300).range(0, 1), 5, 0.1) }.play;
+
+//r = noise, xi = periodic
+{ FIS.ar(LFNoise2.ar(10).range(1, 4), SinOsc.ar(50).range(0, 1), 5, 0.1) }.play;
+
+//r = noise, xi = mouseY
+{ FIS.ar(LFNoise2.ar(2000).range(3.5, 4), K2A.ar(MouseY.kr(0, 1)), 3, 0.1) }.play;
+
+//r = noise, xi = mouseY, nice texture.
+{ FIS.ar(LFNoise2.ar(2000).range(1, 4), K2A.ar(MouseY.kr(0, 1)), 4, 0.1) }.play;
+
+//r = mouseY, xi = noise, nice rainy sound.
+{ FIS.ar(K2A.ar(MouseY.kr(1, 4)), LFNoise2.ar(3000).range(0, 1), 8, 0.1) }.play;
+::

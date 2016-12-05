@@ -1,7 +1,7 @@
 TITLE:: Diamond
 summary:: An N-limit tonality diamond
 categories:: Tuning>TuningLib
-related:: Tuning, Scale, http://en.wikipedia.org/wiki/Tonality_diamond
+related:: Classes/Tuning, Classes/Scale, http://en.wikipedia.org/wiki/Tonality_diamond
 DESCRIPTION::
 An N-limit tonaility diamond, as used by Harry Partch.
 
@@ -24,7 +24,7 @@ CLASSMETHODS::
 METHOD:: new
 Create a new instance
 
-ARGUMENT:: integers
+ARGUMENT:: identities
 An array of numbers to use for numerators in otonality. Defaults to [2, 5, 3, 7, 9, 11, 13, 15, 17, 19, 21, 23]
 
 ARGUMENT:: base
@@ -67,23 +67,54 @@ returns:: The adjusted ratio
 
 INSTANCEMETHODS::
 
-METHOD:: getOvertoneInterval
- Returns the fraction at the index
 
-ARGUMENT:: index
-The index of the overtone or undertone
+METHOD:: niad
+Rfor a given numerator and denominator, return a chord of n ratios
 
-ARGUMENT:: orientation
-true for otonality, false for utonality
+ARGUMENT::numerator
+The numerator for the first item in the triad. The triad will wrap around if three spaces past the integer goes beyond the limit.
 
-returns:: a ratio
+ARGUMENT::denominator
+The denominator for the first item in the triad. The triad will wrap around if three spaces past the integer goes beyond the limit.
+
+ARGUMENT::orientation
+Use true for utonality or false for otonailty.
+
+ARGUMENT::
+the number of conitguious ratios for the N-iad;
+
+returns:: An array of ratios
 
 discussion::
 code::
-d = Diamond.new([2, 5, 3, 7, 9]);
-d.getOvertoneInterval(2, true); // returns 3/2
-d.getOvertoneInterval(3, false); // returns 8/7
+d = Diamond.limit(9);
+d.niad(7, 2, true); // returns [7/4, 9/8, 2/2]
 ::
+
+
+
+METHOD:: walk
+Find a pivot based on a start point, describe by numerator/denominator.
+	Finding the new pivot point means picking one of the fractions in a n-iad
+	Finding the new start means figuring out whether the new pivot is the top, middle, or bottom
+	member of the triad and computing a new start index based on that computation
+
+ARGUMENT:: numerator
+The starting numerator of the n-iad which we will launch from
+
+ARGUMENT:: denominator
+The starting denominator of the n-iad in which we will launch from
+
+ARGUMENT:: orientation
+If true, the overtones will change in the pivot for the first step. If false, the
+	undertones will change in the pivot for the first step. This will alternate for every step.
+
+ARGUMENT:: niad
+The number of contigious ratios to return in the chord. This defaults to 3 for a triad
+
+returns:: An link::Classes/Routine:: which yields a stream of arrays of ratios
+
+
 
 
 
@@ -97,20 +128,6 @@ ARGUMENT:: y
 The index in the diamond column for o[x]/o[y] This wraps if need be.
 
 returns:: a ratio
-
-
-
-METHOD:: d1Pivot
-Find a pivot based on a start point. Finding the new pivot point means picking one of the fractions in a n-iad. Finding the new start means figuring out wether the new pivot is the top, middle, or bottom member of the n-iad and computing a new start index based on that computation
-
-ARGUMENT:: start
-The starting index of the n-iad, in which we wish to pivot
-
-ARGUMENT:: niad
-The number of contigious ratios to return in the chord. This defaults to 3 for a triad
-
-returns:: An array containing the index of the new start and the index of the pivot
-
 
 
 
@@ -130,8 +147,6 @@ Use true for utonality such that the returned triads will change in the numerato
 ARGUMENT:: niad
 The number of contigious ratios to return in the chord. This defaults to 3 for a triad
 
-
-
 returns:: an Array of niad ratios
 
 discussion::
@@ -144,7 +159,53 @@ d.makeIntervals(2, 2, false); // returns [1/1, 12/7, 4/3]
 
 
 
-METHOD:: makeOvertoneIntervals
+
+
+
+
+
+METHOD:: d1Interval
+ Returns the fraction at the index
+
+ARGUMENT:: index
+The index of the overtone or undertone
+
+ARGUMENT:: orientation
+true for otonality, false for utonality
+
+returns:: a ratio
+
+discussion::
+code::
+d = Diamond.new([2, 5, 3, 7, 9]);
+d.d1Interval(2, true); // returns 3/2
+d.d1Interval(3, false); // returns 8/7
+::
+
+
+
+
+
+METHOD:: d1Pivot
+Find a pivot based on a start point. Finding the new pivot point means picking one of the fractions in a n-iad. Finding the new start means figuring out wether the new pivot is the top, middle, or bottom member of the n-iad and computing a new start index based on that computation
+
+ARGUMENT:: start
+The starting index of the n-iad, in which we wish to pivot
+
+ARGUMENT:: niad
+The number of contigious ratios to return in the chord. This defaults to 3 for a triad
+
+returns:: An array containing the index of the new start and the index of the pivot
+
+
+
+
+
+
+
+
+
+METHOD:: d1Intervals
 For a given index, return a n-iad of ratios
 
 ARGUMENT:: start
@@ -163,8 +224,8 @@ discussion::
 	ex:
 code::
 d = Diamond.new([2, 5, 3, 7, 9]);
-d.makeOvertoneIntervals(4, true); // returns [9/8, 2/2, 5/4]
-d.makeOvertoneIntervals( 2, false); // returns [4/3, 8/7, 16/9]
+d.d1Intervals(4, true); // returns [9/8, 2/2, 5/4]
+d.d1Intervals( 2, false); // returns [4/3, 8/7, 16/9]
 ::
 
 METHOD:: d2Pivot
@@ -190,26 +251,6 @@ returns:: An array containing the x of the first interval in the n-iad, the y of
 
 
 
-METHOD:: walk
-Find a pivot based on a start point, describe by o[x]/o[y].
-	Finding the new pivot point means picking one of the fractions in a n-iad
-	Finding the new start means figuring out whether the new pivot is the top, middle, or bottom
-	member of the triad and computing a new start index based on that computation
-
-ARGUMENT:: numerator
-The starting numerator of the n-iad which we will launch from
-
-ARGUMENT:: denominator
-The starting denominator of the n-iad in which we will launch from
-
-ARGUMENT:: orientation
-If true, the overtones will change in the pivot for the first step. If false, the
-	undertones will change in the pivot for the first step. This will alternate for every step.
-
-ARGUMENT:: niad
-The number of contigious ratios to return in the chord. This defaults to 3 for a triad
-
-returns:: An link::Classes/Routine:: which yields a stream of arrays of ratios
 
 
 
@@ -221,7 +262,7 @@ Find a pivot based on a start point, describe by o[x]/o[y].
 	Finding the new start means figuring out whether the new pivot is the top, middle, or bottom
 	member of the triad and computing a new start index based on that computation
 
-ARGUMENT:: startX
+ARGUMENT:: x
 The starting index of the numerator of the n-iad which we will launch from
 
 ARGUMENT:: y
@@ -238,7 +279,14 @@ returns:: An link::Classes/Routine:: which yields a stream of arrays of ratios
 
 
 
+METHOD:: postln
+Prints out the tonality diamond
 
+discussion::
+code::
+d = Diamond.limit(9);
+d.postln;
+::
 
 
 

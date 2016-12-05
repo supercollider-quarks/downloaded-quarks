@@ -10,7 +10,7 @@ KtlLoop can recorded events from input controllers, and play them back with the 
 
 code::
 
-// make a sound to control 
+// make a sound to control
 (
 Ndef(\form, { |freq = 50, shape = 0.9, ffreq = 200, amp = 0.1, lag = 0.1|
 	var snd = VarSaw.ar(freq.lag(lag) + [0.1, -0.1], 0, shape.lag(lag));
@@ -29,16 +29,15 @@ k = KtlLoop(\form);
 k.paramsToRecord_([\lx, \ly, \rx, \ry]);
 
 // simple usage case:
-// tell it which object will be controlled 
+// tell it which object will be controlled
 k.object_(Ndef(\form));
 
 // and declare which input params set which object params
 k.ktlMap_((lx: \freq, ly: \shape, rx: \ffreq, ry: \amp));
-
 )
 
 // make 4 channel controller:
-	// put params into an event, store it, 
+	// put params into an event, store it,
 	// and set the object from it
 
 (
@@ -47,9 +46,9 @@ w.view.addFlowLayout;
 Slider2D(w, Rect(0,0,190,190))
     .action_({ |sl|
 
-		// put params into an event, 
+		// put params into an event,
 	var event = (lx: sl.x, ly: sl.y);
-		// store it, 
+		// store it,
 	k.recordEvent(event.put(\type, \set));
 		// and set the object from it
 	k.setuObj(event);
@@ -62,13 +61,15 @@ Slider2D(w, Rect(0,0,190,190))
 });
 
 // make an eventloopgui for KtlLoop
-KtlLoopGui(k, parent: w, bounds: 260@180);
+KtlLoopGui(k, parent: w, bounds: 330@180);
+
+w.view.decorator.nextLine.shift(0, 10);
 
 // and an NdefGui for the Ndef
 NdefGui(Ndef(\form), 6, w);
 )
 
-// try recording: 
+// try recording:
 k.startRec;
 // ...
 // now move the two sliders
@@ -82,8 +83,8 @@ k.listInfo;
 k.play;
 
 
-// Rescaling Gestures - all recorded controller values 
-// can be scaled, shifted, and inverted. 
+// Rescaling Gestures - all recorded controller values
+// can be scaled, shifted, and inverted.
 
 k.rescaled = false;
 k.rescaled = true;
@@ -127,13 +128,13 @@ the current numerical state of all input controllers
 private:: init
 
 METHOD:: setuObj
-do param key matching, then set the object: 
-select all params from the event that are in paramsToRecord, 
-use it to set the object params specified in ktlMap, 
+do param key matching, then set the object:
+select all params from the event that are in paramsToRecord,
+use it to set the object params specified in ktlMap,
 and let the object handle spec mapping.
 
 METHOD:: defaultFunc
-the default function to use for playback: 
+the default function to use for playback:
 if the recorded event is type \set, use it to KtlLoop.setuObj
 
 EXAMPLES::

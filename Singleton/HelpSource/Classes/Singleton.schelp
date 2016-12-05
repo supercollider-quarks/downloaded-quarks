@@ -1,0 +1,135 @@
+TITLE:: Singleton
+summary::Base class that provides singleton-like behaviors.
+categories:: Collections
+
+DESCRIPTION::
+Singleton provides a base class that easily enables singleton-like behavior in it's subclasses. In it's simplest form, the constructor for subclasses of Singleton will create a new instance of the object if it does not exist - otherwise it will return the existing instance.
+
+Subclasses of Singleton can override several methods to provide custom behavior for the subclass.
+link::#*createNew:: is called when a new object needs to be constructed (this provides a parallel to the link::#*new:: method).
+link::#-init:: is called once the object is created. Both are guaranteed to be called ONLY when a new object is created.
+link::#-set:: is called on the object EVERY TIME the Singleton constructor is invoked.
+
+The simplest example of using the Singleton class is of the following form:
+
+code::
+MyStuff : Singleton {
+	var <stuff;
+	init {
+		stuff = List();
+	}
+}
+::
+
+Usage:
+code::
+MyStuff().stuff.add("pencil");
+MyStuff().stuff.add("paper");
+MyStuff().stuff.postln;  // ["pencil", "paper"]
+::
+
+The Singleton constructor accepts a key that is used to look up the backing object, so multiple singleton objects can be stored for a single class. In this way, it behaves similarly to common "global registry" objects like Ndef, Pdef, etc.
+
+code::
+MyStuff(\me).stuff.addAll(["pencil", "paper"]);
+MyStuff(\helen).stuff.addAll(["bicycle" "helmet"]);
+MyStuff(\me).stuff.postln; MyStuff(\helen).stuff.postln;
+::
+
+Remaining arguments to the Singleton constructor are passed to the object's code::set:: method. These can be used to set the internal state of the object. For example, if we had:
+
+code::
+GlobalSynth : Singleton {
+	var <synth;
+	set {
+		|synthName, synthArgs|
+		if (synth.isNil) {
+			synth = Synth(synthName, synthArgs);
+		} {
+			synth.replace(synthName, synthArgs, true);
+		}
+	}
+}
+::
+
+Then we could:
+code::
+GlobalSynth(\reverb,
+	\reverbDef, [\out, 0, \revTime, 10]
+);
+// This is creates a Synth(\reverbDef, args:[\out, 0, \revTime, 10])
+
+GlobalSynth(\reverb,
+	\surroundReverbDef, [\out, 0, \revTime, 12]
+);
+// This replaces the previous synth with Synth(\surroundReverbDef, args:[\out, 0, \revTime, 10])
+::
+
+The code::set:: method can be called directly as well:
+code::
+GlobalSynth(\reverb).set(\reverbDef, [\out, 0, \revTime, 4]);
+::
+
+Singleton supports the code::know:: flag like Environments, so dot notation can be used to create and access Singleton's as well:
+
+code::
+GlobalSynth.know = true;
+GlobalSynth.reverb = \cornyEchoEffect;
+GlobalSynth.reverb = \reverbDef;
+::
+
+When using this pattern, the right-hand-side of the equals is passed in as the first argument - this is problematic in cases where code::set:: can take more than one argument. One way to keep the elegance of dot notation while allowing more complex arguments is to detect the type of arguments in your code::set:: method. For example:
+code::
+set {
+	|...args|
+	var synthName, synthArgs;
+	if ((args.size == 1) && args[0].isKindOf(Array)) { args = args[0] };
+	#synthName, synthArgs = args;
+	// ...
+}
+
+GlobalSynth.reverb = [\spaceReverb, [\out, 0, \revTime, 40]];
+::
+
+
+CLASSMETHODS::
+
+METHOD:: new
+For Singleton subclasses to work properly, code::Singleton:*new:: must be called. This should generally not be overridden by subclasses.
+
+ARGUMENT:: name
+A name identifying the Singleton object. The internal storage is identity-based, so Symbol's should be used instead of String's.
+
+ARGUMENT::  ...settings
+Arguments to be forwarded to the code::set:: method of the object.
+returns:: An instance of the Singleton object.
+
+METHOD:: createNew
+This returns a new instance of your class. Override this in a subclass to provide custom behavior when constructing a new instance of your class - this is the equivalent of the normal code::*new:: method. This should not be called directly.
+
+METHOD:: all
+returns:: Returns an IdentityDictionary of all Singletons registered for this class.
+
+METHOD:: know
+If set to true, the Singleton interprets method calls as calls to the Singleton constructor. With code::know = true::, the following are equivalent:
+code::
+Singleton(\something).set("some value");
+Singleton(\something, "some value");
+Singleton.something.set("some value");
+Singleton.something = "some value";
+::
+
+INSTANCEMETHODS::
+
+METHOD:: set
+This is called each time the constructor for Singleton is invoked, regardless of whether a new object is created or not. Arguments to link::#-new:: are forwarded to code::set::. Override this to allow Singleton calls to set internal properties of your object.
+
+METHOD:: init
+This is called on every new Singleton object. Override this to add behavior that occurs when a new object is created.
+
+METHOD:: name
+returns:: The name of the Singleton object.
+
+METHOD:: clear
+Remove / clear this specific Singleton object. The next time the Singleton constructor is called, it will create a new object.
+

@@ -1,0 +1,19 @@
+(
+          name: "QuarkEditor",
+       summary: "Classes to validate and edit quark files, and a GUI that wraps the editor class.",
+        author: "Scott Carver",
+     copyright: "2016",
+       license: "MIT",
+       version: "0.0.2",
+        schelp: "",
+          test: "",
+           url: "http://github.com/scztt/QuarkEditor.quark",
+  dependencies: [
+              		"Connection",
+              		"UnitTesting",
+              		"WindowViewRecall",
+              		"Log"
+                ],
+  isCompatible: true ,
+         since: ""
+)

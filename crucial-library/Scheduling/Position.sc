@@ -8,7 +8,7 @@
 */
 Position  {
 
-	var <current=0,<previous=0;
+	var <current=0, <previous=0;
 
 	value { ^current }
 	value_ { arg val;
@@ -22,9 +22,9 @@ Position  {
 		this.changed;
 		^current
 	}
-	wrapNext { arg min,max;
+	wrapNext { arg min, max;
 		previous = current;
-		current = (current + 1).wrap(min,max);
+		current = (current + 1).wrap(min, max);
 		this.changed;
 		^current
 	}

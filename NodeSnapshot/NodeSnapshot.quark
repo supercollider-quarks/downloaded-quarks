@@ -1,0 +1,18 @@
+(
+          name: "NodeSnapshot",
+       summary: "A class for capturing the state of a tree of nodes on the server.",
+        author: "scott@artificia.org",
+     copyright: "Frank Scott Carver, 2013",
+       license: "MIT",
+       version: "0.2.0",
+        schelp: "TreeSnapshot",
+          test: "Test/NodeSnapshot_unittest.scd",
+           url: "https://github.com/scztt/nodesnapshot.quark",
+  dependencies: [
+              		"Singleton@1.0.0",
+              		"WindowViewRecall@1.0.0",
+              		"UnitTesting@2a8f5e18aaa7cd25968ec094bbfa75a7fb3094b6"
+                ],
+  isCompatible:  true,
+         since: "2013"
+)

@@ -1,0 +1,8 @@
+(
+  name: "JoshMisc",
+  summary: "Various helper classes ejected from JoshUGens in sc3-plugins.",
+  version: "1.0",
+  ext_dependency: "sc3-plugins",
+  license: "GPL",
+  copyright: "Joshua Parmenter"
+)

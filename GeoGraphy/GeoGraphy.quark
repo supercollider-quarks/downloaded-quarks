@@ -8,7 +8,7 @@
 
 // optional:
 	\version:		0.2, // must be a float
-	\organization: 	"CIRMA  - Università di Torino",
+	\organization: 	"CIRMA  - Universit√† di Torino",
 	\country: 		"Italy",
 	\since: 		"2007",
 	\helpdoc: "GeoGraphyHelp/00. GeoGraphyStartup.html",

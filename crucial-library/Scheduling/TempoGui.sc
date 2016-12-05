@@ -1,47 +1,47 @@
 
 TempoGui : ObjectGui {
 
-	var tempoG,gnome;
+	var tempoG, gnome;
 
 	writeName {}
 	guiBody { arg layout;
-		var gn,gnomeInstr,h;
-		tempoG = NumberEditor(model.bpm,[1.0,666.0])
+		var gn, gnomeInstr, h;
+		tempoG = NumberEditor(model.bpm, [1.0, 666.0])
 			.action_({arg t; model.bpm_(t)});
 
-		tempoG.gui(layout,160@GUI.skin.buttonHeight,true);
+		tempoG.gui(layout, 160@GUI.skin.buttonHeight, true);
 
-		if(Instr.isDefined("TempoGui.gnomeInstr").not,{
+		if(Instr.isDefined("TempoGui.gnomeInstr").not, {
 			gnomeInstr =
 				Instr("TempoGui.gnomeInstr",
-					{ arg trig,freq,amp;
+					{ arg trig, freq, amp;
 						Decay2.ar(
-							K2A.ar(trig), 0.01,0.11,
+							K2A.ar(trig), 0.01, 0.11,
 							SinOsc.ar( freq, 0, amp )
 						)
 					});
-		},{
+		}, {
 			gnomeInstr = Instr("TempoGui.gnomeInstr");
 		});
-		gnome = Patch(gnomeInstr,[
+		gnome = Patch(gnomeInstr, [
 			BeatClockPlayer.new(4.0),
 			StreamKrDur(
 				Pseq([ 750, 500, 500, 500, 750, 500, 500, 500,
-					   750, 500, 500, 500, 750, 500, 500, 500 ],inf),
+					   750, 500, 500, 500, 750, 500, 500, 500 ], inf),
 				1.0),
 			StreamKrDur(
-				Pseq([1,0.25,0.5,0.25,0.75,0.25,0.5,0.25,
-					  0.75,0.25,0.5,0.25,0.75,0.25,0.5,0.25] * 0.01,inf),
+				Pseq([1, 0.25, 0.5, 0.25, 0.75, 0.25, 0.5, 0.25,
+					  0.75, 0.25, 0.5, 0.25, 0.75, 0.25, 0.5, 0.25] * 0.01, inf),
 				1.0)
 		]);
 
 		h = GUI.skin.buttonHeight;
-		gn = Button(layout,h@h);
-		gn.states = [ ["M",Color.black,Color.white],["M",Color.white,Color.black]];
+		gn = Button(layout, h@h);
+		gn.states = [ ["M", Color.black, Color.white], ["M", Color.white, Color.black]];
 		gn.action = {
-			if(gnome.isPlaying.not,{
+			if(gnome.isPlaying.not, {
 				gnome.play(atTime: 1)
-			},{
+			}, {
 				gnome.stop
 			})
 		};
@@ -55,7 +55,7 @@ TempoGui : ObjectGui {
 		KeyCodeResponder.global.normal(
 					42->{Tempo.tempo_(Tempo.tempo + 0.166667)},  //  \ + 10bpm
 					35->{Tempo.tempo_(Tempo.tempo - 0.166667)},  //  p - 10bpm
-					30->{Tempo.tempo_(Tempo.tempo - 0.00416666)},// [ - 0.25 bpm
+					30->{Tempo.tempo_(Tempo.tempo - 0.00416666)}, // [ - 0.25 bpm
 					33->{Tempo.tempo_(Tempo.tempo + 0.00416666)} //  ] + 0.25 bpm
 				);
 

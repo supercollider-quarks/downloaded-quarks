@@ -508,10 +508,12 @@ PR(\transient_analysis_file).v.clone({
 	~getAudioData = { |time, buffer|
 		var	result, startFrame = (time * buffer.sampleRate).asInteger;
 		(startFrame < (buffer.numFrames - ~fftsize)).if({
-			buffer.getToFloatArray(startFrame, ~fftsize, action: e { |v|
-				result = v;
-				~asyncUnhang.value;	// getToFloatArray action is not environment-safe
-			});
+			fork {
+				buffer.getToFloatArray(startFrame, ~fftsize, action: e { |v|
+					result = v;
+					~asyncUnhang.value;	// getToFloatArray action is not environment-safe
+				});
+			};
 			~asyncHang.value;
 			(result.size == ~fftsize).if({
 				result
@@ -567,8 +569,7 @@ PR(\transient_analysis_buffer).v.clone({
 
 	~prep = { 
 		~chan.isNil.if({
-			~chan = MixerChannel(~collIndex, s, 1, ~mixerOutChannels, postSendReady: true,
-				outbus: ~master);
+			~chan = MixerChannel(~collIndex, s, 1, ~mixerOutChannels, outbus: ~master);
 			~iMadeMixer = true;
 		});
 
@@ -689,22 +690,24 @@ PR(\transient_analysis_buffer).v.clone({
 		SynthDef(\trigrecfft, { |bufnum, t_trig, inbus, outbus,
 				cmpgain = 1, cmpclamp = 0.02, cmprelax = 0.1, cmpthresh = 0.4,
 				cmpratio = 1.0, cmpgateratio = 1.0, hardgate = 0.01,
-				audiothru = 0, faststop = 0|
+				audiothru = 0, faststop = 0, thrulevel = 1|
 			var	pc = PulseCount.kr(t_trig),
 				start = BinaryOpUGen.new1(\control, '==', pc, 1),
 				stop = BinaryOpUGen.new1(\control, '==', pc, 2),
 				started = (pc > 0),
 				sig = In.ar(inbus, 1),
 				dlysig,
-				peak = Peak.ar(sig * started),
+				peak,
 				dur;
-			
-			sig = sig * (Amplitude.kr(sig, cmpclamp, cmprelax) >= hardgate);
+
+			sig = sig * Lag.kr(Amplitude.kr(sig, cmpclamp, cmprelax) >= hardgate, 0.01);
 				// expand out CompanderD so I can control max delay time
 			dlysig = DelayN.ar(sig, 0.15, cmpclamp);
 			sig = Compander.ar(dlysig, sig, cmpthresh, cmpgateratio, cmpratio, cmpclamp, cmprelax,
 				cmpgain);
-			
+
+			peak = Peak.ar(sig * started);
+
 				// trigger should ensure recording waits until trigger rec'd
 			RecordBuf.ar(sig, bufnum, 0, 1, 0, started - stop, 0, 0);
 		
@@ -716,7 +719,7 @@ PR(\transient_analysis_buffer).v.clone({
 			SendTrig.kr(stop, 1, dur);		// "how long recording?"
 
 				// delay the stop trigger in the EnvGen to avoid glitch
-			Out.ar(outbus, sig
+			Out.ar(outbus, sig * thrulevel
 				* EnvGen.kr(Env.asr(0.05, 1, 0.05),
 					DelayN.kr((started + audiothru) * (stop <= 0), cmpclamp, cmpclamp),
 					doneAction:2)
@@ -769,7 +772,8 @@ PR(\transient_analysis_buffer).v.clone({
 			buf.matrix = Array.new;
 			bundle = s.makeBundle(false, {
 				buf.node = ~chan.play(~inputdef.name, [\bufnum, buf.buf.bufnum,
-					\inbus, ~inputBusIndex, \t_trig, 0, \audiothru, ~audioThru.binaryValue]
+					\inbus, ~inputBusIndex, \t_trig, 0, \audiothru, ~audioThru.binaryValue,
+					\thrulevel, ~audioThruLevel]
 					++ ~inputParms.(buf));
 				buf.detectnode = ~chan.playfx(~featuredef.name, [t_trig: 0]
 					++ ~detectParms.(buf));
@@ -798,19 +802,25 @@ PR(\transient_analysis_buffer).v.clone({
 		BP(~collIndex).changed(\stop);
 
 			// if nothing was recorded on stopRecord, buf.peak is nil so guarantee failure with -1
-		((buf.peak ? -1) >= ~minPeak).if({
-			buf.status = switch(buf.status)
-				{ \recordPending } { \idle }
-				{ \record } { \ready }
-				{ \stopRec } { \ready }
-				{ \idle };
-		}, {
+		case
+		{ (buf.peak ? -1) < ~minPeak } {
 			"Recording rejected, amplitude (%) didn't meet threshold (%)."
 				.format(buf.peak, ~minPeak)
 				.warn;
 			buf.status = \idle;
 			buf.recTime = -1;	// force next record to use this buffer
-		});
+		}
+		{ buf.matrix.size == 0 } {
+			"Recording rejected, no triggers found.".warn;
+			buf.status = \idle;
+			buf.recTime = -1;	// force next record to use this buffer
+		} {
+			buf.status = switch(buf.status)
+				{ \recordPending } { \idle }
+				{ \record } { \ready }
+				{ \stopRec } { \ready }
+				{ \idle };
+		};
 		buf.node = nil;
 
 			// kindly release the node -- buf.node is already nil so oscresp won't match
@@ -839,7 +849,7 @@ PR(\transient_analysis_buffer).v.clone({
 	
 		// dummy action, replace to call another BP to use the buffer
 	~doAction = { |buf|
-		(buf.actionDone.not and: { buf.peak >= ~minPeak }).if({
+		(buf.actionDone.not and: { buf.status == \ready }).if({
 			"Analysis complete. Last buffer stored in BP(%).v.lastBuf.\n"
 				.postf(~collIndex.asCompileString);
 			~lastBuf = buf;

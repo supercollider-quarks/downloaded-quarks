@@ -82,7 +82,7 @@ InfluxKtlGui : JITGui {
 		xpop = EZPopUpMenu(topLine, (rightWid * 0.37)@butH, "x:", labelWidth: 12)
 		.items_([\x, \y])
 		.globalAction_({ |pop|
-			xyMapDict.put(\x, object.inNames[pop.value]).postln
+			xyMapDict.put(\x, object.inNames[pop.value])
 		});
 
 		StaticText(topLine, Rect(0, 0, rightWid * 0.26, butH)).align_(\center)
@@ -90,7 +90,7 @@ InfluxKtlGui : JITGui {
 
 		ypop = EZPopUpMenu(topLine, (rightWid * 0.37)@butH, "y:", labelWidth: 12)
 		.items_([\x, \y]).value_(1).globalAction_({ |pop|
-			xyMapDict.put(\y, object.inNames[pop.value]).postln
+			xyMapDict.put(\y, object.inNames[pop.value])
 		});
 
 		xySlider = Slider2D(rightButtonV, Rect(0, 0, rightWid, rightWid))
@@ -127,12 +127,12 @@ InfluxKtlGui : JITGui {
 
 	// could do func lookup here - maybe later
 	influxFunc { |index, butVal, modif|
-		thisMethod.postln;
-		[index, butVal, modif].postln;
+		// thisMethod.postln;
+		// [index, butVal, modif].postln;
 	}
 
 	slKeydown { |char, modif|
-		thisMethod.postln;
+
 		if (object.notNil) {
 			char.switch(
 				$o, { object.rec.toggleRec },

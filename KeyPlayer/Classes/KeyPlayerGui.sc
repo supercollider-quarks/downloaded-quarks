@@ -189,7 +189,7 @@ KeyPlayerGui : JITGui {
 			var keyExists = keys[i].notNil;
 			b.states_([[key ? "", Color.black, col]]).enabled_(keyExists);
 		};
-		
+
 		lpGuiBut.enabled_(object.notNil and: { object.rec.notNil });
 
 		listView !? { listView.items_(keys).value_(myIndex); };
@@ -270,7 +270,7 @@ KeyPlayerGui : JITGui {
 			Button(zone, Rect(0, 0, 34, 16)).states_([[ keys[i] ? "-" ]])
 				.action_({ |b|
 					var nuKP = KeyPlayer.all[b.states[0][0]];
-					if (nuKP.notNil) { this.object_(nuKP); 
+					if (nuKP.notNil) { this.object_(nuKP);
 					};
 					this.checkUpdate;
 					b.focus(false);
@@ -363,23 +363,24 @@ KeyPlayerGui : JITGui {
 		});
 	}
 
-	focusToPlayerName { |name|
-		var index;
-		if (listView.notNil) {
-			index = listView.items.indexOf(name);
-			if (index.notNil) { listView.value_(index) };
-			listView.focus;
-		} {
-			index = buttons.detectIndex { |bt, i|
-				bt.states[0][0].postcs == name;
-			};
-			if (index.notNil) { buttons[index].focus; };
-		}
+	buttonForPlayerName {|name|
+		^buttons.detect{|bt| bt.states[0][0] == name};
 	}
 
+	focusToPlayerName { |name|
+		var button = this.buttonForPlayerName(name);
+		if (button.notNil) { button.focus };
+	}
+
+	switchToPlayer { |name|
+		var button = this.buttonForPlayerName(name);
+		if (button.notNil) { button.valueAction_(1) };
+	}
+
+
 	openLoopGui {
-		var loopgui, coords; 
-		if (object.isNil or: { object.rec.isNil }) { 
+		var loopgui, coords;
+		if (object.isNil or: { object.rec.isNil }) {
 			"no object or no loop, so no loopgui.".postln;
 			^this
 		};

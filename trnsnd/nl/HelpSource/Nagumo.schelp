@@ -1,0 +1,37 @@
+title:: Nagumo
+summary:: ugen fitzhugh-nagumo neuron firing model
+categories:: transnd>ugen
+
+description::
+
+CLASSMETHODS::
+
+METHOD:: ar
+
+argument:: uh
+integration timesteps
+
+argument:: vh
+integration timesteps
+
+argument:: pulse
+audio rate pulse
+
+EXAMPLES::
+
+code::
+s.boot;
+
+//plug&play with pulse
+{ Nagumo.ar(0.1, 0.001, LFPulse.ar(1, 0, MouseX.kr(0.0, 0.5), MouseY.kr(0.01, 0.5)), 0.1) }.play;
+{ Nagumo.ar(0.1, 0.005, LFPulse.ar(1000, 0, MouseX.kr(0.0, 0.5), MouseY.kr(0.01, 0.5)), 0.1) }.play;
+{ Nagumo.ar(0.1, 0.1, LFPulse.ar(4410, 0, MouseX.kr(0.0, 0.5), MouseY.kr(0.01, 0.5)), 0.1) }.play;
+{ Nagumo.ar(0.1, 0.1, LFPulse.ar(4410, 0, MouseX.kr(0.0, 0.5), MouseY.kr(0.01, 0.5)), 0.1) }.play;
+
+//non-pulse, watch-out. noisy!
+{ Nagumo.ar(0.1, 0.00001, Impulse.ar(10, 0, MouseY.kr(0.01, 0.5))) }.play;
+{ Nagumo.ar(0.1, 0.001, Impulse.ar(10, 0, MouseY.kr(0.01, 0.5))) }.play;
+{ Nagumo.ar(0.1, 0.001, SinOsc.ar(50, 0, MouseY.kr(0.01, 0.5))) }.play;
+{ Nagumo.ar(0.1, 0.1, SinOsc.ar(50, 0, MouseY.kr(0.01, 0.5))) }.play;
+{ Nagumo.ar(0.1, 0.1, BrownNoise.ar(MouseY.kr(0.01, 0.5))) }.play;
+::

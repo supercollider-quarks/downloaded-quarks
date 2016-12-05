@@ -186,20 +186,11 @@ PR(\abstractProcess).v.clone({
 		~newMelFlag = false;
 		Prout({ |inval|
 			var phrase, phraseStream, seg, rhy;
-				// try to get phrase; if nil, is this a new melody object?
-			{ ((phrase = ~mel[\segStream].next).isNil and: { ~newMelFlag }).if({
-						// new melody object -- make the phrase stream
-					~mel.asSegStream(\asPattern,
-						~getPassInValue.(~mel.keysFromParent, true));
-					~newMelFlag = false;
-					phrase = ~mel[\segStream].next;
-				});
-				phrase.notNil  // if that fails, nothing to do
-			}.while({
+			{ (phrase = ~getOnePhrase.()).notNil }.while({
 				phraseStream = phrase  //.asStream(~getPassInValue.value);
 					.perform(\asPattern,
 						~getPassInValue.(~mel[\keysFromParent])).asStream;
-				{ (seg = phraseStream.next).notNil }.while({
+				{ (seg = phraseStream.next(inval)).notNil }.while({
 					inval = seg.embedInStream(inval)
 				});
 					// stick in rest if available
@@ -218,9 +209,29 @@ PR(\abstractProcess).v.clone({
 		})
 	};
 
-// asNotePattern MIGHT BE BROKEN, pretty much deprecated
+	~getOnePhrase = {
+		var phrase;
+		// try to get phrase; if nil, is this a new melody object?
+		((phrase = ~mel[\segStream].next).isNil and: { ~newMelFlag }).if({
+			// new melody object -- make the phrase stream
+			~mel.asSegStream(\asPattern,
+				~getPassInValue.(~mel.keysFromParent, true));
+			~newMelFlag = false;
+			phrase = ~mel[\segStream].next;
+		});
+		phrase
+	};
+	~getOnePhrasePattern = { |phraseSeg|
+		if(phraseSeg.isNil) { phraseSeg = ~getOnePhrase.() };
+		phraseSeg.asPattern(~getPassInValue.(~mel[\keysFromParent]))
+	};
+	~getOnePhraseStream = { |phraseSeg|
+		~getOnePhrasePattern.(phraseSeg).asStream  // need to make the stream inside this environment
+	};
 
-	~asNotePattern = #{ 
+	// asNotePattern MIGHT BE BROKEN, pretty much deprecated
+
+	~asNotePattern = #{
 		~mel.asSegStream(\asNotePattern);
 		~newMelFlag = false;
 		Prout({ |inval|

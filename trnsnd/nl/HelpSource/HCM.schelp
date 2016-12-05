@@ -1,0 +1,33 @@
+title:: HCM
+summary:: ugen hypercubic coupled maps
+categories:: transnd>ugen
+
+description::
+no interpolation.
+
+CLASSMETHODS::
+
+METHOD:: ar
+
+argument:: freq
+iteration frequency
+
+argument:: r
+equation variable [1.0, 2.0]
+
+argument:: g
+coupling strength [0.0, 1.0]
+
+argument:: xi
+initial value of x [0.0, 1.0]
+
+returns:: values of xn in range  [-1.0, 1.0]
+
+
+EXAMPLES::
+
+code::
+s.scope(2, 0, 64).style_(2);
+
+{var sig=HCM.ar(SampleRate.ir/2, MouseY.kr(1.5, 1.9), MouseX.kr(0, 4));[Delay1.ar(sig),sig] }.play;
+::

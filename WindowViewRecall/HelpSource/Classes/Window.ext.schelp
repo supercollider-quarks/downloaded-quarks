@@ -1,0 +1,31 @@
+instancemethods::
+
+subsection:: WindowViewRecall extensions
+
+The following extensions enable easy recall of the position and size of a Window or View. To use, register a Window using autoRememberPosition when it is created.
+
+code::
+w = Window("my window", bounds:300@300).autoRememberPosition(\scztt, \mywindow).front;
+
+v = View(bounds:300@300).autoRememberPosition(\scztt, \myview).front;
+::
+
+The argument to autoRememberPosition should be a unique sequence of keys that will be used as an address to store and look up the window position. Names should be constructed to avoid collision with other possible named (for example: don't use code::w.autoRememberPosition(\server)::, use code::w.autoRememberPosition(\Server, \internalServerView)::).
+
+Window positions are stored in link::Classes/Archive::.global and written to disk, so positions should be recallable across application launches.
+
+
+copymethod:: View, -autoRememberPosition
+copymethod:: View, -rememberPosition
+copymethod:: View, -recallPosition
+copymethod:: View, -resetPosition
+
+EXAMPLES::
+
+Normally, only link::#-autoRememberPosition:: needs to be used to enable remembering/recall of the window position.
+It should be called during the creation of the Window or View - it will ensure that the previously recorded position is recalled, and it will autosave the position throughout the lifetime of the window.
+
+code::
+~scope = Stethoscope(s);
+~scope.window.autoRememberPosition(\Stethoscope, \my_scope);
+::

@@ -1,7 +1,7 @@
 TITLE:: BufEnvir
 summary:: referentially transparent buffer environment
-categories:: JITLib
-related:: Classes/Buffer, Reference/JITLib
+categories::Live Coding
+related:: Classes/Buffer, Overviews/JITLib
 
 DESCRIPTION::
 an environment for keeping buffers by name.

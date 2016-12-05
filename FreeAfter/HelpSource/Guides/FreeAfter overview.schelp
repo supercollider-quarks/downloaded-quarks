@@ -1,0 +1,74 @@
+title:: FreeAfter overview
+summary:: An overview of the FreeAfter quark
+categories:: Control
+
+section::Description
+A simple Quark to manage freeing/closing of objects after another limited-lifetime object is complete.
+
+section::Introduction
+FreeAfter provides a simple mechanism to free or close any object after another limited-lifetime object is complete.
+It works by way of an code::Object:freeAfter:: and code::Object:closeAfter:: methods, plus type-specific overrides for the objects that are able to trigger a free/close.
+
+In the context of this quark, "freeing" simply consists in calling the code::.free:: method for the object in question. Likewise, "closing" consists in calling the code::.close:: method.
+
+InstanceMethods::
+
+method::freeAfter
+method::closeAfter
+Call code::.free:: or code::.close:: on the current object after another object is finished.
+
+argument::other
+Another limited-lifetime object. Any object which has a code::addDoAfter:: method is valid:
+list::
+## link::Classes/Condition:: [after a link::Classes/Condition:: is true]
+## link::Classes/Number:: [after n seconds]
+## link::Classes/Meta_CmdPeriod:: [after a cmd+period. NOTE: In this case, the argument is the link::Classes/CmdPeriod:: class itself, since it has no instances.]
+## link::Classes/Node:: [after a synth or group is freed]
+## link::Classes/Server:: [after a Server quits]
+## link::Classes/PauseStream:: [after a link::Classes/PauseStream:: or link::Classes/Task:: ends]
+## link::Classes/View::, link::Classes/Window:: [after a Window or View closes]
+::
+
+section::Examples
+code::
+~sine = { |f=440| SinOsc.ar(f) };
+
+~sine.play.freeAfter(5); // free after 5 seconds
+
+v = View(bounds:100@100).front;
+~sine.play.freeAfter(v); // free after view is closed
+
+a = ~sine.play.freeAfter(5);
+{ SinOsc.ar(660) }.play.freeAfter(a); // free after another synth is freed
+
+t = Task({ 10.do {|i| i.postln; 0.2.yield } }).play;
+~sine.play.freeAfter(t); // free after a task is complete
+
+n = ~sine.play;
+v = StaticText(bounds:100@100).string_("Playing...").front.closeAfter(n); // close window after synth is finished
+::
+
+section::Use cases
+Some valuable use-cases include:
+
+list::
+## Attaching a link::Classes/Synth:: providing metering to a link::Classes/LevelIndicator::, and ending it when the meter closes.
+## Attaching a link::Classes/Buffer:: to a link::Classes/Synth::, such that it's freed after the synth is done.
+## Attaching a link::Classes/View:: to a link::Classes/Task::, and closing it when complete.
+::
+
+
+section::Extending
+Custom classes can provide support for .freeAfter and .closeAfter by defining an code::onDoAfter:: method. It must take a single argument, a function to call after the object in question in finished.
+code::
++MyCustomClass {
+	onDoAfter: {
+		|func|
+		this.addOnFinishedAction(func)
+	}
+}
+::
+
+In general, the func argument should NOT be called more than once.
+
+

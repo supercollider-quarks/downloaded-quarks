@@ -1,0 +1,97 @@
+TITLE:: ItemsSpec
+summary:: A class to map an Array of items to a value range between 0 and 1.
+categories:: Control, Spec, Libraries/Modality
+related:: Overviews/Modality, Classes/MKtl, Classes/MKtlDesc, Tutorials/How_to_create_a_description_file_for_OSC
+
+DESCRIPTION::
+
+ItemsSpec maps an item from an array of possible items onto a value range between 0 and 1.
+
+Simple example:
+
+code::
+~itspec = ItemsSpec.new( ["off","amber","red"] );
+
+// mapping
+~itspec.map( 0 );
+~itspec.map( 0.5 );
+~itspec.map( 1 );
+
+~itspec.map( 0.33); // still off
+~itspec.map( 0.34 ); // already amber
+
+// unmapping
+~itspec.unmap( "off" );
+~itspec.unmap( "amber" );
+~itspec.unmap( "red" );
+
+~itspec.unmap( "orange" ); // item not there -> nil
+
+~itspec.default;
+~itspec.items;
+~itspec.spec;
+
+
+// check that ranges are equal size: 21 values, 7 each
+~itspec.map( (0, 0.05..1) );
+// -> anything in [0, 0.3333] -> "off", [0.3334, 0.6666] -> amber, [0.6667, 1] -> red
+
+["off","amber","red"].collect { |it| ~itspec.unmap(it) };
+
+// change the warp to bend ranges
+~itspec.warp = 4;
+~itspec.map( (0, 0.05..1) ); // off has wider part of the range now (15, 4, 2)
+
+::
+
+CLASSMETHODS::
+
+
+METHOD:: new
+Create a new ItemsSpec.
+
+ARGUMENT:: items
+An Array of items to map onto.
+
+ARGUMENT:: warp
+An optional warp like \lin, \cos, \sin, or float number.
+
+ARGUMENT:: default
+An optional default value (float between 0 and 1)
+
+INSTANCEMETHODS::
+
+private:: init
+
+
+METHOD:: map
+Map a SimpleNumber onto the items.
+
+ARGUMENT:: inval
+A SimpleNumber
+
+returns:: a String
+
+METHOD:: unmap
+Unmap an items contained in items to its number value
+
+ARGUMENT:: inval
+an item
+
+returns:: A SimpleNumber or nil if the item was not found.
+
+METHOD:: default
+The default value of an ItemsSpec is 0
+
+METHOD:: items
+The array of items.
+
+METHOD:: spec
+A ControlSpec that handles the conversion of 0-1 range to number of indices for the ItemsSpec.
+
+
+METHOD:: asSpec
+Convenience method.
+
+returns:: the ItemsSpec
+

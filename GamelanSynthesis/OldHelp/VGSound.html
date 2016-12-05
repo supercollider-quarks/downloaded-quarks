@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title></title>
+<meta name="Generator" content="Cocoa HTML Writer">
+<meta name="CocoaVersion" content="949.35">
+<style type="text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+p.p3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco; min-height: 12.0px}
+p.p4 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco; color: #a91616}
+p.p5 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco}
+p.p6 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Monaco; color: #307109}
+p.p7 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Monaco; min-height: 17.0px}
+p.p8 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Monaco; color: #a91616}
+span.s1 {font: 18.0px Helvetica; color: #0014bc}
+span.s2 {font: 9.0px Monaco}
+span.s3 {color: #0014bc}
+span.s4 {color: #000000}
+span.s5 {color: #307109}
+span.s6 {color: #a91616}
+span.Apple-tab-span {white-space:pre}
+</style>
+</head>
+<body>
+<p class="p1"><span class="s1"><b>VGSound</b></span><span class="s2"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span><b>rendering gamelan data to sound,</b></p>
+<p class="p1"><b><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span>with different synthesis variants</b></p>
+<p class="p2"><br></p>
+<p class="p1"><span class="s3">VGSound</span> is part of the <span class="s3">VGLibrary</span> by Julian Rohrhuber, Alberto de Campo, Rainer Schuetz, 2007/8.</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="s3">For</span> rendering by synthesis see also <span class="s3">VGSynth</span>,</p>
+<p class="p1">for sample-based playback, see also <span class="s3">VGSamp</span>.</p>
+<p class="p2"><br></p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// VGSound initialises all sound engines.</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// this can take ca. 30-40 seconds, and<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// posts much detailed info.</p>
+<p class="p5"><span class="s3">VGSound</span>.startUp;</p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// no sampler, faster loading</p>
+<p class="p5"><span class="s3">VGSound</span>.startUp(loadSamp: <span class="s3">false</span>);</p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// test that everthing is fine<span class="Apple-converted-space"> </span></p>
+<p class="p5"><span class="s3">VGSound</span>.loaded;<span class="Apple-tab-span">	</span></p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// VGSound has a convenvience method to play sounds quickly,</p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// and debug info for it.</p>
+<p class="p3"><span class="Apple-tab-span">	</span></p>
+<p class="p1"><span class="Apple-tab-span">	</span>*play (laras, synthDef, event)<span class="Apple-converted-space"> </span></p>
+<p class="p5"><span class="s3">VGSound</span>.play;<span class="Apple-converted-space"> </span></p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// play all instruments/sonators for one tuning:</p>
+<p class="p5"><span class="s3">VGSound</span>.play(<span class="s5">\slendro</span>);<span class="Apple-converted-space"> </span></p>
+<p class="p5"><span class="s3">VGSound</span>.play(<span class="s5">\pelog</span>);</p>
+<p class="p5"><span class="s3">VGSound</span>.play(<span class="s5">\neutral</span>);</p>
+<p class="p3"><br></p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// use specific synthesis variants:</p>
+<p class="p4"><span class="s3">VGSound</span><span class="s4">.play(</span><span class="s5">\pelog</span><span class="s4">, </span><span class="s5">\vgSampDyn</span><span class="s4">); <span class="Apple-tab-span">	</span></span>// sampling, retunable</p>
+<p class="p4"><span class="s3">VGSound</span><span class="s4">.play(</span><span class="s5">\pelog</span><span class="s4">, </span><span class="s5">\vgSampFix</span><span class="s4">); <span class="Apple-tab-span">	</span></span>// sampling fixed params - e.g. for drums.</p>
+<p class="p4"><span class="s3">VGSound</span><span class="s4">.play(</span><span class="s5">\pelog</span><span class="s4">, </span><span class="s5">\vgAddiAr</span><span class="s4">); <span class="Apple-tab-span">	</span></span>// additive synthesis, full resolution</p>
+<p class="p4"><span class="s3">VGSound</span><span class="s4">.play(</span><span class="s5">\pelog</span><span class="s4">, </span><span class="s5">\vgAddiKr</span><span class="s4">); <span class="Apple-tab-span">	</span></span>// additive, slightly cheaper envelope</p>
+<p class="p4"><span class="s3">VGSound</span><span class="s4">.play(</span><span class="s5">\pelog</span><span class="s4">, </span><span class="s5">\vgRingz</span><span class="s4">); <span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// ringing filters, no attack modeling<span class="Apple-converted-space"> </span></p>
+<p class="p4"><span class="s3">VGSound</span><span class="s4">.play(</span><span class="s5">\pelog</span><span class="s4">, </span><span class="s5">\vgFormlet</span><span class="s4">); <span class="Apple-tab-span">	</span></span>// ringing filters with modeled attack - not tuned well yet.</p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// look up all variants:</p>
+<p class="p5"><span class="s3">VGSound</span>.synthEngines.keys.postcs;</p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// play a specific instrument</p>
+<p class="p6"><span class="s3">VGSound</span><span class="s4">.play(</span>\slendro<span class="s4">, </span>\vgSampDyn<span class="s4">, (instKey: </span>\BonangBar<span class="s4">));<span class="Apple-converted-space"> </span></span></p>
+<p class="p5"><span class="s3">VGSound</span>.play(<span class="s5">\slendro</span>, event: (instKey: <span class="s5">\BonangBar</span>));<span class="Apple-converted-space"> </span></p>
+<p class="p3"><br></p>
+<p class="p5"><span class="s3">VGSound</span>.play(<span class="s5">\slendro</span>, event: (instKey: <span class="s5">\BonangPan</span>));<span class="Apple-converted-space"> </span></p>
+<p class="p5"><span class="s3">VGSound</span>.play(<span class="s5">\pelog</span>, event: (instKey: <span class="s5">\BonangPan</span>));<span class="Apple-converted-space"> </span></p>
+<p class="p3"><br></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span></span>// play a specific note:</p>
+<p class="p5"><span class="s3">VGSound</span>.play(<span class="s5">\pelog</span>, event: (instKey: <span class="s5">\BonangPan</span>, noteKey: \56));<span class="Apple-converted-space"> </span></p>
+<p class="p3"><br></p>
+<p class="p3"><br></p>
+<p class="p7"><br></p>
+<p class="p8"><span class="s4"><span class="Apple-tab-span">	</span></span>// extensive tests</p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor().play;<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="s6">// rest</span></p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor(()).play;<span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span><span class="s6">// rest</span></p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((instKey: <span class="s5">\BonangBar</span>)).play;<span class="Apple-tab-span">	</span><span class="s6">// rest</span></p>
+<p class="p3"><span class="Apple-tab-span">	</span></p>
+<p class="p4"><span class="s4"><span class="Apple-tab-span">	</span><span class="Apple-tab-span">	</span></span>// correct</p>
+<p class="p5"><span class="s3">VGSound</span>.playbackSettings[<span class="s5">\BonangBar</span>].put(<span class="s5">\mute</span>, <span class="s3">true</span>);</p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((instKey: <span class="s5">\BonangBar</span>, noteKey: \56)).play;</p>
+<p class="p5"><span class="s3">VGSound</span>.playbackSettings[<span class="s5">\BonangBar</span>].put(<span class="s5">\mute</span>, <span class="s3">false</span>);<span class="Apple-tab-span">	</span><span class="s6">// rest, because muted</span></p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((instKey: <span class="s5">\BonangBar</span>, noteKey: \56)).play;</p>
+<p class="p3"><br></p>
+<p class="p5"><span class="s3">VGSound</span>.playbackSettings[<span class="s5">\PekingA</span>].put(<span class="s5">\solo</span>, <span class="s3">true</span>);</p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((instKey: <span class="s5">\BonangBar</span>, noteKey: \56)).play;<span class="Apple-tab-span">	</span><span class="s6">// rest because others are soloed</span></p>
+<p class="p5"><span class="s3">VGSound</span>.playbackSettings[<span class="s5">\PekingA</span>].put(<span class="s5">\solo</span>, <span class="s3">false</span>);</p>
+<p class="p3"><br></p>
+<p class="p5">// overwriting VGMixer/playbackSettings value for synthDef</p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((synthDef: <span class="s5">\vgSampDyn</span>, instKey: <span class="s5">\BonangBar</span>, noteKey: \56)).play;</p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((synthDef: <span class="s5">\vgAddiKr</span>, instKey: <span class="s5">\BonangBar</span>, noteKey: \56)).play;</p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((amp: 0.2, synthDef: <span class="s5">\vgAddiAr</span>, instKey: <span class="s5">\BonangBar</span>, noteKey: \56, sustain: 20)).play;</p>
+<p class="p3"><br></p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((instKey: <span class="s5">\Kendhang</span>, noteKey: <span class="s5">\k_tapRight</span>)).play;<span class="Apple-converted-space"> </span></p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((instKey: <span class="s5">\Kendhang</span>, noteKey: <span class="s5">\k_tak</span>)).play; <span class="s6">// still broken</span></p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((instKey: <span class="s5">\Kendhang</span>, noteKey: <span class="s5">\c_dhen</span>)).play; <span class="s6">// still broken</span></p>
+<p class="p3"><br></p>
+<p class="p5"><span class="Apple-tab-span">	</span>// remove direct drums names, or leave them in?<span class="Apple-converted-space"> </span></p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((instKey: <span class="s5">\Ciblon</span>, noteKey: <span class="s5">\tapRight</span>, amp: 10)).play;</p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((laras: <span class="s5">\neutral</span>, instKey: <span class="s5">\Ciblon</span>, noteKey: <span class="s5">\tapRight</span>)).play;</p>
+<p class="p3"><br></p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((laras: <span class="s5">\pelog</span>, instKey: <span class="s5">\BonangBar</span>, <span class="s5">\noteKey</span>: \56)).play;</p>
+<p class="p5"><span class="s3">VGSound</span>.eventFor((laras: <span class="s5">\slendro</span>, instKey: <span class="s5">\BonangBar</span>, <span class="s5">\noteKey</span>: \56)).play;</p>
+<p class="p3"><br></p>
+<p class="p3"><br></p>
+</body>
+</html>

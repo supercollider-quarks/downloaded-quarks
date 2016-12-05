@@ -1,0 +1,6 @@
+CLASS:: AbstractMusic
+summary:: basic administration
+categories:: transnd
+
+DESCRIPTION::
+An abstract class inhereted by projects.

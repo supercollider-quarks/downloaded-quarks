@@ -1,0 +1,7 @@
+(
+	\name:		"crucial-library",
+	\summary:	"The AbstractPlayer system including Patch, Instr, Sample, and scheduling tools",
+	\author:	"felix",
+	\version:	"4.1.5",
+	\url:		"https://github.com/crucialfelix/crucial-library"
+)

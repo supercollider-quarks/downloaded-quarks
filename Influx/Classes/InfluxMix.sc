@@ -6,9 +6,8 @@ InfluxMix : InfluxBase {
 
 	*initClass {
 		Class.initClassTree(Spec);
-	//	Class.initClassTree(Halo);
-	//	this.addSpec(\damping, [0, 1]);
-		Spec.add(\damping, [0, 1]);
+		Class.initClassTree(Halo);
+		this.addSpec(\damping, [0, 1]);
 
 		// damping 0 is linear sum of contribs,
 		// damping 0.5 is scaled by sqrt of contribs (equal power sum)
@@ -30,13 +29,13 @@ InfluxMix : InfluxBase {
 		}
 	}
 
-	*new { |inNames|
-		^super.newCopyArgs(inNames).init;
+	*new { |inNames = 2|
+		^super.new(inNames).initMix;
 	}
 
-	init {
-		super.init;
-		inNames.do(inValDict.put(_, ()));
+	initMix {
+		inValDict = ();
+		inNames.do (inValDict.put(_, ()));
 		trusts = ();
 		mergeFunc = mergeFunc ? defaultMergeFunc
 	}

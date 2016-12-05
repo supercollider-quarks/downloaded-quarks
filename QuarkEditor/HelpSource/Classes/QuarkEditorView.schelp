@@ -1,0 +1,16 @@
+TITLE:: QuarkEditorView
+summary:: (put short description here)
+categories:: Undocumented classes
+related:: Classes/SomeRelatedClass, Reference/SomeRelatedStuff, etc.
+
+DESCRIPTION::
+GUI view for a link::Classes/QuarkEditor::.
+
+
+CLASSMETHODS::
+
+METHOD:: new
+
+ARGUMENT:: path
+Path to a .quark file.
+

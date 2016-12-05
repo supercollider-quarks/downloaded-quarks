@@ -10,6 +10,8 @@ m = MView(123);
 m.drawFunc.disable(\all);
 m.parent.bounds_(Rect(100, 100, 150, 24)); // crash
 m.parent.bounds_(m.parent.bounds.moveTo(100, 100)); // fine, no resize
+m.value_([1, 2, 3] / 4);
+m.dict.myspec = [0,100].asSpec;
 
 // later:
 
@@ -52,8 +54,9 @@ MView : JITView {
 	doEnter { |uv, mod = 0|
 		// overrides return in keyDownFuncs
 		var newVal = try { dict[\editStr].interpret };
+		var spec;
 		if (newVal.notNil) {
-			var spec = dict[\myspec];
+			spec = dict[\myspec];
 			if (spec.notNil and: { this.checkNum(newVal) > 0}) {
 				newVal = spec.constrain(newVal);
 			} {

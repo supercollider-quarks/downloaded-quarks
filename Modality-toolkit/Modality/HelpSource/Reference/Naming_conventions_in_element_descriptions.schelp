@@ -1,0 +1,196 @@
+title:: Naming conventions in element descriptions
+summary:: How to name entries in the single element descriptions in MKtl desc files.
+categories:: Libraries>Modality
+related:: Overviews/Modality, Classes/MKtl, Tutorials/How_to_create_a_description_file
+
+note::
+This document lists conventions to describe link::Classes/MKtlElement::s in link::Overviews/Modality:: description files.
+A more general introduction to description files can be found in link::Tutorials/How_to_create_a_description_file::.
+::
+
+
+
+A single element description is a dictionary of type link::Classes/Event::. It (or the shared properties of its group) should contain these keys:
+
+
+
+section:: generic keys
+
+subsection:: elementType
+
+User-readable name for the physical type of thing. Usually one of the many types in
+
+code::
+MKtlElement.types; // [\button, \slider, \joyAxis, ...]
+::
+
+Example:
+
+code::
+( elementType: \slider )
+::
+
+
+subsection:: ioType
+
+whether and how it is an input and/or output element.
+Usually one of
+
+code::
+MKtl.ioTypes; // [\in, \out, \inout, \collectiveIn, ...];
+// or soon to be:
+	// [\in, \out, \inout, \sharedIn, \sharedOut, \sharedInOut];
+::
+
+Example:
+
+code::
+( ioType: \inout )
+::
+
+subsection:: spec
+
+a spec for the internal number range of the device; e.g. for midi controls, code::\midiCC:: is code::[0, 127, \lin, 1, 0].asSpec;::
+
+This gives an overview of some predefined specs:
+
+code::
+Spec.specs;
+MKtl.globalSpecs.keys;
+::
+
+note::
+	You can also add specific specs in the desc for the MKtl itself.
+::
+
+Example:
+
+code::
+spec: \midiCC,
+	// e.g. hid buttons send values of 0 or 1:
+spec: \hidBut, // or just spec: \but,
+::
+
+
+subsection::  valueType
+
+Either code::\absolute:: or code::\relative::.
+
+definitionlist::
+## \absolute
+|| this is what most elements send, e.g. fader position, so it is the default valueType.
+## \relative
+|| means the element sends a delta value, i.e. by how much to change whatever it is currently setting. HID mouse devices send deltaX and deltY values, MIDI encoder knobs send how many clicks one has turned, or custom increment/decrement buttons. In this case, the element's value is simply the last delta value, and there is no current absolute value in the element - the object that is being set knows its absolute value.
+The code::RelSet:: class can be used in the element.action to change the current value of the destination object by a delta.
+See link::Classes/RelSet::
+::
+
+Example:
+
+code::
+(
+valueType: \absolute, // this is default and need not be given.
+valueType: \relative
+)
+::
+
+
+subsection:: buttonMode
+
+Determines how buttons behave:
+definitionlist::
+## \toggle
+|| triggers action on release only for toggle buttons
+## \momentary
+|| triggers action on push and release, so value is active only while holding down on link::Classes/MKtlGUI::s. The mode can be changed by clicking on the
+button view and typing 't' or 'm'.
+::
+
+Example:
+
+code::
+( buttonMode: \toggle ); // or
+( buttonMode: \momentary )
+::
+
+
+subsection:: releaseMode and snapbackValue
+
+Many physical elements, e.g. faders and joystick axes have one of several behaviors when they are released.
+code::\releaseMode:: describes which behavior the element has.
+
+definitionlist::
+## \hold
+|| means the value is held where it is (e.g. most faders)
+## \snapback
+|| means it physically returns to a known value,
+which is then given via code::\snapbackValue::.
+::
+
+Example:
+
+code::
+
+( releaseMode: \hold ); // simple fader
+
+// joystick axes with springs that return them to center:
+(
+  releaseMode: \snapback,
+  snapbackValue: 0.5
+)
+::
+
+section:: Protocol-specific keys
+
+subsection:: MIDI device elements
+
+MIDI device elements require these keys:
+
+code::
+(
+	// one of MIDIMKtlDevice.allMsgTypes;
+	midiMsgType: \control,
+
+	// which channel to listen to and/or send on
+	midiChan: 0,
+
+	// for note/cc specific controls like noteOn, noteOff, cc, polyTouch:
+	// which noteNum, ccNum to use
+	midiNum: 60,
+)
+::
+
+subsection:: HID device elements
+
+
+HID device elements require these keys:
+
+code::
+(
+	// which 'usage' and 'usagePage' to listen to
+	'hidUsage': 5,
+	'hidUsagePage': 9,
+
+	// if the HID's firmware is flaky,
+	// one also can define by an elementID
+	'hidElementID': 0,
+)
+::
+
+subsection:: OSC device elements
+
+OSC device elements require these keys:
+
+
+code::
+(
+	// the osc message the element listens to:
+	oscPath: "/minibee/imu",
+
+	// if multiple elements use the same message name,
+	// address this one via argTemplate:
+	argTemplate: [ 1, 2 ]
+);
+::
+
+code::\argTemplate:: is further described in link::Tutorials/How_to_create_a_description_file_for_OSC::.

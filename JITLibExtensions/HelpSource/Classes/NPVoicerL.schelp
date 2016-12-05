@@ -1,6 +1,6 @@
 TITLE:: NPVoicerL
 summary:: a voicer with stealing
-categories:: Libraries/JITLib
+categories::Live Coding
 related:: Classes/NPVoicer, Classes/Ndef
 
 DESCRIPTION::
@@ -81,9 +81,9 @@ g.play;                    // play it
 
 
        // TEST SUSTAIN PEDAL:
-       // sustain pedal holds all keys that were held, 
+       // sustain pedal holds all keys that were held,
        // and new keys that are plyed while sustain is on.
-       
+
 g.put(48, [\freq, 48.midicps]);
 g.put(51, [\freq, 51.midicps]);
 g.sustain (true);

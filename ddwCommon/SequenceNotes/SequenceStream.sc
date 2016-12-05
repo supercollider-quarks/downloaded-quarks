@@ -85,13 +85,15 @@ SequenceNote : AbstractFunction {
 
 	gate_ { |gate|
 		var	index;
-		args.isNil.if({ args = gate }, {
+		if(args.isArray.not) {
+			args = gate
+		} {
 			(index = args.indexOf(\gate)).notNil.if({
 				args[index+1] = gate;
 			}, {
 				args = args ++ [\gate, gate];
 			});
-		});
+		};
 	}
 
 	// maybe make this a dictionary sometime

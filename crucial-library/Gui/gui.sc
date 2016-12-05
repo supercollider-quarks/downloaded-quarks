@@ -8,21 +8,21 @@
 	}
 
 	topGui { arg ... args;
-		^this.guiClass.new(this).performList(\topGui,args);
+		^this.guiClass.new(this).performList(\topGui, args);
 	}
 
 	smallGui { arg  ... args;
 		var class;
 		class = this.guiClass;
-		if(class.findMethod(\smallGui).notNil,{
-			^this.guiClass.new(this).performList(\smallGui,args);
+		if(class.findMethod(\smallGui).notNil, {
+			^this.guiClass.new(this).performList(\smallGui, args);
 		});
-		while ({ class = class.superclass; class !== Object },{
-			if(class.findMethod(\smallGui).notNil,{
-				^this.guiClass.new(this).performList(\smallGui,args);
+		while ({ class = class.superclass; class !== Object }, {
+			if(class.findMethod(\smallGui).notNil, {
+				^this.guiClass.new(this).performList(\smallGui, args);
 			});
 		});
-		^this.guiClass.new(this).performList('gui',args);
+		^this.guiClass.new(this).performList('gui', args);
 	}
 }
 
@@ -32,7 +32,7 @@
 		this.performList(\gui, args);
 	}
 	defer { arg function;
-		if(this.canCallOS,function,{function.defer})
+		if(this.canCallOS, function, {function.defer})
 	}
 }
 
@@ -48,7 +48,7 @@
 		var endval = patternpairs.size-1;
 		forBy (0, endval, 2) { arg i;
 			f.startRow;
-			ArgNameLabel(patternpairs[i],f);
+			ArgNameLabel(patternpairs[i], f);
 			patternpairs[i+1].gui(f);
 		};
 	}
@@ -74,9 +74,9 @@
 + Dictionary {
 	//guiClass { ^DictionaryGui }
 	guiBody { arg layout;
-		this.keysValuesDo({ arg k,v,i;
-			CXLabel(layout.startRow,k,minWidth: 100);
-			Tile(v,layout,200);
+		this.keysValuesDo({ arg k, v, i;
+			CXLabel(layout.startRow, k, minWidth: 100);
+			Tile(v, layout, 200);
 		})
 	}
 }
@@ -84,12 +84,12 @@
 + Node {
 //	guiClass { ^NodeGui }
 	guiBody { arg layout;
-		Tile(this.server,layout);
-		Tile(this.group,layout);
-		ActionButton(layout,"trace",{
+		Tile(this.server, layout);
+		Tile(this.group, layout);
+		ActionButton(layout, "trace", {
 			this.trace;
 		});
-		ActionButton(layout,"query",{
+		ActionButton(layout, "query", {
 			this.query;
 		});
 	}
@@ -98,9 +98,8 @@
 + Synth {
 //	guiClass { ^SynthGui }
 	guiBody { arg layout;
-		CXLabel(layout,this.defName);
+		CXLabel(layout, this.defName);
 		super.guiBody(layout);
 	}
 }
 
-	

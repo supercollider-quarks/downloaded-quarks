@@ -60,10 +60,6 @@
     pure { |class| ^class.makePure(this) }
     *pure { |class| ^class.makePure(this) }
 
-    join {
-        ^this >>= { |x| x }
-    }
-
 //Monoid
 	|+| { |b| Object.typeClassError("Monoid").throw }
     //args can be used for hints about the type of the zero
@@ -215,6 +211,12 @@
 	}
 
 	//(1:2) |+| (3:4)
+	//(1:2) |+| (1:4)
+	//(1:T(2,2)) |+| (1:T(4,4))
+	//(1:T([2],[2])) |+| (1:T([4],[4]))
+	//(1:T(Some([2]),None())) |+| (1:T(Some([4]),Some([4])))
+	//(1:Some(T([2],[2]))) |+| (1:Some(T([4],[4])))
+	//(1:Some(T([2],[2]))) |+| (1:None())
 	//[(1:2), (3:4)].mreduce
 	//[(1:2), ()].mreduce
 	*zero{

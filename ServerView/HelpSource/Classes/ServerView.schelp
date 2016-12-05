@@ -1,0 +1,90 @@
+TITLE:: ServerView
+summary:: An improved GUI for server information
+categories:: GUI
+related:: Classes/Server, Classes/Singleton
+
+DESCRIPTION::
+ServerView is a replacement for the standard SuperCollider server gui. It has a cleaner and more compact look, it supports multiple servers, and displays graphs of CPU usage, Synth counts, as well as a scope and input/output levels.
+
+NOTE:: ServerView is built to use the M+ font series: http://mplus-fonts.osdn.jp/mplus-outline-fonts/index-en.html
+
+It will work without these installed, but layout and affordances may not be correct.
+::
+
+SECTION:: Keyboard shortcuts / interaction
+
+TABLE::
+## p || Show node hierarchy window
+## n || Dump all node information to post window (code::s.queryAllNodes(true)::)
+## l || Show level meters window.
+## <space> || Boot server (if not already running)
+## s || Show scope window
+## f || Show frequency scope window
+## d || Enable / disable dumping of OSC messages
+## m || Mute server volume
+## 0 || Reset server volume to 0dB
+::
+
+Horizontal / vertical mouse wheel or scroll actions over the scope will zoom horizontally and vertically.
+
+Clicking graph widgets will reset their bounds.
+
+Clicking the server name will boot / kill the server.
+
+
+SECTION:: Adding widgets.
+
+ServerView is populated by widgets that must be subclasses of link::Classes/ServerWidgetBase::. To add a new widget type to the ServerView:
+
+1. Create a subclass of link::Classes/ServerWidgetBase::. It should not implement a constructor, and must implement a code::view:: method that returns a valid link::Classes/View::.
+
+2. Add the class to link::#*widgets:: in your startup file, or any time before a ServerView is created.
+
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new ServerView
+
+ARGUMENT:: key
+A link::Classes/Symbol:: or other IdentityDictionary-appropriate object used to identify the ServerView. See link::Singleton#-new:: for behavior. Unless you need multiple ServerView's, no argument is required.
+
+METHOD:: widgets
+
+ARGUMENT:: widgetlist
+A list of subclasses of ServerWidgetBase to be displayed in the ServerView. By default, it contains ServerStatusWidget, VolumeWidget, ScopeWidget. Set this in your startup file to enable alternative configurations of widgets.
+
+INSTANCEMETHODS::
+
+METHOD:: close
+Close the view;
+
+COPYMETHOD:: View -onClose
+
+METHOD:: front
+Bring ServerView to front. If this ServerView has not been created yet, create it.
+
+METHOD:: registerKeyAction
+Add a keyboard action to the ServerView.
+
+ARGUMENT:: key
+A link::Classes/Char:: representing an ascii key.
+
+ARGUMENT:: action
+A function to execute when key is detected.
+
+
+EXAMPLES::
+
+ServerView works as a singleton, so the default constructor will always refer to the same object.
+code::
+
+ServerView().front;
+
+ServerView().close;
+::
+
+
+
+
+

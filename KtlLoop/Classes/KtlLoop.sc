@@ -70,7 +70,7 @@ KtlLoop : EventLoop {
 
 		currState.putAll(parEvent);
 		parEvent.keysValuesDo { |par, val|
-			object.setu(ktlMap[par], val);
+			object.setUni(ktlMap[par], val);
 		}
 	}
 

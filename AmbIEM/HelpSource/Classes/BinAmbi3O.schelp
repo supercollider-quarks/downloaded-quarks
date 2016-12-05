@@ -1,0 +1,56 @@
+TITLE:: BinAmbi3O
+summary:: Direct decoding of Ambisonic signals to binaural signals
+categories:: Libraries>AmbIEM, UGens>Multichannel>Ambisonics
+related:: Overviews/AmbIEM
+
+DESCRIPTION::
+This class allows direct decoding of Ambisonic signals to binaural signals. It assumes symmetric virtual loudspeaker setups and exploits this symmetry to reduce the number of needed Convolutions. It needs about half the CPU than a Decoder + Kemar (see PanAmbi3O.help.rtf). This approach was developed by T. Musil, A. Sontacchi and others at the IEM in Graz.
+
+
+CLASSMETHODS::
+
+METHOD:: getSetup
+
+ARGUMENT:: setup
+
+
+METHOD:: bin
+
+
+METHOD:: order
+
+
+METHOD:: getPositions
+
+ARGUMENT:: setup
+
+
+METHOD:: initClass
+
+
+
+INSTANCEMETHODS::
+
+
+EXAMPLES::
+
+code::
+// a ProxySpace example
+p = ProxySpace.push;
+
+BinAmbi3O.kemarPath_("KemarHRTF/");
+BinAmbi3O.init('1_4_7_4');
+
+~test = { EnvGen.kr(Env.adsr, Impulse.kr(3)) * PinkNoise.ar(0.8); };
+
+~enc = { PanAmbi3O.ar(~test.ar, MouseX.kr(-pi, pi), MouseY.kr(-pi, pi)) };
+~bin = { BinAmbi3O.ar(~enc.ar) };
+~bin.play
+
+// a second rendering engine for different output chans
+~bin2 = { BinAmbi3O.ar(~enc.ar) };
+~bin2.playN([2, 3]);
+
+ProxyMixer(p);
+p.pop
+::

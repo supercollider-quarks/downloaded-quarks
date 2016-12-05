@@ -1,0 +1,145 @@
+TITLE:: Log
+summary:: A simple logging class.
+categories:: Language
+related:: Classes/Singleton, Classes/LogWindow
+
+DESCRIPTION::
+Log is a simple logging class, enabling both simple setup-free logging and more extensive event-based logging.
+
+NOTE::
+Log is a link::Classes/Singleton::, so the common way to access global logs is via the Log constructor. Please refer to the Singleton help file, and examples below.
+::
+
+CLASSMETHODS::
+
+METHOD:: logErrors
+Enable/disable logging of caught Exceptions.
+
+ARGUMENT:: shouldLog
+A link::Classes/Boolean::.
+
+NOTE::
+This creates a root level exception handler to allow logging of all exceptions. This will handle most but emphasis::NOT:: all exceptions. Also, be aware that this risks throwing during exception handling, which is almost always bad - this should be considered unstable functionality.
+::
+
+METHOD:: critical
+Log a message with a level of "debug". By default, these items are shown.
+
+ARGUMENT:: str
+A link::Classes/String::
+
+ARGUMENT::  ... items
+Arguments to be passed to str.format (see link::Classes/String#-format::)
+
+
+METHOD:: error
+Log a message with a level of "error". By default, these items are shown.
+
+ARGUMENT:: str
+A link::Classes/String::
+
+ARGUMENT::  ... items
+Arguments to be passed to str.format (see link::Classes/String#-format::)
+
+
+METHOD:: warning
+Log a message with a level of "warning". By default, these items are shown.
+
+ARGUMENT:: str
+A link::Classes/String::
+
+ARGUMENT::  ... items
+Arguments to be passed to str.format (see link::Classes/String#-format::)
+
+
+METHOD:: debug
+Log a message with a level of "debug". By default, these items are shown.
+
+ARGUMENT:: str
+A link::Classes/String::
+
+ARGUMENT::  ... items
+Arguments to be passed to str.format (see link::Classes/String#-format::)
+
+
+METHOD:: shouldPost
+A link::Classes/Boolean:: enabling / disabling posting of log events to the post window.
+
+
+METHOD:: level
+A log level. Anything events with this log level or higher will be logged.
+
+ARGUMENT:: inLevel
+A link::Classes/Symbol:: matching an entry in Log.levels (one of \debug, \info, \warning, \error, \critical).
+
+
+METHOD:: info
+Log a message with a level of "info". By default, these items are shown.
+
+ARGUMENT:: str
+A link::Classes/String::
+
+ARGUMENT::  ... items
+Arguments to be passed to str.format (see link::Classes/String#-format::)
+
+
+METHOD:: maxLength
+An link::Classes/Integer:: representing the maximum log events to keep in the history of this log. This is relevent for log views.
+
+METHOD:: formatter
+A link::Classes/Function:: of the form { |item, log| }, where item is a log event and log is the parent link::Classes/Log:: object. Log items are link::Classes/Event:: objects with at least keys for \string (a string representation of the log event), \level (the log level), and \time. This function should return a formatted or serialized string representation of the log event. Generally, this is used to customize the string output of a specific log.
+
+METHOD:: actions
+An link::Classes/IdentitySet:: containing functions to be executed for each new log event. Functions should be of the form: { |item, log| }, where item is a log event and log is the parent link::Classes/Log:: object.
+
+
+EXAMPLES::
+
+code::
+
+Log().info("This is an info message, using the '%' logger.", Log().name);
+Log(\myproject).info("This is an info message, using the '%' logger.", Log().name);
+
+
+// Set the log level.
+(
+Log(\myproject).level = \debug;
+Log(\myproject).debug("This is a debug message, using the '%' logger.", Log().name);
+)
+
+// You can also pass log strings to the Log constructor
+Log(\myproject, "This is another way to log a debug message.", \debug);
+
+
+// Let's show some more extended info in our log string.
+(
+Log(\myproject).formatter = {
+	|item, log|
+	"%: [%.%] %".format(item.time, log.name, item.level, item.string)
+};
+Log(\myproject).warning("A warning message.");
+Log(\myproject).critical("A critical error!");
+)
+
+
+// Let's display our errors in a noticable way.
+(
+~error = StaticText(bounds:400@100).align_(\center).stringColor_(Color.red).front;
+Log(\myproject).actions.add({
+	|item|
+	if (~error.isClosed.not && item.level == \error) {
+		~error.string = item.string; ~error.front;
+	}
+});
+fork({ while {~error.isClosed.not} {
+	~error.stringColor_(Color.black); 0.2.wait;
+	~error.stringColor_(Color.red); 0.2.wait;
+}}, AppClock);
+)
+
+Log(\myproject).error("Something's wrong!");
+Log(\myproject).error("A big error has occurred!");
+Log(\myproject).error("This is really a mess!");
+
+
+::

@@ -1,0 +1,50 @@
+CLASS::AudacityLabels
+summary::Import labels from Audacity
+categories::Files
+
+DESCRIPTION:: The Audacity open source sound editor, supports the marking and naming of soundfile regions (name, start, end), which may overlap with each other and which may be exported in a simple file format. This class imports such files and converts the information into a lookup dictionary of link::Classes/Event::s. If no label name has been given, the label index (an link::Classes/Integer::) is used as a key instead. The events can then be played directly, or used in link::Tutorials/Streams-Patterns-Events4##event patterns:: (see also: link::Classes/LabeledSoundFile::).
+
+To create the labels in Audacity, go to code::Tracks>Add Label At Selection::.
+
+To export them, use: code::File>Export Labels::.
+
+CLASSMETHODS::
+
+METHOD::read
+Create a new instance an read labels into the dictionary
+
+ARGUMENT::labelPath
+Path to the file that contains the label information
+
+INSTANCEMETHODS::
+
+METHOD::at
+
+Access the event for a specific label
+
+ARGUMENT::wort
+
+A symbol or string matching the label (as entered in Audacity).
+
+METHOD::dict
+access the dictionary
+
+METHOD::read
+Reads labels into the dictionary
+
+ARGUMENT::labelPath
+Path to the file that contains the label information
+
+METHOD::parseAndAddLabels
+Given a comma separated list as string, add the corresponding events into the dictionary
+
+ARGUMENT::string
+The string with the label information accordingto the audacity format.
+
+ARGUMENT::labelPath
+(optional) path to the file that contains the label information
+
+METHOD::clear
+Empty the dictionary
+
+

@@ -1,7 +1,7 @@
 TITLE:: KeyPlayer
 summary:: a simple keyboard playing interface
 categories:: Undocumented classes
-related:: Classes/KeyPlayerGui, Classes/KeyPlayerRec, Classes/KeyChain, Classes/KtlLoop
+related:: Classes/KeyPlayerGui, Classes/KeyChain, Classes/KeyLoop
 
 
 
@@ -122,7 +122,7 @@ ARGUMENT:: char
 the char for which to put the action
 
 ARGUMENT:: func
-the action
+the action. Is called with arguments code::func.value(char, modifiers, unicode, keycode)::
 
 ARGUMENT:: both
 flag whether to distinguish upper/lower or to respond to both.
@@ -161,10 +161,10 @@ METHOD:: isUp, isDown
 check wether a char is currently down (pressed) or not.
 
 METHOD:: makeRec
-make an instance of KeyPlayerRec for the KeyPlayer
+make an instance of KeyLoop for the KeyPlayer
 
 METHOD:: rec
-get and set the KeyPlayerRec for the KeyPlayer
+get the KeyLoop for the KeyPlayer
 
 METHOD:: saveDoc
 post current actions as code into a Document.

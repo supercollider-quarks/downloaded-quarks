@@ -1,6 +1,7 @@
 ! dwarf17marveq.scl
+!
 Semimarvelous dwarf: equal beating dwarf(<17 27 40|)
-17
+ 17
 !
 70.247930173690388400
 115.13195688812420070
@@ -18,6 +19,5 @@ Semimarvelous dwarf: equal beating dwarf(<17 27 40|)
 955.45720258552538090
 1000.3412292999591932
 1084.8680431118757993
-1200.0000000000000000
+2/1
 ! eight tetrads/pentads, representible by [[0, -1, 0], [0, -1, 1], ! [1, -1, 1], [1, -1, 2], [0, 0, 2], [0, -1, -2], [0, 0, 1], [0, -1, -1]]
-

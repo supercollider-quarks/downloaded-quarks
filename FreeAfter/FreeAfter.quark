@@ -1,0 +1,17 @@
+(
+          name: "FreeAfter",
+       summary: "A quark to facilitate calling of .free or .close on an object after another object has completed or gone away.
+",
+        author: "Scott Carver",
+     copyright: "2016",
+       license: "MIT",
+       version: "1.0.0",
+        schelp: "FreeAfter overview",
+          test: "",
+           url: "https://github.com/scztt/FreeAfter.quark",
+  dependencies: [
+
+                ],
+  isCompatible: true ,
+         since: ""
+)

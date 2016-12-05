@@ -3,15 +3,15 @@
 AbstractConstraint {
 
 	not {	^Not(this)	}
-	or { arg constraint;	^Any([this,constraint])	}
-	and { arg constraint; ^Every([this,constraint]) }
+	or { arg constraint;	^Any([this, constraint])	}
+	and { arg constraint; ^Every([this, constraint]) }
 	xor { arg constraint; ^Xor([this.constraint]) }
 
 	reject { arg constraint;
-		^Every([this,Not(constraint)])
+		^Every([this, Not(constraint)])
 	}
 	select { arg constraint;
-		^Every([this,constraint])
+		^Every([this, constraint])
 	}
 	reset {}
 
@@ -55,7 +55,7 @@ Every : AbstractConstraint {
 	value { arg obj;
 		//list.any({ arg c; c.value(obj).not }).not
 		list.do({ arg c;
-			if(c.value(obj).not,{ ^false })
+			if(c.value(obj).not, { ^false })
 		});
 		^true
 	}
@@ -70,7 +70,7 @@ Any : Every {
 
 	value { arg obj;
 		list.do({ arg c;
-			if(c.value(obj),{ ^true })
+			if(c.value(obj), { ^true })
 		});
 		^false
 	}
@@ -80,9 +80,9 @@ Any : Every {
 
 Xor : AbstractConstraint { // both are always evaluated
 
-	var <>a,<>b;
+	var <>a, <>b;
 
-	*new { arg a,b;
+	*new { arg a, b;
 		^super.new.a_(a).b_(b)
 	}
 
@@ -121,9 +121,9 @@ SeenBefore : AbstractConstraint {
 	}
 
 	value { arg path;
-		if(history.includes(path),{
+		if(history.includes(path), {
 			^true
-		},{
+		}, {
 			history=history.add(path);
 			^false
 		})
@@ -135,7 +135,7 @@ SeenBefore : AbstractConstraint {
 
 CountLimit : SeenBefore {
 
-	var <>count=0,<>limit;
+	var <>count=0, <>limit;
 
 	*new { arg limit;
 		^super.new.limit_(limit)
@@ -156,7 +156,7 @@ CountLimit : SeenBefore {
 // LimitCount(10)
 /*
 
-	PreviousValues({arg obj,prev;
+	PreviousValues({arg obj, prev;
 			obj.round(0.1) != prev.round(0.1) // none is within 0.1 of a previous value
 	});
 

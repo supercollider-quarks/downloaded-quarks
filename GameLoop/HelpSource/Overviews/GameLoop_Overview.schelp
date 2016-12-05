@@ -31,11 +31,7 @@ to your startup file and place the Kemar folder in the Application Support direc
 
 -------------------------------------------------------------------------------------------------------------------------------------------------
 
-strong::DEVELOPMENT STATUS:::
-LIST::
-## First version. Not tested beyond simple examples.
-## Possibility of changes in the interface of the classes.
-::
+strong::v0.1.4:::
 strong::Contributions, Issues, Feature Requests:::
 link::https://github.com/dathinaios/gameloop##github.com/dathinaios/gameloop::
 

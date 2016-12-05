@@ -1,0 +1,48 @@
+TITLE:: ArduinoQuaternion
+summary:: A Serial parser to read in Quaternions and output Euler coordinates.
+categories:: Control>Serial
+related:: Classes/Arduino, Classes/SerialPort
+
+DESCRIPTION::
+A Serial parser to read in Quaternions and output Euler coordinates. Useful for making use of head-tracking data.
+
+
+INSTANCEMETHODS::
+
+METHOD:: send
+Send a message to the serial port. A newline string code:: "\n":: is appended to the message.
+
+ARGUMENT:: aString
+
+METHOD:: free
+Stop the parsing thread and free the serial port.
+
+METHOD:: setHome
+Zero out the coordinates of the input signal so set a relative home position.
+
+METHOD:: clearHome
+Clear the relative home position to let the input position through unfiltered.
+
+EXAMPLES::
+
+code::
+SerialPort.listDevices
+
+a = ArduinoQuaternion( "/dev/tty.AdafruitEZ-Link416c-SPP", 38400)
+
+// set the action to be performed with every new
+// reading of the sensor. yaw, pitch, and roll are
+// passed into your action function
+a.action = { |y,p,r|
+	[ y,p,r ].raddeg.postln
+};
+
+a.setHome		// reset home if the position is drifting
+a.clearHome
+
+// post yaw pitch and roll from within parser for debugging
+a.parser.postYPR = true
+a.parser.postYPR = false
+
+a.close
+::

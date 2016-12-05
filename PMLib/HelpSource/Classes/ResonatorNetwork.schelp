@@ -1,0 +1,587 @@
+TITLE:: ResonatorNetwork
+SUMMARY:: creates a network of inter-connected one-dimensional and two-dimensional resonator objects
+CATEGORIES:: Physical Modelling, Sound Synthesis
+RELATED:: Classes/Resonator1D, Classes/Resonator2D
+
+DESCRIPTION::
+CODE::ResonatorNetwork:: allows one to assemble a system of inter-connected resonators in the form of strings, bars, membranes and plates. Once a network has been specified, its modal data can be calculated, which in turn may be used to simulate the resonator network in real time. Note that the calculation of all modal data is an offline procedure and is done behind the scenes in the Python programming language with the help of the NumPy and SciPy packages. This calculation stage may take a significant amount of time, dependending on the complexity of the resonator network.
+
+WARNING::This class has only been tested to work on OSX. Although it may work prefectly well on other platforms provided that a suitable version of Python 2.7.x and the packages NumPy and SciPy have been installed, no guarantees are given. The default full path to the Python executable is set as SOFT::"/System/Library/Frameworks/Python.framework/Versions/Current/bin/python"::. This is tailored to the OSX platform and hence, would need to be adapted in case one would like to use a Python executable living at another location or if you are on a different platform. Note that if a full path to a python executable is not properly specified, CODE::ResonatorNetwork:: will be unable to calculate any modal data and hence, an error will be thrown.
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a system of inter-connected objects according to the specification of the arguments.
+
+ARGUMENT:: resonators
+An LINK::Classes/Array:: containing instances of LINK::Classes/Resonator1D:: and LINK::Classes/Resonator2D:: that form the basic building blocks of the resonator network.
+
+ARGUMENT:: connPointMatrix
+An LINK::Classes/Array2D:: containing CODE::m:: rows and CODE::n:: columns, where CODE::m:: needs to be equal to the number of items in CODE::resonators:: and CODE::n:: is equal to the total number of object inter-connections. Each column of CODE::connPointMatrix:: should only contain two nonzero entrees, where the first entree denotes the relative point (0 - 1) of inter-connection as seen from the first object and the second entree denotes the relative point of inter-connection as seen from the second object involved in the inter-connection. Note that a value of 0 is not considered to denote a connection point. If one requires to connect one of the objects at relative position 0, one can simply enter a very small, but nonzero value instead (e.g. 0.001).
+
+ARGUMENT:: massMatrix
+An LINK::Classes/Array2D:: containing CODE::m:: rows and CODE::n:: columns, where CODE::m:: needs to be equal to the number of items in CODE::resonators:: and CODE::n:: is equal to the total number of object inter-connections. As such the shape of CODE::massMatrix:: is equal to the shape of CODE::resonators::. Each column of CODE::massMatrix:: should only contain two nonzero entrees, where the first entree denotes the mass of the first object and the second entree denotes the mass of the second object involved in the inter-connection. Note that the quantity which matters only in the end is the mass ratio of the two objects and hence the interpretation of the individual entree values is arbitrary.
+
+ARGUMENT:: excPointMatrix
+An LINK::Classes/Array2D:: containing CODE::m:: rows and CODE::n:: columns, where CODE::m:: needs to be equal to the number of items in CODE::resonators:: and CODE::n:: is equal to the number of distinct excitations to be executed. Note that it is possible to excite multiple objects making up the complete system at the same time by having more than one nonzero entrees in a column.
+
+ARGUMENT:: readoutPointMatrix
+An LINK::Classes/Array2D:: containing CODE::m:: rows and CODE::n:: columns, where CODE::m:: needs to be equal to the number of items in CODE::resonators:: and CODE::n:: is equal to the number of distinct readouts to be executed. Note that is possible to pick up the sum of the vibrational response of multiple objects making up the complete system by having more than one nonzero entrees in a column.
+
+returns:: An instance of CODE::ResonatorNetwork:: with the given objects, mass matrix, matrices describing the positions of object inter-connection and matrices for the excitation and readout points of the resulting system as instance variables.
+
+METHOD:: pythonPath
+Class variable which points to a valid executable version of Python 2.7.x. Set this to a different path if necessary (see below).
+
+ARGUMENT:: value
+A LINK::Classes/String:: denoting the location of a Python executable. It is essential to point this to a valid executable path, otherwise the instance method CODE::calcModes:: will fail to compute any modal data. The default path is set to the location of the default currently used Python version by the OSX operating system, which for version 10.11.5 is equal to SOFT::"/System/Library/Frameworks/Python.framework/Versions/Current/bin/python"::.
+
+returns:: A LINK::Classes/String:: which points to the path denoting the current location of Python.
+
+INSTANCEMETHODS::
+
+PRIVATE:: connPointMatrix
+PRIVATE:: excPointMatrix
+PRIVATE:: massMatrix
+PRIVATE:: resonators
+PRIVATE:: readoutPointMatrix
+PRIVATE:: prCheckMatrixDimensions
+PRIVATE:: prParseArgsAsJSON
+PRIVATE:: prParseModalData
+
+METHOD:: calcModalData
+Calculate the modal data associated with the system of inter-connected objects.
+
+NOTE::
+The purpose of the arguments is to be able to obtain more efficient simulations by providing the user some control over deciding which modes should be included in the simulation and which modes can be discarded. If one is unsure about what to set these arguments to, it is adviced to just leave them at their default values.
+::
+
+ARGUMENT:: minFreq
+Modes which fall below CODE::minFreq:: will be discarded.
+
+ARGUMENT:: maxFreq
+Modes which are higher than CODE::maxFreq:: will be discarded.
+
+ARGUMENT:: minT60
+Modes with a duration below CODE::minT60:: will be discarded.
+
+ARGUMENT:: gain
+An optional multiplicative factor to be applied to the numerator coefficients of the second order biquad sections. This may be used to boost the response of the filter by a specified amount of dB's. if one is unsure about how to use this parameter, it is adviced to leave it as it is. If it turns out the response of the resonator is very low in amplitude, one can always increase the gain of the second order section ugens during the simulation (this will have exactly the same effect, although will be slightly less efficient).
+
+ARGUMENT:: pathname
+A LINK::Classes/String:: denoting a valid path (must include the file name and json extension) where the json representation of the calculated modal data will be saved.
+
+ARGUMENT:: incl
+A four parameter LINK::Classes/String:: indicating which representations of the modal data should be saved to disk in json format. Every parameter can take on one of two values: CODE::"y":: or CODE::"n"::, signifying "yes" or "no" respectively. The first slot corresponds to the transfer function matrix (i.e. a dictionary of second order filter section coefficients), the second slot corresponds to the eigenvalues in rectangular coordinates, the third slot corresponds to the eigenvalues in polar coordinates, and the fourth and final slot corresponds to the eigenvectors.
+
+ARGUMENT:: async
+A LINK::Classes/Boolean:: denoting whether the calculation of the modal data should be done synchronously or asynchronously.
+
+DISCUSSION::
+The calculation of the modal data roughly involves the following six steps:
+NUMBEREDLIST::
+## The system described by an instance of CODE::ResonatorNetwork:: will be parsed into a json representation written to disk temporarily.
+## A Python script will read in this json file and it into a finite difference representation of all individual resonators making up our resonator network.
+## The separate finite difference representations of the individual resonator objects will be collected into a single, state transition block matrix taking into account all resonator object inter-connections.
+## The state transition block matrix will be diagonalised in order to obtain all eigenvalues and eigenvectors associated with our resonator network.
+## Depending on the include flags specified by the user, different representations of the modal data will be calculated and saved to a json file.
+## This json data will be read back into SuperCollider. After parsing, the result will be stored in the CODE::modalData:: instance variable.
+::
+
+METHOD:: loadModalData
+Load the modal data associated with a previously calculated system of inter-connected objects.
+
+ARGUMENT:: pathname
+A LINK::Classes/String:: indicating the location of a json file which contains the modal data associated with the system  of inter-connected resonator objects represented by this instance of CODE::ResonatorNetwork::.
+
+METHOD:: modalData
+An instance of LINK::Classes/Dictionary:: which will hold all modal data associated with the current system of inter-connected resonator objects. This instance variable will only be defined after the instance methods CODE::calcModalData:: or CODE::loadModalData:: have been called successfully on the current instance of CODE::ResonatorNetwork::.
+
+EXAMPLES::
+Some examples of how to design and simulate systems of inter-connected objects will follow with the intent to give a hands on demonstration of how CODE::ResonatorNetwork:: can be of practical use.
+
+CODE::
+/*
+ * EXAMPLE 1:
+ * Create a system of two inter-connected strings. The strings are fixed at their left end points and
+ * coupled together at their right end points.
+ */
+
+/*
+***********************
+*PRE-CALCULATION STAGE*
+***********************
+*/
+(
+var objs,massMatrix,connPointMatrix,excPointMatrix,readoutPointMatrix;
+
+// the virtual object descriptions making up our system
+objs = [
+	Resonator1D(100,0.3,0.698698,0.001515,\leftClampedRightFree),
+	Resonator1D(200,0.1,0.698698,0.001515,\leftClampedRightFree)
+];
+
+// note that the mass ratio is 1, meaning that an equal amount of energy will flow from string 1 to string 2
+// as from string 2 to string 1 in the ideal lossless case
+massMatrix = Array2D.fromArray(2,1,[
+	1,
+	1
+]);
+
+// string are connected at relative position 1: i.e. their right end points
+connPointMatrix = Array2D.fromArray(2,1,[
+	1,
+	1
+]);
+
+// excite string 1 and 2 separately and both together at a random relative position along their lengths
+excPointMatrix = Array2D.fromArray(2,3,[
+	1.0.rand, 0,        1.0.rand,
+	0,        1.0.rand, 1.0.rand
+]);
+
+// listen to string 1 and 2 separately and both together at a random relative position along their lengths
+readoutPointMatrix = Array2D.fromArray(2,6,[
+	1.0.rand, 1.0.rand, 0,        0,        1.0.rand, 1.0.rand,
+	0,        0,        1.0.rand, 1.0.rand, 1.0.rand, 1.0.rand
+]);
+
+// construct our 2-string system and calculate its modal data (this can take a second or two
+// depending on the available computing power)
+~network = ResonatorNetwork(objs,connPointMatrix,massMatrix,excPointMatrix,readoutPointMatrix).calcModalData(gain:40.dbamp,maxFreq:16000,incl:"yynn")
+)
+
+// post all normal mode frequencies and t60 decay times of our resonator network
+(
+var sr = 44100 ? s.sampleRate;
+[~network.modalData["eigenvaluesPolar"]["angle"]*sr/2pi,6.91/((1.0 - ~network.modalData["eigenvaluesPolar"]["radius"])*sr)].flop do: _.postln;
+)
+
+/*
+******************
+*SIMULATION STAGE*
+******************
+*/
+(
+s.waitForBoot({
+	// a synth def template for simulating the string
+	~makeResonatorSynthDef = { arg inA1,inA2,inB1,inB2,synthDefName;
+		inA1.postln;
+		SynthDef(synthDefName,{ arg inBus,outBus = 0,inputGain = 1,outputGain = 1,dryWet = 1;
+			var input,output,a1,a2,b1,b2;
+
+			a1 = \a1.ir(inA1);
+			a2 = \a2.ir(inA2);
+			b1 = \b1.ir(inB1);
+			b2 = \b2.ir(inB2);
+			input = In.ar(inBus)*inputGain;
+			output = SOS.ar(input,0,a1,a2,b1,b2).sum*outputGain;
+
+			Out.ar(outBus,(1 - dryWet)*input + (dryWet*output))
+		}).add
+	};
+
+	// very simple strike-type excitation synth def
+	SynthDef(\strike,{ arg outBus = 0,lpFreq = 12000,strikeFreq = 1;
+		var signal = LPF.ar(Impulse.ar(strikeFreq),lpFreq);
+		Out.ar(outBus,signal)
+	}).add
+})
+)
+
+/*
+ * Every excitation / readout point combination is represented by its own transfer function,
+ * and hence needs to be simulated explicitly.  The following example will demonstrate two
+ * different ways of simulating the output of our system as a stereo signal. Method 1 may be
+ * seen as more physically correct, but uses roughly twice the number of modes of method 2
+ */
+
+// method 1: simulate system output by using two different transfer functions for the left and
+// right channels
+
+(
+// simulate first string in response to exciting it and listening to it at a random relative
+// location (use for left channel)
+~makeResonatorSynthDef.(
+	~network.modalData["biquadCoefs"]["a1"][0][0],
+	~network.modalData["biquadCoefs"]["a2"][0][0],
+	~network.modalData["biquadCoefs"]["b1"].neg,
+	~network.modalData["biquadCoefs"]["b2"].neg,
+	\string1_left
+);
+
+// simulate first string in response to exciting it at the same location, but listening to it
+// at another random relative location (use for right channel)
+~makeResonatorSynthDef.(
+	~network.modalData["biquadCoefs"]["a1"][1][0],
+	~network.modalData["biquadCoefs"]["a2"][1][0],
+	~network.modalData["biquadCoefs"]["b1"].neg,
+	~network.modalData["biquadCoefs"]["b2"].neg,
+	\string1_right
+)
+)
+
+(
+s.makeBundle(nil,{
+	x = Synth(\string1_left,[\inBus,10,\outBus,0,\outputGain,5],1,\addToTail);
+	y = Synth(\string1_right,[\inBus,10,\outBus,1,\outputGain,5],1,\addToTail);
+	z = Synth(\strike,[\outBus,10,\lpFreq,8000],1,\addToHead)
+})
+)
+
+x.free; y.free; z.free
+
+// method 2: simulate system output by using the same transfer function for the left and right
+// channels by spreading the individual second order sections (i.e. modes) equally over them
+
+(
+var evenInd,oddInd;
+
+// simulate first string in response to exciting it and listening to it at a random relative
+// location (use for both channels)
+evenInd = (0,2..~network.modalData["biquadCoefs"]["b1"].lastIndex);
+oddInd = (1,3..~network.modalData["biquadCoefs"]["b1"].lastIndex);
+~makeResonatorSynthDef.(
+	~network.modalData["biquadCoefs"]["a1"][0][0]|@|evenInd,
+	~network.modalData["biquadCoefs"]["a2"][0][0]|@|evenInd,
+	(~network.modalData["biquadCoefs"]["b1"]|@|evenInd).neg,
+	(~network.modalData["biquadCoefs"]["b2"]|@|evenInd).neg,
+	\string1_left2
+);
+
+~makeResonatorSynthDef.(
+	~network.modalData["biquadCoefs"]["a1"][0][0]|@|oddInd,
+	~network.modalData["biquadCoefs"]["a2"][0][0]|@|oddInd,
+	(~network.modalData["biquadCoefs"]["b1"]|@|oddInd).neg,
+	(~network.modalData["biquadCoefs"]["b2"]|@|oddInd).neg,
+	\string1_right2
+)
+)
+
+(
+s.makeBundle(nil,{
+	x = Synth(\string1_left2,[\inBus,10,\outBus,0,\outputGain,10],1,\addToTail);
+	y = Synth(\string1_right2,[\inBus,10,\outBus,1,\outputGain,10],1,\addToTail);
+	z = Synth(\strike,[\outBus,10,\lpFreq,8000],1,\addToHead)
+})
+)
+
+x.free; y.free; z.free
+
+// simulate system output by using the two transfer functions which correspond to exciting
+// the first string at the same random realtive location as before, but now listen to the
+// response of the second string instead
+
+(
+// simulate second string in response to exciting the first string by listening to it at a random relative
+// location (use for left channel)
+~makeResonatorSynthDef.(
+	~network.modalData["biquadCoefs"]["a1"][2][0],
+	~network.modalData["biquadCoefs"]["a2"][2][0],
+	~network.modalData["biquadCoefs"]["b1"].neg,
+	~network.modalData["biquadCoefs"]["b2"].neg,
+	\string2_left
+);
+
+// simulate second string in response to exciting the first string at the same location,
+// but listening to it at another random relative location (use for right channel)
+~makeResonatorSynthDef.(
+	~network.modalData["biquadCoefs"]["a1"][3][0],
+	~network.modalData["biquadCoefs"]["a2"][3][0],
+	~network.modalData["biquadCoefs"]["b1"].neg,
+	~network.modalData["biquadCoefs"]["b2"].neg,
+	\string2_right
+)
+)
+
+(
+s.makeBundle(nil,{
+	x = Synth(\string2_left,[\inBus,10,\outBus,0,\outputGain,10],1,\addToTail);
+	y = Synth(\string2_right,[\inBus,10,\outBus,1,\outputGain,10],1,\addToTail);
+	z = Synth(\strike,[\outBus,10,\lpFreq,8000],1,\addToHead)
+})
+)
+
+x.free; y.free; z.free
+
+// simulate system output by using the two transfer functions which correspond to exciting the
+// second string at a random realtive location, but now listen to the response of the first string instead
+
+(
+// simulate first string in response to exciting the second string by listening to it at a random relative
+// location (use for left channel)
+~makeResonatorSynthDef.(
+	~network.modalData["biquadCoefs"]["a1"][0][1],
+	~network.modalData["biquadCoefs"]["a2"][0][1],
+	~network.modalData["biquadCoefs"]["b1"].neg,
+	~network.modalData["biquadCoefs"]["b2"].neg,
+	\string1_left3
+);
+
+// simulate first string in response to exciting the second string at the same location,
+// but listening to it at another random relative location (use for right channel)
+~makeResonatorSynthDef.(
+	~network.modalData["biquadCoefs"]["a1"][1][1],
+	~network.modalData["biquadCoefs"]["a2"][1][1],
+	~network.modalData["biquadCoefs"]["b1"].neg,
+	~network.modalData["biquadCoefs"]["b2"].neg,
+	\string1_right3
+)
+)
+
+(
+s.makeBundle(nil,{
+	x = Synth(\string1_left3,[\inBus,10,\outBus,0,\outputGain,10],1,\addToTail);
+	y = Synth(\string1_right3,[\inBus,10,\outBus,1,\outputGain,10],1,\addToTail);
+	z = Synth(\strike,[\outBus,10,\lpFreq,8000],1,\addToHead)
+})
+)
+
+x.free; y.free; z.free
+
+// simulate system output by using the two transfer functions which correspond to exciting both
+// strings at a random realtive location, and listen to the response of both strings
+
+(
+// simulate both strings in response to exciting both strings at a random relative location,
+// and listen to both of them at another random relative location (use for left channel)
+~makeResonatorSynthDef.(
+	~network.modalData["biquadCoefs"]["a1"][4][2],
+	~network.modalData["biquadCoefs"]["a2"][4][2],
+	~network.modalData["biquadCoefs"]["b1"].neg,
+	~network.modalData["biquadCoefs"]["b2"].neg,
+	\string12_left
+);
+
+// simulate both strings in response to exciting both strings at a random relative location,
+// and listen to both of them at another random relative location (use for right channel)
+~makeResonatorSynthDef.(
+	~network.modalData["biquadCoefs"]["a1"][5][2],
+	~network.modalData["biquadCoefs"]["a2"][5][2],
+	~network.modalData["biquadCoefs"]["b1"].neg,
+	~network.modalData["biquadCoefs"]["b2"].neg,
+	\string12_right
+)
+)
+
+(
+s.makeBundle(nil,{
+	x = Synth(\string12_left,[\inBus,10,\outBus,0,\outputGain,5],1,\addToTail);
+	y = Synth(\string12_right,[\inBus,10,\outBus,1,\outputGain,5],1,\addToTail);
+	z = Synth(\strike,[\outBus,10,\lpFreq,8000],1,\addToHead)
+})
+)
+
+x.free; y.free; z.free
+
+
+
+/*
+ * EXAMPLE 2:
+ * Create a more complicated system of inter-connected objects. Create two plates which are
+ * inter-connected at a random location along their surface through the two end points of a string.
+ */
+
+/*
+***********************
+*PRE-CALCULATION STAGE*
+***********************
+*/
+(
+var objs,massMatrix,connPointMatrix,excPointMatrix,readoutPointMatrix;
+
+// the virtual object descriptions making up our system
+objs = [
+	Resonator2D(0,20,0.61,0.0015,\allSidesClamped,1),
+	Resonator1D(100,0.3,0.698698,0.001515,\bothClamped),
+	Resonator2D(0,50,0.61,0.0015,\allSidesClamped,1),
+];
+
+// note that the mass ratio of the string to both plates is set as 2, meaning that this should increase the
+// transfer of energy from the string to the plates in response to exciting the string as opposed to using
+// an equal mass ratio
+massMatrix = Array2D.fromArray(3,2,[
+	1, 0,
+	5, 5,
+	0, 1
+]);
+
+// connect plates and strings
+connPointMatrix = Array2D.fromArray(3,2,[
+	{1.0.rand}!2, 0,
+	1.0.rand,     1.0.rand,
+	0,            {1.0.rand}!2
+]);
+
+// excite plate 1, the string and plate 2 at a random relative position
+excPointMatrix = Array2D.fromArray(3,3,[
+	{1.0.rand}!2, 0,        0,
+	0,            1.0.rand, 0,
+	0,            0,        {1.0.rand}!2
+]);
+
+// listen to plate 1, the string and plate 2 at a random relative position
+readoutPointMatrix = Array2D.fromArray(3,6,[
+	{1.0.rand}!2, {1.0.rand}!2, 0,        0,        0,            0,
+	0,            0,            1.0.rand, 1.0.rand, 0,            0,
+	0,            0,            0,        0,        {1.0.rand}!2, {1.0.rand}!2
+]);
+
+// construct our 3-object system and calculate its modal data (this can take a second or two
+// depending on the available computing power)
+~network = ResonatorNetwork(objs,connPointMatrix,massMatrix,excPointMatrix,readoutPointMatrix).calcModalData(minFreq:25,maxFreq:16000,gain:36.dbamp)
+)
+
+/*
+******************
+*SIMULATION STAGE*
+******************
+*/
+(
+// alternative excitation synth def for continuous excitation (adapted from an sctweet by nathaniel virgo)
+SynthDef(\bandNoise,{ arg outBus = 0,amp = 1,freqLo = 50,freqHi = 12000,freqModT = 3e-02,gate = 1,cutoff = 80;
+	var source = PinkNoise.ar;
+	25 do: { source = BBandStop.ar(source,LFDNoise1.kr(freqModT).exprange(freqLo,freqHi),ExpRand(0.5,1.5)) };
+	Out.ar(outBus,HPF.ar(LPF.ar(source,1e4,amp),cutoff))
+}).add
+)
+
+// simulate output of string in response to exciting the string
+(
+~makeResonatorSynthDef.(
+	~network.modalData["biquadCoefs"]["a1"][2][1],
+	~network.modalData["biquadCoefs"]["a2"][2][1],
+	~network.modalData["biquadCoefs"]["b1"].neg,
+	~network.modalData["biquadCoefs"]["b2"].neg,
+	\plate1_left
+);
+
+~makeResonatorSynthDef.(
+	~network.modalData["biquadCoefs"]["a1"][3][1],
+	~network.modalData["biquadCoefs"]["a2"][3][1],
+	~network.modalData["biquadCoefs"]["b1"].neg,
+	~network.modalData["biquadCoefs"]["b2"].neg,
+	\plate1_right
+)
+)
+
+(
+s.makeBundle(nil,{
+	x = Synth(\plate1_left,[\inBus,10,\outBus,0,\outputGain,1],1,\addToTail);
+	y = Synth(\plate1_right,[\inBus,10,\outBus,1,\outputGain,1],1,\addToTail);
+	z = Synth(\bandNoise,[\outBus,10],1,\addToHead)
+})
+)
+
+x.free; y.free; z.free
+::
+The previous examples all made use of SC's native LINK::Classes/SOS:: UGen for the simulation part. Another option is to use the LINK::Classes/SOSBank:: UGen footnote::"https://github.com/michaeldzjap/SOSBank"::. The next example compares both methods.
+
+CODE::
+/*
+ * EXAMPLE 3:
+ * Create a system of two inter-connected strings. The strings are fixed at their left end points and
+ * coupled together at their right end points.
+ */
+
+/*
+***********************
+*PRE-CALCULATION STAGE*
+***********************
+*/
+(
+var objs,massMatrix,connPointMatrix,excPointMatrix,readoutPointMatrix;
+
+objs = [
+    Resonator1D(100,0.3,0.698698,0.001515,\bothClamped),
+    Resonator1D(200,0.1,0.698698,0.001515,\bothClamped)
+];
+
+massMatrix = Array2D.fromArray(2,1,[
+    1,
+    1
+]);
+
+connPointMatrix = Array2D.fromArray(2,1,[
+    0.345,
+    0.678
+]);
+
+
+excPointMatrix = Array2D.fromArray(2,2,[
+    1.0.rand, 0,
+    0,        1.0.rand
+]);
+
+readoutPointMatrix = Array2D.fromArray(2,3,[
+    1.0.rand, 1.0.rand, 0,
+    0,        0,        1.0.rand
+]);
+
+~network = ResonatorNetwork(objs,connPointMatrix,massMatrix,excPointMatrix,readoutPointMatrix).calcModalData(gain:40.dbamp,maxFreq:16000,incl:"ynnn")
+)
+
+// Now let's compare two methods for simulating our system: the first one using SOS, the second one using SOSBank
+
+
+// method 1: SOS
+
+// not so elegant: make 6 dedicated synth defs for simulating each possible excitation/readout point combination
+3 do: { |i|
+	2 do: { |j|
+		~makeResonatorSynthDef.(
+			~network.modalData["biquadCoefs"]["a1"][i][j],
+			~network.modalData["biquadCoefs"]["a2"][i][j],
+			~network.modalData["biquadCoefs"]["b1"].neg,
+			~network.modalData["biquadCoefs"]["b2"].neg,
+			\string_ ++ i ++ \_ ++ j
+		);
+	}
+};
+
+x = Array.newClear(6);
+(
+s.makeBundle(nil,{
+	x[0] = Synth(\string_0_0,[\inBus,10,\outBus,0,\outputGain,5],1,\addToTail);
+	x[1] = Synth(\string_0_1,[\inBus,10,\outBus,1,\outputGain,5],1,\addToTail);
+	x[2] = Synth(\string_1_0,[\inBus,10,\outBus,2,\outputGain,5],1,\addToTail);
+	x[3] = Synth(\string_1_1,[\inBus,10,\outBus,3,\outputGain,5],1,\addToTail);
+	x[4] = Synth(\string_2_0,[\inBus,10,\outBus,4,\outputGain,5],1,\addToTail);
+	x[5] = Synth(\string_2_1,[\inBus,10,\outBus,5,\outputGain,5],1,\addToTail);
+    y = Synth(\strike,[\outBus,10,\lpFreq,8000],1,\addToHead)
+})
+)
+
+x do: _.free; y.free
+
+// method 2: SOSBank
+
+// more elegant (although not very efficient for some reason... lookup overhead due to buffering the coefficients???): store all filter coefficients in buffers and use a single synth def
+(
+s.waitForBoot({
+	SynthDef(\string,{ arg bufnum_a1, bufnum_a2, bufnum_b1, bufnum_b2, inBus,outBus = 0,inputGain = 1,outputGain = 1,dryWet = 1;
+		var input,output;
+
+		input = In.ar(inBus)*inputGain;
+		output = SOSBank.ar(2,3,input,-1,bufnum_a1,bufnum_a2,bufnum_b1,bufnum_b2);
+
+		Out.ar(outBus,(1 - dryWet)*input + (dryWet*output))
+	}).add;
+
+	~a1 = Buffer.loadCollection(s,~network.modalData["biquadCoefs"]["a1"].flat);
+	~a2 = Buffer.loadCollection(s,~network.modalData["biquadCoefs"]["a2"].flat);
+	~b1 = Buffer.loadCollection(s,~network.modalData["biquadCoefs"]["b1"]);
+	~b2 = Buffer.loadCollection(s,~network.modalData["biquadCoefs"]["b2"])
+})
+)
+
+(
+s.makeBundle(nil,{
+	x = Synth(\string,[\inBus,10,\outBus,0,\outputGain,5,\bufnum_a1,~a1.bufnum,\bufnum_a2,~a2.bufnum,\bufnum_b1,~b1.bufnum,\bufnum_b2,~b2.bufnum],1,\addToTail);
+	y = Synth(\strike,[\outBus,10,\lpFreq,8000],1,\addToHead)
+})
+)
+
+x.free; y.free
+::

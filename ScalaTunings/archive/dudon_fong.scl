@@ -1,0 +1,20 @@
+! dudon_fong.scl
+!
+Differentially-coherent Tha• scale, with double seventh note
+ 12
+!
+ 97/88
+ 97/88
+ 107/88
+ 107/88
+ 59/44
+ 65/44
+ 1041/704
+ 287/176
+ 18/11
+ 633/352
+ 639/352
+ 2/1
+! comma choice of the seventh for inversion of the L/s last tones
+! based on Fong fractal algorithm : x^3 - x^2 = 1/8
+! Dudon 1991

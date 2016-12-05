@@ -1,0 +1,66 @@
+TITLE:: StringConverter
+summary:: Converts strings to sc-events (typically into arrays of events)
+categories:: Extensions>Virtual Gamelan
+related:: Classes/KendhanganReader, Classes/BalunganReader, Reference/VGNotationStrings
+
+DESCRIPTION::
+Superclass to convert gamelan-notation strings into events. BalunganReader is the subclass that is used as default currently. KendhanganReader is used for kendhangan (drumming) notation. BasicScoreReader implements a simpler conversion (not needed in VG).
+
+CLASSMETHODS::
+
+METHOD:: current
+returns:: Returns the current score reader
+
+METHOD:: convert
+Convert the string into an array of events. If addScore is true (default), add the score to the proto event (under the key \score) when using the converter to create an attribute for a rule, addScore should be set to false.
+ARGUMENT:: str
+ARGUMENT:: addScore
+returns:: (describe returnvalue here)
+
+METHOD:: makeCurrent
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: use
+Use a score reader without changing the global current reader
+
+ARGUMENT:: function
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: unconvert
+(describe method here)
+
+ARGUMENT:: list
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: error
+(describe method here)
+
+ARGUMENT:: string
+(describe argument here)
+
+ARGUMENT:: index
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+
+INSTANCEMETHODS::
+
+
+EXAMPLES::
+
+code::
+a = StringConverter.convert("33--1=1=");
+a = StringConverter.convert("1'65_3_2");
+// unconvert it back to string
+StringConverter.unconvert(a);
+
+// play the score
+Pseq(a).play;
+::

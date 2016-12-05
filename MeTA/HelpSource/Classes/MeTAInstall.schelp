@@ -1,0 +1,22 @@
+TITLE:: MeTAInstall
+summary:: install a MeTA performance barebone
+categories:: Library>MeTA, Performance Framework
+related:: Classes/MeTA
+
+DESCRIPTION::
+MeTAInstall provides tools to install a structured directory in which you can set up your performance environment.
+
+code::
+MeTAInstall.make(basePath: "/your/path", projectName: "projectName")
+::
+
+CLASSMETHODS::
+
+METHOD:: make
+argument:: basePath
+the path to which to install the barebone directory
+argument:: projectName
+the name of your project and the directory it installs
+
+PRIVATE:: copyProto, getSubDirs
+

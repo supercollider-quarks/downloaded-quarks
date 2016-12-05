@@ -1,0 +1,34 @@
+TITLE:: Spectrum
+summary:: Holds the spectrum of a timbre
+categories:: Tuning>TuningLib
+related:: Classes/DissonanceCurve
+
+DESCRIPTION::
+Spectrum is a class for holding a spectral analysis of a given timbre.
+
+
+CLASSMETHODS::
+
+METHOD:: new
+Create a new Spectrum
+
+ARGUMENT:: freqs
+An Array of Frequencies
+
+ARGUMENT:: amps
+An Array of the Amplitudes of those frequencies
+
+
+
+INSTANCEMETHODS::
+
+
+METHOD:: +
+Add two Spectrums together. This might be a useful way to generate a scale that works with two timbres.
+
+ARGUMENT:: other
+The other Spectrum
+
+returns:: A new spectrum
+
+

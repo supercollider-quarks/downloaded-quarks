@@ -1,122 +1,235 @@
 title:: Modality
-summary:: Toolkit to simplify the creation of personal (electronic) instruments utilising hardware and software controllers of any kind.
+summary:: A toolkit for creating flexible personal electronic instruments using a variety of  controllers.
 categories:: Libraries>Modality, External Control
 related:: Overviews/Modality, Classes/MKtl, Tutorials/ModalityTutorial
 
-Section:: Introduction
+The Modality toolkit simplifies using controllers in SuperCollider. It was created by a team of developers and users of SuperCollider.
 
-Modality is a toolkit created by a team of developers and (advanced) users of SuperCollider.
-
-One of its basic ideas is to simplify the creation of your very personal instruments with SuperCollider, using controllers of many different kinds. To this end, a common code interface, MKtl, is used for connecting  controllers from different sources (and protocols) like HID and MIDI, Serial, OSC, GUI, etc.
-
-A second starting point is that the same physical interfaces (sets of sliders, buttons, motion sensors etc etc) can be used for many different purposes, and a highly modal approach to mapping and on-the-fly remapping can help to make a setup much more flexible, powerful, and interesting to play. For example, when improvising with acoustic musicians, highly modal interfaces allow much faster changes of overall (performing) direction.
-
-http://modality.bek.no/
-
-
-section:: Tutorials and further reads
-
-LIST::
-##link::Tutorials/ModalityTutorial::
-##link::Tutorials/How_to_create_a_description_file::
-##link::Reference/SupportedDevices::
+see link::http://modality.bek.no/::, or in browser:
+code::
+"http://modality.bek.no/".openOS;
 ::
 
-There are tutorial files and examples of common usage cases of MKtl available here:
+section::Features
+list::
+##Modality allows creating highly personal performance instruments with a wide variety of controllers. A common code interface, MKtl, is used to set up controllers from various sources and protocols like HID, MIDI and OSC.
+##With Modality, the same set of physical interfaces (sliders, buttons, motion sensors etc.) can control many different processes. Modality allows a highly modal approach to mapping and on-the-fly remapping to make setups much more flexible, powerful, and interesting to play. For example, when improvising, highly modal interfaces allow much faster changes of overall musical direction.
+##Modality allows quick substitution of controllers for others, whether for experiment (how do the sounds in my setup feel when played with a gaming joystick instead of this faderbox?) or in emergencies (My faderbox broke and my show starts in 30 minutes!).
+##Users can add description files for their own controllers locally and are welcome to contribute them to Modality.
+::
+
+SCDoc
+section:: Tutorials, how-tos, examples
+
+LIST::
+##Begin here (or jump to link::Overviews/Modality#First Steps:: below):
+
+link::Tutorials/ModalityTutorial::
+
+##Supported Devices are:
+
+code::
+"https://modalityteam.github.io/controllers/".openOS;
+// or in SC:
+MKtlDesc.postLoadable;
+MKtlDesc.web;
+::
+
+##Tutorials for special modality features:
+
+link::Tutorials/Creating_Named_Groups::
+
+link::Tutorials/Creating_Custom_Elements_and_Groups::
+
+link::Tutorials/Creating_Presets_for_MKtl_Values::
+
+link::Tutorials/Using_Hardware_Pages::
+
+link::Tutorials/Substituting_MKtls::
+
+link::Tutorials/Coding_for_Modal_Flexibility::
+
+
+link::Classes/CompMKtl:: - Composing an MKtl from several MKtls
+
+link::Classes/PagedMKtl:: - Paging by using multiple MKtls for the same device
+
+##Practical issues:
+
+link::Tutorials/Fix_Missing_hutDirectory_osx::
+
+link::Tutorials/Connecting_generic_devices::
+
+link::Tutorials/Connecting_multiple_identical_devices::
+
+link::Tutorials/Connecting_external_MIDI_devices::
+
+link::Tutorials/Connecting_multiport_MIDI_devices::
+
+link::Tutorials/Connecting_OSC_devices::
+
+
+Find many tutorial files and examples of common use cases of MKtl here:
 link::https://github.com/ModalityTeam/ModalityWorkshop::
 
+Also, some description files have little examples for each device:
+code::
+MKtlDesc.openFolder;
+MKtlDesc.loadDescs.choose.openFile;
 
-SECTION:: Overview
+// generate code to test a device:
+MKtlDesc.loadDescs.choose.openTestCode;
+MKtlDesc("*icontrols*102").openTestCode;
+::
 
-With code::MKtl:: it is possible to assign functionality to controller elements.
+Longer examples for some specific devices are here -
+please contribute examples for your device:
+code::
+(MKtlDesc.defaultFolder.dirname +/+ "DeviceExamples").openOS;
+::
 
-To find your device, evaluate
+::
+
+section:: Advanced Tutorials and further reading
+LIST::
+## Adding your own controller(s) to Modality:
+
+link::Tutorials/How_to_adapt_a_description_file:: - to be written
+
+link::Tutorials/How_to_create_a_description_file_for_MIDI::
+
+link::Tutorials/How_to_create_a_description_file_for_HID::
+
+link::Tutorials/How_to_create_a_description_file_for_OSC::
+::
+
+
+SECTION:: First Steps
+
+This section is intended as a rough and quick overview. For more detailed information, see link::Tutorials/ModalityTutorial::.
+
+In Modality, an code::MKtl:: represents a supported hardware controller, and one assigns functionality to its controller elements. To find your device, evaluate
 code::
 MKtl.find;
 ::
 
-NOTE:: You may have to install drivers before code::MKtl.find:: is able to find your device.::
+NOTE:: You may have to install drivers before code::MKtl.find:: is able to find your device. Some devices may show up in multiple protocols. For example, the code::ICON IControls:: show up as both code::MIDI:: and code::HID::.::
 
-Each code::MKtl:: has elements such as sliders or knobs. It is possible to assign an action to such an element that is evaluated every time the value of that element gets updated.
 
-Below two examples of what you can do with this toolkit. For further explanation, refer to link::Tutorials/ModalityTutorial::.
+Each code::MKtl:: contains code::MKtlElement::s, which represent the hardware elements of the controller, e.g. the sliders or knobs on a faderbox. You can assign actions to these elements and to groups of elements. They will get evaluated every time the value that element is activated.
 
 subsection:: Example NanoKontrol2
 
 code::
-// plug in your NanoKontrol2 and evaluate this line.
-// If there is no such controller connected, it opens a fake gui-based controller for you.
-k = MKtl('nnkn20');
+// plug in a NanoKontrol2 and evaluate this line.
+// ( if you don't have one at hand, do it anyhow :)
+k = MKtl('nk2', "korg-nanokontrol2");
 
-k.gui; // opens a gui representation of the device
+// alternatively, you can evaluate
+MKtl.find(\midi);
+// grab the last line pasted, and change its short name:
+k = MKtl('nk2', "korg-nanokontrol2");
 
-s.boot; // boot the server
+// If no controller is connected, use its gui instead:
+k.gui;
+
+// turn on trace, then move some elements to see that it works
+k.trace;
+k.trace(false);
+
+// the elements (knobs, sliders, buttons) are in hierarchical groups
+k.elementGroup;
+k.postElements;
+
+// elements can be accessed by hierarchical names or indices:
+k.elAt(\kn, 0);
+k.elAt(\kn, \1);
+k.elAt(\tr, \play);
+k.elAt(\bt, 1, 4);
+k.elAt(\bt, \M, \5);
+
+
+// make sure there are no current assigned actions
+k.resetActions;
+
+// boot the server
+s.boot;
 
 (
 // play a sound
 x = {
 	Splay.ar(
-		SinOsc.ar([
+		LFSaw.ar([
 			\freq1.kr(700, lag: 0.3),
 			\freq2.kr(150, lag: 0.3),
 			\freq3.kr(100, lag: 0.3)
-	]))/3
+	])) * 0.2
 }.play;
 
-// add specs for the controls
+// add a spec for the controls
 Spec.add(\freq1, [100, 1000, \exp]);
-Spec.add(\freq2, \freq1);
-Spec.add(\freq3, \freq1);
 )
 
 // set actions to the first three sliders
-k.elementAt(\sl, 0).action = {arg el;
-	x.set(\freq1, \freq1.asSpec.map(el.value))
-};
-k.elementAt(\sl, 1).action = {arg el;
-	x.set(\freq2, \freq2.asSpec.map(el.value))
-};
-k.elementAt(\sl, 2).action = {arg el;
-	x.set(\freq3, \freq3.asSpec.map(el.value))
-};
-
+(
+k.elAt(\sl, 0).action = {arg el; x.set(\freq1, \freq1.asSpec.map(el.value)) };
+k.elAt(\sl, 1).action = {arg el; x.set(\freq2, \freq1.asSpec.map(el.value)) };
+k.elAt(\sl, 2).action = {arg el; x.set(\freq3, \freq1.asSpec.map(el.value)) };
+)
 
 // after testing, free sound
 x.free;
+
+// and free the device
+k.free;
 ::
 
 subsection:: Example BCR2000
 
 code::
 // plug in your BCR2000 and evaluate this line.
-// If there is no such controller connected, it opens a fake gui-based controller for you.
-k = MKtl('bcr20000');
+k = MKtl('myBCR', "behringer-bcr2000");
 
-k.gui;      // open a gui representation of the device
+// If there is no controller connected, use its gui:
+k.gui;
 
-k.elements; // dictionary of controls keys to MKtlElements
+// turn on trace, then move some elements to see that it works
+k.trace;
 
-// elements can be accessed through their hierarchy:
-k.elementAt(\kn, 0, 0);
+
+// make sure there are no current assigned actions
+k.resetActions;
+
+// the elements (knobs, sliders, buttons) are in hierarchical groups
+k.elementGroup;
+k.postElements;
+
+// elements can be accessed by hierarchical names or indices:
+k.elAt(\kn, 0);
+k.elAt(\kn, 0, 0);
 
 // all knobs of the first row
-k.elementAt(\kn, 0); // -> MktElementArray
+k.elAt(\kn, 0); // -> MKtlElementGroup
 
 // elements have a type:
-k.elementAt(\kn, 0, 0).type;
+k.elAt(\kn, 0, 0).type;
 
 // select elements by their type:
-k.allElements.select{ |x| x.type == \encoder };
+k.elementsDict.select { |x| x.type == \encoder };
 
 // perform an action on turning knob [0,0] (upper left)
-k.elementAt(\kn, 0, 0).action = { |el| el.value.postln };
+k.elAt(\kn, 0, 0).action = { |el| [el.name, el.value.round(0.001)].postln };
+
+// boot the server
+s.boot;
 
 // simple sound example
-x = { RLPF.ar(Saw.ar(\freq.kr(440, 0.1), mul: 0.1), 1000)}.play;
+x = { Splay.ar(RLPF.ar(Saw.ar(\freq.kr(440, 0.1), mul: 0.1), 1000))}.play;
 
+// .action overrides previously set actions
 (
-k.elementAt(\kn, 0, 0).action_({ |el|
-	x.set(\freq, el.value.linlin(0.0, 1, 300.0, 600));
+k.elAt(\kn, 0, 0).action_({ |el|
+	x.set(\freq.postln, el.value.linlin(0.0, 1, 300.0, 600));
 });
 )
 
@@ -124,7 +237,10 @@ k.elementAt(\kn, 0, 0).action_({ |el|
 x.free;
 
 // send data back to the device
-k.elementAt(\kn,0,0).value_(0.5);
+k.elAt(\kn,0,0).value_(0.5);
+
+// remove all assigned actions
+k.resetActions;
 ::
 
 
@@ -133,11 +249,11 @@ code::
 (
 d = 0;
 {
-	loop{
+	loop {
 		0.05.wait;
 		d = d + 0.01;
-		8.do{ |i|
-			k.elementAt(\kn, 0, i).value_(
+		8.do { |i|
+			k.elAt(\kn, 0, i).value_(
 				(d + (i/7)).mod(1.0);
 			);
 		};
@@ -146,11 +262,16 @@ d = 0;
 )
 ::
 
-SECTION:: Controllers not yet recognised
+SECTION:: Adding More Controllers
 
-Have a controller that is not yet known to the system? You can fix this by yourself!
-To do so, look at link::Tutorials/How_to_create_a_description_file::.
+If your controller is not supported yet, you can add it by yourself!
+See link::Tutorials/How_to_adapt_a_description_file:: or
+link::Tutorials/How_to_create_a_description_file::.
 
 section:: Acknowledgements
+
 Modality and its research meetings have kindly been supported by BEK in Bergen, Norway, and STEIM, Amsterdam.
-The ModalityTeam is, in no obvious order: Jeff Carey, Bjoernar Habbestad, Marije Baalman, Alberto de Campo, Tijs Ham, Wouter Snoei, Till Bovermann, Miguel Negrao, Robert van Heumen, Hannes Hoelzl, Tim Blechmann, Amelie Hinrichsen, and Dominik Hildebrand Marques Lopes.
+The ModalityTeam is, in no particular order:
+code::
+["Jeff Carey", "Bjørnar Habbestad", "Marije Baalman", "Alberto de Campo", "Tijs Ham", "Wouter Snoei", "Till Bovermann", "Miguel Negrão", "Robert van Heumen", "Hannes Hoelzl", "Tim Blechmann", "Amelie Hinrichsen", "Dominik Hildebrand Marques Lopes"].scramble;
+::

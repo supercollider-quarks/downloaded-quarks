@@ -2,19 +2,21 @@
 	*guess { |key, value|
 		if (value.isKindOf(SimpleNumber).not) { ^nil };
 
+		// label units as \guess so one can throw spec away later.
 		^if (value.abs > 0) {
-			[value/20, value*20, \exp].asSpec
+			ControlSpec(value/20, value*20, \exp, 0, value, \guess)
 		} {
-			[-2, 2, \lin].asSpec
+			ControlSpec(-2, 2, \lin, 0, value, \guess)
 		};
 	}
 }
 
 + TaskProxy {
+	// use \orderNames in halo for maintaining non-alphabetic order of names
 	controlKeys {
 		var cKeys = this.getHalo(\orderedNames);
 		if (cKeys.notNil) { ^cKeys };
-		cKeys = if (envir.notNil) { envir.keys.asArray.sort } { [] };
+		cKeys = if (envir.notNil) { envir.keys(Array).sort } { [] };
 		^cKeys;
 	}
 }
@@ -62,40 +64,57 @@
 		};
 	}
 
-	// overwriting global getSpec to get local specs
-	// this and useHalo depend on Halo class (in JITLibExtensions)
-	// precedence: the object's halo, the objects owner's halo,
-	// global Spec.specs, envirgui local specs, or guess
+	// new getSpec logic
+	// - if there is a spec from object or its lookup halo, use that
+	// - if there is a handmade local spec, keep it.
+	// - if no spec yet, and there is a value, guess a spec
+
 	getSpec { |key, value|
-		var spec = object.getHalo(\spec, key)
-		      // specs.parent may be the halo of e.g. a tdef that owns the envir
+		var localSpec, objSpec;
+		if (key.isNil) { ^specs };
+
+		localSpec = specs[key];
+		objSpec = object.getSpec(key)
+		// specs.parent may be the halo of e.g. a tdef that owns the envir
 		?? { if (specs.parent.notNil) { specs.parent[key] }
-			?? { Spec.specs[key]
-				?? { specs[key]
-					?? { Spec.guess(key, value) };
-				}
-			}
+			?? { Spec.specs[key] }
 		};
-		^spec
+		// always override with new spec from object.
+		if (objSpec.notNil) {
+			specs.put(key, objSpec);
+			^objSpec;
+		};
+
+		if (localSpec.isNil and: value.notNil) {
+			localSpec = Spec.guess(key, value);
+			specs.put(key, localSpec);
+		};
+		^localSpec
 	}
 
 	useHalo { |haloObject|
 		var objSpecs;
 		if (haloObject.isNil) { ^this };
-		objSpecs = haloObject.getSpec;
-		specs.parent_(objSpecs);
+		this.addHalo(\specObject, haloObject);
+		this.addHaloSpecsAsParent;
 		this.checkUpdate;
 	}
+
+	addHaloSpecsAsParent {
+		specs.parent = this.getHalo(\specObject).getSpec;
+	}
+
 
 	updateSliderSpecs { |editKeys|
 
 		editKeys.do { |key, i|
 			var currVal, newSpec;
-			var widge = widgets[i];
+			var widge = this.widgets[i];
 			if (widge.isKindOf(EZSlider) or: { widge.isKindOf(EZRanger) }) {
 				currVal = object[key];
 				newSpec = this.getSpec(key, currVal);
-				if (newSpec != widge.controlSpec) {
+				// "% - newSpec: %\n".postf(thisMethod, newSpec);
+				if (newSpec.notNil and: { newSpec != widge.controlSpec }) {
 					widge.controlSpec_(newSpec);
 					widge.value_(currVal);
 				};
@@ -103,40 +122,9 @@
 		}
 	}
 
-	checkForSpecs { |editKeys|
-
-		var newSpec, newSpecsFound = false;
-		if (object.isNil) { specs.clear; ^this };
-
-		object.keysValuesDo { |key, val|
-			if (val.isKindOf(SimpleNumber)){
-				newSpec = this.getSpec(key, val);
-				if (newSpec != specs[key]) {
-					specs.put(newSpec);
-					newSpecsFound = true;
-				};
-			} {
-				if (val.isKindOf(Array)
-					and: { val.size == 2
-					and: val.every(_.isKindOf(SimpleNumber)) }) {
-					// only if spec pre-exists, no guessing
-					newSpec = this.getSpec(key);
-					if (newSpec != specs[key]) {
-						specs.put(newSpec);
-						newSpecsFound = true;
-					};
-				}
-			}
-		};
-		if (newSpecsFound) {
-			editKeys = editKeys ?? { this.getState[\editKeys] };
-			this.updateSliderSpecs(editKeys);
-		}
-	}
-
 	// also get specs as state that may have changed
 	getState {
-		var newKeys, overflow;
+		var newKeys, overflow, specsToUse;
 
 		if (object.isNil) { ^(editKeys: [], overflow: 0, keysRotation: 0) };
 
@@ -144,25 +132,26 @@
 		overflow = (newKeys.size - numItems).max(0);
 		keysRotation = keysRotation.clip(0, overflow);
 		newKeys = newKeys.drop(keysRotation).keep(numItems);
-		// currSpecs = newKeys.collect{ |key|
-		// [key, this.getSpec(key, object[key])] };
+		specsToUse = newKeys.collect { |key| this.getSpec(key, object[key]) };
 
 		^(  object: object.copy,
 			editKeys: newKeys,
 			overflow: overflow,
-			keysRotation: keysRotation
+			keysRotation: keysRotation,
+			specsToUse: specsToUse
 		)
 	}
 
-	// also updateSliderSpecs
-	checkUpdate { |doFull = false|
-		var newState = this.getState;
-		var newKeys = newState[\editKeys];
+	checkUpdate {
+		var newState, newKeys;
+		this.addHaloSpecsAsParent;
 
-		this.checkForSpecs(newKeys);
+		newState = this.getState;
+		newKeys = newState[\editKeys];
+
 		this.updateButtons;
 
-		if (doFull.not and: { newState == prevState }) {
+		if (newState == prevState) {
 			prevState = newState;
 			^this
 		};
@@ -188,6 +177,21 @@
 			if (newState[\overflow] == 0) { this.clearFields(newKeys.size) };
 		};
 
+		// need to update slider/paramview specs:
+		if (newState[\specsToUse] != prevState[\specsToUse]) {
+
+			if (this.respondsTo(\widgets)) {
+				// pre 3.8 compatibility:
+				this.updateSliderSpecs(newKeys);
+			} {
+				// from 3.8 on, using ParamViews
+				// if (\ParamView.asClass.notNil) ...
+				this.updateViewSpecs(
+					[newKeys, newState[\specsToUse]].flop
+				);
+			};
+		};
+
 		prevState = newState;
 	}
 }
@@ -199,7 +203,7 @@
 	// delete when obsolete
 
 	getState {
-		var settings, newKeys, overflow, currSpecs;
+		var settings, newKeys, overflow, specsToUse;
 
 		if (object.isNil) {
 			^(name: 'anon', settings: [], editKeys: [], overflow: 0, keysRotation: 0)
@@ -211,19 +215,20 @@
 		overflow = (newKeys.size - numItems).max(0);
 		keysRotation = keysRotation.clip(0, overflow);
 		newKeys = newKeys.drop(keysRotation).keep(numItems);
-		currSpecs = newKeys.collect { |key|
+		specsToUse = newKeys.collect { |key|
 			var pair = settings.detect { |pair| pair[0] == key };
 			this.getSpec(key, pair[1]);
 		};
 
 		^(object: object, editKeys: newKeys, settings: settings,
 			overflow: overflow, keysRotation: keysRotation,
-			specs: currSpecs
+			specsToUse: specsToUse
 		)
 	}
 
 	checkUpdate {
 		var newState = this.getState;
+		var newKeys = newState[\editKeys];
 
 		if (newState == prevState) {
 			^this
@@ -243,18 +248,41 @@
 			scroller.visible_(false);
 		};
 
-		if (newState[\editKeys] == prevState[\editKeys]) {
-			this.setByKeys(newState[\editKeys], newState[\settings]);
+		if (newKeys == prevState[\editKeys]) {
+			this.setByKeys(newKeys, newState[\settings]);
 		} {
-			this.setByKeys(newState[\editKeys], newState[\settings]);
-			if (newState[\overflow] == 0) { this.clearFields(newState[\editKeys].size) };
+			this.setByKeys(newKeys, newState[\settings]);
+			this.clearFields(newKeys.size);
+			this.paintWetParams(newKeys);
 		};
 
-		this.updateSliderSpecs(newState[\editKeys]);
+		if (newState[\specsToUse] != prevState[\specsToUse]) {
+			if (this.respondsTo(\widgets)) {
+				// pre 3.8 compatibility:
+				this.updateSliderSpecs(newKeys);
+			} {
+				// from 3.8 on, using ParamViews
+				this.updateViewSpecs(
+					[newKeys, newState[\specsToUse]].flop
+				);
+			};
+		};
 
 		prevState = newState;
 	}
 
+	paintWetParams { |editKeys|
+		editKeys.do { |key, i|
+			if (replaceKeys[key].notNil) {
+				key.postln;
+				paramViews[i].background_(Color.green);
+			} {
+				paramViews[i].background_(skin.background);
+			}
+		}
+	}
+
+	// compat with pre-3.8 only
 	updateSliderSpecs { |editKeys|
 		var currState;
 
@@ -264,16 +292,35 @@
 
 		editKeys.do { |key, i|
 			var currValue = currState.detect { |pair| pair[0] == key }[1];
+			var oldSpec;
 			var newSpec = this.getSpec(key, currValue);
-			var widge = widgets[i];
-			if (newSpec != specs[key]) {
-				specs.put(key, newSpec);
-				if (widge.isKindOf(EZSlider) or:
-					{ widge.isKindOf(EZRanger) }) {
+			var widge = this.widgets[i];
+			if (widge.respondsTo(\controlSpec)) {
+				oldSpec = widge.controlSpec;
+				// "% - newSpec: %\n".postf(thisMethod, newSpec);
+				if (newSpec != oldSpec) {
+					specs.put(key, newSpec);
 					widge.controlSpec = newSpec;
 					widge.value_(currValue);
 				};
 			};
 		}
+	}
+}
+
+// temp fix, should go in main 3.8 distro
++ EnvirGui {
+	updateViewSpecs { |newSpecs|
+		newSpecs.do { |pair|
+			var name, spec, pv;
+			#name, spec = pair;
+			if (spec.notNil) {
+				pv = this.viewForParam(name);
+				if (pv.notNil) {
+					pv.spec_(spec);
+					pv.value_(pv.value);
+				};
+			};
+		};
 	}
 }

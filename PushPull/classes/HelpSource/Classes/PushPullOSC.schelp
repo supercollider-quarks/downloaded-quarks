@@ -1,0 +1,191 @@
+TITLE:: PushPullOSC
+summary:: interfacing the PushPull controller via OSC
+categories:: Control, 3DMIN
+related:: Classes/Object, Classes/PushPullOSC_SE
+
+DESCRIPTION::
+This is the class to interface with a pre-SE PushPull.
+
+note::
+There are only two of them in the world, so chances are that you do not have one but a link::Classes/PushPullOSC_SE::.
+::
+
+PushPull is an instrument prototype created as part of the 3DMIN project. It features digital and analog controls, most prominently a bellow made from cardboard. Sound synthesis combines analogue sound generation with digital sound manipulation. Moving the hand piece activates the bellow: hand movements restricted by the limitations of the bellow turn into gestures and create air flow over a microphone. Inertial sensors in the hand piece together with a thumb stick allow for continuous sound shaping, while four buttons complete the setup to trigger changes or change between synthesis engines.
+
+This class provides an interface to the hardware via OSC.
+
+CLASSMETHODS::
+
+METHOD:: new
+Creates a new PushPull instance.
+
+ARGUMENT:: netAddr
+the network port at which the PushPull is accessible.
+
+
+INSTANCEMETHODS::
+
+subsection:: actions
+
+METHOD:: imuAction
+Action that is evaluated for each IMU update (progressive).
+
+code::
+// p = PushPullOSC(NetAddr(...));
+p.imuAction = {|imuDict|
+	imuDict.postln;
+}
+::
+
+METHOD:: capAction
+Action that is evaluated for each update of the capacitive sensors readings (progressive).
+
+code::
+// p = PushPullOSC(NetAddr(...));
+p.capAction = {|capNormVals, capTrigs, capRawVals|
+	[capNormVals, capTrigs, capRawVals].postln;
+}
+::
+
+
+
+METHOD:: encoderAction
+Action that is evaluated when an encoder is turned or a button is pressed.
+
+code::
+// p = PushPullOSC(NetAddr(...));
+p.encoderAction = {|encoderDict|
+	encoderDict.postln;
+}
+::
+
+
+METHOD:: batteryWarnAction
+Action that is evaluated when battery viltage drops below a threshold set in batteryWarnThresh.
+
+code::
+// p = PushPullOSC(NetAddr(...));
+p.batteryWarnAction = {|voltage|
+	voltage.postln;
+}
+::
+
+
+METHOD:: batteryWarnThresh
+Threshold voltage below which the battery warning is issued.
+
+
+METHOD:: pingAction
+Action that is evaluated every time the pushpull sends a ping message. Can be used to implement a life sign.
+
+code::
+// p = PushPullOSC(NetAddr(...));
+p.pingAction = {|me|
+	"%: I am alive".format(me).postln;
+}
+::
+
+
+
+subsection:: values
+
+METHOD:: capRawVals, capNormVals, capTrigs
+capacitive sensor values in raw, normalised, resp. made into triggers (if > capTrigThresh)
+
+METHOD:: imuDict
+a dictionary with IMU values from the last read
+
+code::
+// pseudocode
+imuDict = (
+	\gyro, [r,p,y],
+	\acc, [X,Y,Z],
+	\mag, [x, y, z],
+	\temp, t;
+)
+::
+
+
+
+METHOD:: encoderDict
+a dictionary with encoder values from the last read
+
+code::
+// pseudocode
+encoderDict = (
+	\a, enc0,
+	\b, enc1,
+	\c, but0,
+	\d, but1,
+	\e, but2,
+	\f, but3
+)
+::
+
+
+METHOD:: setLight
+Set the lights in the bellow to color.
+
+argument:: color
+either a link::Classes/Color:: or an array of colors.
+
+
+subsection:: config
+
+METHOD:: batteryUri, capUri, imuUri, pingUri, encoderUri
+OSC URIs under which the information on battery, cap, imu, ping and encoder arrive.
+
+
+subsection:: tareing
+
+METHOD:: tareCap
+argument:: isOn
+
+Enable/disable tareing of the capacitive sensing.
+
+METHOD:: capMinMax
+returns:: array of minima and maxima of capacitive sensors as given by tareCap.
+
+METHOD:: capMinThresh
+minimum value for caps, used instead of minimum value.
+
+
+METHOD:: tareMag
+Experimental. tare Magnitude sensor.
+
+METHOD:: direction
+where is east wrt. measured magnitude?
+
+subsection:: info
+
+METHOD:: netAddr
+the netAddr under which the PushPull is reachable.
+
+METHOD:: trace
+Dictionary of code::Boolean:: values indicating trace-state for the various sensors:
+
+code::
+// p = PushPullOSC(NetAddr(...));
+
+p.trace[\cap]     = true; // trace capacitive sensors
+p.trace[\encoder] = true; // trace encoders
+p.trace[\imu]     = true; // trace IMU
+p.trace[\battery] = true; // trace  battey level
+p.trace[\ping]    = true; // trace ping
+
+p.trace[\cap]     = false;
+p.trace[\encoder] = false;
+p.trace[\imu]     = false;
+p.trace[\battery] = false;
+p.trace[\ping]    = false;
+::
+
+
+
+
+
+PRIVATE:: pr_tareCap, pr_normalizeCap, init, pr_makeResponders
+
+
+EXAMPLES::
+

@@ -9,11 +9,11 @@
 Proto {
 	classvar	<>strict = false, <>warnOnAssignment = true;
 
-	var	<>env;	// I'm providing a setter for env, but it's really for internal use only
+	var	<env;	// setter is below, but it's really for internal use only
 				// be careful if you muck around with it!
 	var	<>putAction,
 		>isPrototype;	// safety check for chucklib
-	
+
 	*new { arg initFunc, env, parentKeys;
 			// the init func is evaluated in Environment.make
 			// and should include setting of all env variables
@@ -21,11 +21,11 @@ Proto {
 			// parentKeys says which data keys should be moved into the parent for inheritance
 		^super.new.init(initFunc, env, parentKeys);
 	}
-	
+
 		// call on an existing instance: like creating an instance of a class
 		// initialize() is passed thru to the environment
 	new { |...args| ^this.copy.initialize(*args) }
-	
+
 		// init clears the environment
 	init { arg func, initEnv, parentKeys;
 		var new;
@@ -40,10 +40,12 @@ Proto {
 		this.make(func).moveFunctionsToParent(parentKeys);
 		env.know = true;
 	}
-	
+
 		// myAdhoc.import((myOtherAdhoc: #[key1, key2]))
 	import { |objectKeyDict, parentKeys|
 		var obj2;
+		// without this, importing into an instance corrupts the class proto
+		env.parent = IdentityDictionary(parent: env.parent);
 		objectKeyDict.keysValuesDo({ |obj, keysToImport|
 			(obj2 = obj.asProtoImportable).notNil.if({
 				keysToImport.do({ |key|
@@ -55,66 +57,67 @@ Proto {
 		});
 		env.moveFunctionsToParent(parentKeys);
 	}
-	
+
 	asProtoImportable {}
-	
+
 	moveFunctionsToParent { |keysToMove|
 		env.moveFunctionsToParent(keysToMove)
 	}
-	
+
 	storeArgs { ^[env] }
-	
+
 	at { |key| ^env[key] }
 	put { |key, value|
 		env.put(key = key.asSymbol, value);		// keys MUST be symbols
 		putAction.value(key, value, this);
 	}
-	putAll { |... dictionaries| 
-		dictionaries.do {|dict| 
-			dict.keysValuesDo { arg key, value; 
-				this.put(key, value) 
+	putAll { |... dictionaries|
+		dictionaries.do {|dict|
+			dict.keysValuesDo { arg key, value;
+				this.put(key, value)
 			}
 		}
 	}
 	parent { ^env.parent }
 	isPrototype { ^isPrototype == true }
-	
+
 	next { arg ... args;
 		var result;
 		this.use({ result = ~next.valueArray(args); });
 		^result
 	}
-	
+
 	value { arg ... args;
 		var result;
 		this.use({ result = ~next.valueArray(args); });
 		^result
 	}
-	
+
 	reset { arg ... args;
 		var result;
 		this.use({ result = ~reset.valueArray(args); });
 		^result
 	}
-	
+
 	update { arg ... args;
 		var result;
-		this.use({ result = ~update.valueArray(args); });
+		// true = allow silent failure if the Proto has already been freed
+		this.use({ result = ~update.valueArray(args); }, true);
 		^result
 	}
-	
+
 	asStream { arg ... args;
 		var result;
 		this.use({ result = ~asStream.valueArray(args); });
 		^result
 	}
-	
+
 	asPattern { arg ... args;
 		var result;
 		this.use({ result = ~asPattern.valueArray(args); });
 		^result
 	}
-	
+
 	embedInStream { arg ... args;
 		var result;
 		if(env[\canEmbed] == true) {
@@ -130,48 +133,60 @@ Proto {
 		this.use({ result = ~play.valueArray(args); });
 		^result
 	}
-	
+
 	stop { arg ... args;
 		var result;
 		this.use({ result = ~stop.valueArray(args); });
 		^result
-	}	
-	
-	use { arg func;
-		var result, saveEnvir;
-		saveEnvir = currentEnvironment;
-		currentEnvironment = this;
-		protect {
-			result = func.value;
-		} {
-			currentEnvironment = saveEnvir;
-		};
-		^result
 	}
 
-	make { arg func;
-		var saveEnvir;
-		protect {
+	use { arg func, failSilentlyAfterFree = false;
+		var result, saveEnvir;
+		if(env.notNil) {
 			saveEnvir = currentEnvironment;
 			currentEnvironment = this;
-			func.value;
-			currentEnvironment = saveEnvir;
+			protect {
+				result = func.value;
+			} {
+				currentEnvironment = saveEnvir;
+			};
+			^result
 		} {
-			currentEnvironment = saveEnvir;
+			if(failSilentlyAfterFree.not) {
+				MethodError("Can't call 'use' after Proto was freed", this).throw
+			} { ^nil };
+		};
+	}
+
+	make { arg func, failSilentlyAfterFree = false;
+		var saveEnvir;
+		if(env.notNil) {
+			protect {
+				saveEnvir = currentEnvironment;
+				currentEnvironment = this;
+				func.value;
+				currentEnvironment = saveEnvir;
+			} {
+				currentEnvironment = saveEnvir;
+			};
+		} {
+			if(failSilentlyAfterFree.not) {
+				MethodError("Can't call 'make' after Proto was freed", this).throw
+			};
 		};
 		^this
 	}
-	
+
 	free { arg ... args;
-		this.use({ ~free.valueArray(args) });
+		this.use({ ~free.valueArray(args) }, true);  // do not throw error if you free twice
 		env = nil;
 	}
-	
+
 		// make the Proto act like an object
 		// selector must be implemented as a func assigned to an environment var
 		// named for the selector
 		// if that key returns nil, object does not understand!
-		
+
 		// messages not understood by Proto should be passed to the environment
 		// so: node.message == node.perform(\message) == node.use({ ~message.value })
 	doesNotUnderstand { arg selector ... args;
@@ -188,7 +203,7 @@ Proto {
 				this.put(selector, args[0]);
 				result = this
 			}, {
-				strict.if({ 
+				strict.if({
 					this.envRespondsTo(selector).if({ result = item },
 						{ DoesNotUnderstandError(this, selector, args).throw });
 				}, {
@@ -198,7 +213,7 @@ Proto {
 		});
 		^result
 	}
-	
+
 	perform { arg selector ... args;
 		^this.performList(\doesNotUnderstand, [selector] ++ args);
 	}
@@ -206,12 +221,12 @@ Proto {
 	tryPerform { arg selector ... args;	// for sth like draggedInto...GUI
 		^this.perform(selector, *args);
 	}
-	
+
 	respondsTo { arg selector;
 		super.respondsTo(selector).if({ ^true });
 		^this.envRespondsTo(selector)
 	}
-	
+
 	envRespondsTo { |selector|
 		var	recursivetest = { |environment, method|
 				block { |break|
@@ -225,7 +240,7 @@ Proto {
 			};
 		^recursivetest.(env, selector)
 	}
-	
+
 		// make a copy of this node, and run this func to change some props
 	clone { arg modFunc, parentKeys;
 		modFunc.isNil.if({
@@ -238,15 +253,15 @@ Proto {
 	}
 
 	copy { ^this.shallowCopyItems }
-	shallowCopyItems { 
+	shallowCopyItems {
 		^this.class.new
 			.env_(env.shallowCopyItems.parent_(env.parent))
 			.putAction_(putAction)
 	}
-	
+
 	listVars { this.help(\var) }
 	listMethods { this.help(\method) }
-	
+
 		// return a flat dictionary with all methods
 	allMethods {
 		var	getter = { |level, list|
@@ -261,7 +276,7 @@ Proto {
 		getter.value(this.env, methods);
 		^methods
 	}
-	
+
 	help { |what = \all|
 		(what == \var or: { what == \all }).if({
 			"\nVariables:".postln;
@@ -280,5 +295,23 @@ Proto {
 		});
 	}
 
+	env_ { |newEnv|
+		case
+		{ newEnv.isKindOf(Dictionary) } {
+			env = newEnv
+		}
+		{ newEnv.isKindOf(Proto) } {
+			env = newEnv.env
+		}
+		{
+			Error(
+				"Attempt to set a Proto's environment to a% %"
+				.format(
+					if(newEnv.class.name.asString[0].isVowel) { "n" } { "" },
+					newEnv.class.name
+				)
+			).throw
+		}
+	}
 }
 

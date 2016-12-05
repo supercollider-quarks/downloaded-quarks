@@ -31,6 +31,7 @@ list::
 ## one letter is one synth: code::abc::
 ## square brackets: nested structure is parallel: code::[ab]c::
 ## round parentheses: nested structure is serial: code::[(ab)(ab)]::
+## curly brackets: open a stack for operators in postfix syntax: code::{ab*}:: or code::{abc*+}::
 ## force a full replacement on eval: code::!abc::
 ## line ending comments are ignored: code::abc // this is a comment::
 ## variable names are optional and can be declared explicitly, see: link::#-declareVariables::
@@ -100,12 +101,12 @@ The current Steno instance (like e.g. link::Classes/TempoClock#*default::).
 
 INSTANCEMETHODS::
 
-PRIVATE::addSynthDef, calcNextArgument, initDiff, initSynthDefs, newSynth, removePrefix, prefix, removeSynthDefs, sendSynthDefs, valueUGenFunc
+PRIVATE:: addSynthDef, initArguments, initDiff, initSynthDefs, initBusses, calcNextArguments, getBusArgs, newSynth, removePrefix, prefix, removeSynthDefs, sendSynthDefs, valueUGenFunc, startMonitor
 
 method::value
 Interpret a string of steno code.
 
-argument::str
+argument::string
 The program to run (a link::Classes/String::).
 
 
@@ -168,8 +169,49 @@ Ndef(\x, { MouseX.kr(0.1, 10, 1) });
 t.set(\b, \modrate, Ndef(\x));
 ::
 
+note::when the value is a function, it is called for each synth, and controls are passed in as a dictionary, as to allow arguments to depend on the graph.::
 
-Special values are: fadeTime (cross fade time), mix (sound level), through (for filters: pre vs. post level).
+code::
+(
+t = Steno.new;
+t.quelle(\a, { SinOsc.ar(\freq.kr(440)) });
+t.set(\a, \freq, { |args| args.postcs; args[\index] * 200 + 400 * args[\depth].neg.midiratio });
+)
+
+
+t.value("a");
+t.value("aa");
+t.value("aaaa");
+t.value("aa(a(aa))");
+::
+
+note::If the value is a link::Classes/Ref:: (containing the value), the setting spills over into the subsequent and deeper nested synths (not to the next level up). This allows to uses synths to set parameters for other synths.::
+
+code::
+(
+t = Steno.new;
+t.quelle(\a, { Blip.ar(\freq.kr(20), 304) * 0.1 });
+t.quelle(\m, { 0.0 }); // dummy
+t.set(\a, \freq, 10); // Ref is written as a tick: `
+t.set(\m, \freq, `{ exprand(3, 70) }); // Ref is written as a tick: `
+)
+
+
+t.value("a");
+t.value("amama");
+::
+
+A short form is the method link::#-setter::, which generates a dummy synth with referenced settings.
+
+Special values are:
+table::
+##strong::fadeTime:: || cross fade time ||  default: 0.02
+##strong::attack:: || ratio of fadeTime used as attack (for 1, it equals fadeTime) || default: 0
+##strong::mix:: || sound level || default: 1
+##strong::through:: || for filters: pre vs. post level || default: 0
+##strong::hangTime:: || for filters, as a maximum release tail length, unless fadeTime is longer || default: 30
+::
+
 code::
 t = Steno.new;
 t.set(\a, \fadeTime, 2.0);
@@ -183,22 +225,46 @@ argument::... keyValuePairs
 Any number of parmeters and values. Values can be anything that can be converted to a synth argument.
 
 
-method::settings
-Dictionary of synth arguments for each synth function. Each set of arguments is a dictionary.
-
 method::setGlobal
-Dictionary of synth arguments for all synth functions.
+Dictionary of synth arguments for all synth functions (for Special values, see link::#-set::).
+
 code::
 t = Steno.new;
 t.setGlobal(\fadeTime, 2.0);
-t.globalSettings; // settings are a global dictionary
+t.settings.globalSettings; // settings are a global dictionary
 ::
 
 argument::... keyValuePairs
 Any number of parmeters and values. Values can be anything that can be converted to a synth argument.
 
-method::globalSettings
-Dictionary of synth arguments for all synth functions.
+note::when the value is a function, it is called for each synth, and controls are passed in, as to allow arguments to depend on the graph::
+
+code::
+(
+t =  Steno.new;
+t.quelle(\a, { SinOsc.ar(\freq.kr(440)) });
+t.setGlobal(\freq, { |args| args.postcs; args[\index] * 200 + 400 * args[\depth].neg.midiratio });
+)
+
+
+t.value("a");
+t.value("aa");
+t.value("aaaa");
+t.value("aa(a(aa))");
+::
+
+method::settings
+Instance of class teletype::StenoSettings::, which provides different levels of synth arguments for all synth functions:
+
+table::
+##globalSettings || parameters applied to each synth in the graph
+##synthSettings || parameters applied only to the synths that have a given name
+::
+
+If the value is a link::Classes/Function:: (or anything that responds to the message teletype::value::), it is called for each synth, passing in the following informations as a dictionary: synthIndex (the count for each synth), index (the count for each type of synth), depth (the current nesting depth), and the token (name of the synth).
+
+
+The synthSettings have a special feature: if the value is a link::Classes/Ref:: (containing the value), the setting spills over into the subsequent and deeper nested synths (not to the next level up). This allows to uses synths to set parameters for other synths.
 
 method::numChannels
 Set the number of channels of the system - if running, synths defs are rebuilt and synths are restarted. If expand is true, the functions will multichannel expand.
@@ -209,17 +275,21 @@ Set to true to make synth functions multichannel expand.
 method::freeAll
 Free all synths and empty current cmdLine.
 
+method::releaseHanging
+Free all synths that have been released but which still run as they have a filter input. This will cut long filter tails.
+
 method::quant
 Specify the moment of changes relative to a temporal grid (see link::Classes/Quant::).
 code::
 t = Steno.new;
-t.quelle(\a, { Ringz.ar(Impulse.ar(1), { Rand(300, 700) } ! 2, 0.3) });
+t.quelle(\a, { Ringz.ar(Impulse.ar(1), { Rand(200, 700) } ! 2, 0.3) });
 t.quelle(\b, { Ringz.ar(Impulse.ar(2),{ Rand(3000, 7000) } ! 2, 0.1) });
-t.filter('?', { |input| DelayN.ar(input, 0.5, Rand(0, 0.5).round(1/8)) });
+t.filter('&', { |input| DelayN.ar(input, 0.5, Rand(0, 0.5).round(1/6)) * Rand(0.5, 1) + input});
 t.filter('.', { |input| Limiter.ar(input) }); // full stop is a limiter here.
 t.quant = 1;
 t.("abaaabaa.");
-t.("aba?aabaa.");
+t.("aba&aabaa.");
+t.("aba&aab&a&a.");
 ::
 
 
@@ -240,7 +310,7 @@ t.value("babaf");
 t.value("(ab)f (ab)f");
 ::
 
-note::In the filter method, only the input signal is faded out when the synth is replaced by a new one. So you have to take care that your processed output will become silent after some time. If you add a signal to the output, use the code::\gate.kr:: control to envelope it.::
+warning::In the filter method, when the synth is replaced by a new one, only the input signal is faded out. So you have to take care that your processed output will become silent after some time. If you add a signal to the output, use the code::\gate.kr:: control or code::controls[\env]:: to envelope it. There is a synth control input called code::hangTime:: that removes hanging notes after some longer time (after 30 sec by default). You can manually release all potentially hanging synths by calling link::#-releaseHanging::.::
 code::
 t.filter(\x, { |input, controls| CombL.ar(input, 0.2, 0.2, 2) + SinOsc.ar(1000, 0, 0.05) }); // this will hang!
 t.filter(\x, { |input, controls| CombL.ar(input, 0.2, 0.2, 2) + (SinOsc.ar(1000, 0, 0.05) * controls[\env]) }); // this won't
@@ -316,6 +386,8 @@ Specify whether the ugen graph should be expanded o the full number of channels 
 argument::update
 Specify whether synth should be updated immediately when synth def is changed (MAY CHANGE IN THE FUTURE).
 
+argument::numChannels
+Specify a number of channels the function should have (by default, it uses link::#-numChannels::).
 
 method::declareVariables
 Add a number of variable names that take signals as value.
@@ -367,6 +439,71 @@ definitionlist::
 || The number of times a variable can be assigned in succession (signals are mixed)
 ::
 
+method::operator
+Define a new operator. Operators take operands (signals) from the stack and combine them. A stack is defined by enclosing an expreaaion in curly brackets, like code::{ab*}::. If operands are left on the stack, they can be combined with the result by subsequent operators, like code::{abc+*}::.
+
+warning::You have to take care that your processed output will become silent after some time. If you add a signal to the output, use the code::\gate.kr:: control or code::controls[\env]:: to envelope it. strong::See above:: under link::#-filter::::
+
+argument::name
+The letter which represents the synth def
+
+argument::func
+A UGen function, which takes a specific number of arguments (given by its arity (see below)). Each argument is a signal of the full number of channels of the steno graph.
+
+argument::arity
+The number of operands (e.g. binary, or ternary).
+
+code::
+t = Steno.new;
+t.quelle(\a, { SinOsc.ar(Rand(0.9, 1.1) * 440) * 0.2 });
+t.quelle(\b, { LFPulse.kr(Rand(1, 3), 0, LFNoise0.kr(1).exprange(0.1, 0.6)) });
+t.operator('*', { |x, y| x * y }, 2);
+t.("{ab*}");
+
+// gating the output, if signal doesn't end by itself
+t.operator('*', { |x, y, controls| x * y  + WhiteNoise.ar(controls[\env] * 0.01)}, 2);
+t.("aaaa");
+::
+
+method::setter
+A convenience method that generates a dummy synth with a setting that spills over to subsequent synths (see comment at link::#-set::).
+
+code::
+t = Steno.new;
+t.quelle(\n, { Dust.ar(\density.kr(1000) ! 2, 0.1) });
+t.filter(\f, { |in| BPF.ar(in * 10, \freq.kr(600), \rq.kr(0.1)) });
+t.setter(\u, \freq, { exprand(4000, 10000) });
+t.setter(\a, \freq, { exprand(400, 1000) });
+t.setter(\i, \density, { exprand(4, 20) });
+t.set(\z, \rq, 0.05);
+t.value("nf nf nf");
+t.value("nuf naf nuf");
+t.value("inuf inaf inuf");
+::
+
+note::
+as the synths are kept running, in fact this doesn't work as well as it should. We'd need to reset the synth parameters to make them forget the values that have been passed in.
+::
+
+method::variables
+Returns a dictionary of variables, if defined.
+
+
+method::resendSynths
+Restart all synths and release hanging notes.
+
+method::rebuild
+Generate new SynthDefs and restart all synths.
+
+method::bus
+The output bus.
+
+method::busIndices
+An array of contiguous bus indices used internally for signal routing
+
+method::monitor
+Returns the monitor synth which maps the last output to the output bus (default: 0).
+
 method::cmdLine
 Return most recently compiled code, after preprocessing.
 code::
@@ -386,7 +523,7 @@ method::prevTokens
 Returns the most recent tokens (the cmdLine split into separate elements, by default letters, but this could also be otherwise, see link::#-preProcessor::).
 
 
-method::argList, synthList, busses, diff, encyclopedia, server, synthDict, synthList, maxBracketDepth
+method::argList, synthList, busses, diff, encyclopedia, server, synthList, maxBracketDepth
 Introspection: returns internal representations of busses, synthdefs, synths, and synth ressources.
 
 
@@ -401,7 +538,7 @@ Steno uses a link::Classes/DiffString:: parser to interpret code. You can change
 code::
 t = Steno.new;
 t.quelle(\hello, { |input| SinOsc.ar(SinOsc.ar(SinOsc.ar(0.1, 0, 1, 2), (input * 10), 400, 800), 0, 0.1) });
-t.quelle(\word, { |input| SinOsc.ar(Saw.ar(SinOsc.ar(0.1 * (input * 3), 0, 1, 2), 300, 800 * (in * 100)), 0, 0.1) });
+t.quelle(\word, { |input| SinOsc.ar(Saw.ar(SinOsc.ar(0.1 * (input * 3), 0, 1, 2), 300, 800 * (input * 100)), 0, 0.1) });
 t.preProcessor = nil; // remove default shortcuts
 t.diff.tokenizer = { |str| str.split($ ) };
 t.verbosity = 2;
@@ -428,5 +565,27 @@ Pdef(\x).set(\play, { t.value(~string.postln) });
 Pdef(\x, Pbind(\string, Prand(["a", "!afafafaf", "afgafg"], inf), \dur, Prand([1, 1/2, 2/3], inf) * 0.1 * Pbrown(0.2, 2))).play;
 
 ::
+
+section::BNF for standard Steno
+
+teletype::
+
+
+<letter> is any printable letter
+<synth> ::== <letter>
+<op> ::== <letter>
+<exp> ::== { <exp> | <synth> | <ser> | <par> | <app> }
+<ser> ::== `(` <exp> `)`
+<par> ::== `[` <exp> `]`
+<app> ::== `{` <exp> { <op> } `}`
+
+
+::
+
+
+
+
+
+
 
 

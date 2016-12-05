@@ -1,17 +1,19 @@
 ! dudon_melkis.scl
 !
-Temperament with differential coherence 19-16=3 (Melkis recurrent sequence), Jacques Dudon
+Sequence of 11 Melkis fourths (499.11472 c.) from D
  12
 !
- 106.19697
- 201.77056
- 297.34416
- 403.54112
- 499.11472
- 605.31169
- 700.88528
- 807.08225
- 902.65584
- 998.22944
- 1104.42641
+ 30739/29088
+ 3064/2727
+ 3238/2727
+ 36499/29088
+ 539/404
+ 15379/10908
+ 4088/2727
+ 160/101
+ 584345/349056
+ 1618/909
+ 10259/5454
  2/1
+! Melkis recurrent sequence  x^4 - 2x = 1/2  (-c of minor thirds)
+! Dudon 1992

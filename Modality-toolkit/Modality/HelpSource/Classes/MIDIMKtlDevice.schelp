@@ -1,10 +1,17 @@
 CLASS:: MIDIMKtlDevice
-summary:: A class for creating and accessing external midi controllers
+summary:: The Modality class for creating and accessing external midi controllers
 categories:: Libraries>Modality, External Control
 related:: Overviews/Modality, Classes/MKtl, Classes/MKtlDevice, Classes/MKtlElement
 
 DESCRIPTION::
-MIDIMKtlDevice provides an easy to use interface for MIDI devices you can connect to your computer. It can search for controllers connected to your computer, and gives you a list of available devices. Or, if you already know which controller you want to use, it will look through this list and returns you the controller with that name. If it cannot find it, it will replace it with a graphical representation of the controller to simulate it.
+MIDIMKtlDevice provides an internal interface for MIDI controllers you can connect to your computer.
+Note:: Usually, you never access the MIDIMKtlDevice itself, as the MKtl that contains it (its parent MKtl) is the main code interface.::
+
+When looking for available devices with code::MKtl.find(\midi)::,
+MIDIMKtlDevice searches for connected controllers, and returns a list of available devices.
+
+When creating an MKtl by desc name, e.g. code::MKtl(\x, "*nanokontrol2");::, MIDIMKtlDevice try to find the matching MIDI ins and outs in the list of available devices and return a MIDIMKtlDevice that contains them. If it does not find it, e.g. because the physical controller is not there, it will return nil.
+In that case, the MKtl will be virtual, meaning it has no device, and you can still work with it, because it can open a GUI that can replace the controller.
 
 For most devices, this requires that someone has already made a description file for the device; if there is none, it is easy to make one following the instructions here:
 link::Tutorials/How_to_create_a_description_file::
@@ -13,9 +20,9 @@ More general info can be found in link::Classes/MKtl:: and link::Classes/MKtlDev
 
 CLASSMETHODS::
 
-PRIVATE:: initialized, sourceDeviceDict, destinationDeviceDict, prepareDeviceDicts
+PRIVATE:: initialized, postMsgNotFound, postMsgTrace
 
-PRIVATE:: makeNoteOnKey, makeNoteOffKey, makeCCKey, makeBendKey, makeProgramKey,  makePolyTouchKey, makeTouchKey, noteKeyToChanNote, ccKeyToChanCtl
+PRIVATE:: makeNoteOnKey, makeNoteOffKey, makeCCKey, makeBendKey, makeProgramKey,  makePolyTouchKey, makeTouchKey, noteKeyToChanNote, ccKeyToChanCtl, makeMsgKey
 
 METHOD:: find
 Find all currently connected MIDI controllers.
@@ -38,36 +45,20 @@ Look for available MIDI devices.
 argument:: force
 Whether or not to do this again if it was already done before.
 
-METHOD:: getSourceName
-Get the full device name from the short source name.
-
-argument:: shortName
-A Symbol as it shows up in the short names found by MKtl.find.
-
-METHOD:: findSource
-Find a source or destination with a given device name and port.
-
-argument:: rawDeviceName
-The device name to search for.
-
-argument:: rawPortName
-The device port to search for.
-
-
 METHOD:: new
 Creates a new instance of MIDIMKtlDevice.
 
 argument:: name
 The short name of the controller as it shows up in the list of found devices.
 
-argument:: srcUID
-The source uid of the device if present.
-
-argument:: destUID
-The destination uid of the device if present.
+argument:: idInfo
+The lookup idInfo as in MKtlLookup if device is present.
 
 argument:: parentMKtl
 The instance of link::Classes/MKtl:: that this MKtlDevice will belong to.
+
+argument:: multiIndex
+When using multiple identical devices, the index which one to use.
 
 
 
@@ -78,12 +69,14 @@ All midi message types supported by MIDIMKtlDevice.
 
 INSTANCEMETHODS::
 
-PRIVATE:: elementHashDict, prepareElementHashDict, hashToElNameDict, elNameToMidiDescDict, destination, dstID, srcID, initMIDIMKtl, makeHashKey
-PRIVATE:: makeRespFuncs, makeNoteOff, makeNoteOn, makeBend, makeTouch, makeCC, makePolyTouch, makeProgram
+PRIVATE:: destination, dstID, srcID, setDstID, initMIDIMKtl
+PRIVATE:: makeRespFuncs, makeChanMsgMIDIFunc, makeChanNumMsgMIDIFunc, makeHashKey, makeCCKey, noteKeyToChanNote, ccKeyToChanCtl, midiKeyToElemDict
+PRIVATE:: checkAllCtls, findChans, prepareLookupDicts
+PRIVATE:: initCollectives, sendSpecialMessage
 
-PRIVATE:: makeNoteOnKey, makeNoteOffKey, makeCCKey, makeBendKey, makeProgramKey,  makePolyTouchKey, makeTouchKey, noteKeyToChanNote, ccKeyToChanCtl
+METHOD:: enable, disable
+turn this device on and off
 
-PRIVATE::removeRespFuncs
 
 METHOD:: closeDevice
 Close the device and clean up anything that it used.
@@ -94,7 +87,6 @@ the midi messages types used by this device
 
 METHOD:: global
 a dict of global response functions for all msgTypes used by this device. This can be used for global responders, e.g. to noteOn/Off messages :
-
 
 
 METHOD:: midiOut
@@ -124,7 +116,7 @@ The uid of the destination.
 METHOD:: explore
 When opening a device that is not known yet by MKtl, you want to explore the device. See for a full tutorial: link::Tutorials/How_to_create_a_description_file::
 
-ARGUMENT:: mode
+ARGUMENT:: bool
 a Boolean to turn this on or off.
 
 METHOD:: exploring
@@ -138,8 +130,8 @@ METHOD:: initElements
 Initialize all elements and hook them up to the hardware elements.
 
 
-METHOD:: cleanupElements
-De-initialize all elements.
+METHOD:: cleanupElementsAndCollectives
+De-initialize all elements and collectives.
 
 
 METHOD:: send

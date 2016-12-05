@@ -4,6 +4,8 @@ summary:: An abstract class for defining representations
 categories:: Undocumented classes
 related:: Classes/SomeRelatedClass, Reference/SomeRelatedStuff, etc.
 
+NOTE::Always use detach to remove a representation and not remove.::
+
 DESCRIPTION::
 EntityRepresentation is the base class for all representations. A representation is added as a dependant to an entity using the attach method.
 
@@ -19,6 +21,9 @@ ARGUMENT:: collisionFunc
 A function to be evaluated when a collision is detected. The function is passed the representation, entity and an array with the colliding entities.
 
 INSTANCEMETHODS::
+
+METHOD:: detach
+Call entity.detach(representation) to remove the relation with the entity and clear.
 
 METHOD:: preUpdate
 Private method to allow for interpolation we can preUpdate the new positions that will be assigned in the next time step (dt).
@@ -51,4 +56,4 @@ METHOD:: update
 The method that receives the messages when the entity is changed.
 
 METHOD:: remove
-Remove the representation from the representation manager. Used internally. Use detach on the entity to remove a representation.
+Always use detach on the entity to remove a representation. Remove the representation from the representation manager. Used internally.

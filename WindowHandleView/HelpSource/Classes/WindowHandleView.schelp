@@ -1,0 +1,41 @@
+TITLE:: WindowHandleView
+summary:: A custom view that enables dragging of it's parent window.
+categories:: GUI
+related:: Classes/Window, Classes/View
+
+DESCRIPTION::
+link::Classes/WindowHandleView:: is a view that acts as a drag handle for it's parent window. This is generally useful for windows without titlebars.
+
+NOTE::
+By default WindowHandleView has no content other than it's background, so if it's contained in a layout it may be resized to a 0px width or height. To prevent this, specify an explicit size using link::Classes/View#-minHeight:: / link::Classes/View#-minWidth:: / link::Classes/View#-minSize:: or link::Classes/View#-fixedHeight:: / link::Classes/View#-fixedWidth:: / link::Classes/View#-fixedSize::.
+::
+
+CLASSMETHODS::
+
+COPYMETHOD:: View *new
+
+INSTANCEMETHODS::
+
+METHOD:: setBackgroundImage
+Set the background image for the view. Default option is to x-y tile, unlike base class implementation of this function.
+
+ARGUMENT:: image
+An image for the background. Can be nil for no background image. Defaults to a crosshatch pattern.
+
+
+EXAMPLES::
+
+code::
+(
+w = Window(border:false);
+w.view.layout_(
+	VLayout(
+		WindowHandleView().minHeight_(20),
+		StaticText().string_("Here's a window."),
+		StaticText().string_("You can drag it using the handle above."),
+		Button().states_([["Close"]]).action_({ w.close }),
+		nil
+	).margins_(2)
+).front;
+)
+::

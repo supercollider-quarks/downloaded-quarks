@@ -70,7 +70,7 @@ EXAMPLES::
 
 code::
 // EXOPLANET SONIFICATION
-// it depends on SpatialRender and SSWorld classes
+// this example depends on SpatialRender and SSWorld classes from the 3Dj quark
 (
 r=SpatialRender.new(s);
 

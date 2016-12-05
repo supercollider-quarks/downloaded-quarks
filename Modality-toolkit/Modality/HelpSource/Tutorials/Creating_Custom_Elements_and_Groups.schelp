@@ -1,0 +1,76 @@
+title:: Creating Custom Elements and Groups
+summary:: Organize alternative groups of elements in an MKtl for particular purposes
+categories:: Libraries>Modality, Tutorials
+related:: Overviews/Modality, Classes/MKtl, Classes/MKtlElement, Classes/MKtlElementGroup, Reference/MKtl_description_files
+
+section:: Background
+MKtl objects contain a hierarchical organisation of their interaction elements in MKtl.elementsGroup. This group contains and defines every element once, and one can access every element directly by its element key, or by its hierarchical address.
+
+Sometimes derived elements are useful, and one can make such elements, but them in additional groups within the MKtl.
+
+subsection:: Example - convert x, y coordinates to point and polar
+
+code::
+// make a gamepad controller
+MKtl('x', "saitek-impact-gamepad");
+MKtl('x').gui;
+
+// add a group for left joy axes that has bipolar point coords
+MKtl('x').addNamed(\pointL,
+	MKtlElementGroup(\pointL, MKtl('x'), [
+		MKtlElement(\x, (spec: \bipolar, type: \coord)),
+		MKtlElement(\y, (spec: \bipolar, type: \coord))
+	])
+);
+// test access
+MKtl('x').elAt(\pointL).dict;
+MKtl('x').elAt(\pointL, 0);
+MKtl('x').elAt(\pointL, \x);
+MKtl('x').elAt(\pointL, 0).deviceValue;
+
+// set actions to forward the value from lx and ly to \pointL
+MKtl('x').elAt(\joy, \l, \x).action_({ |el|
+	MKtl('x').elAt(\pointL, 0).valueAction_(el.value) });
+MKtl('x').elAt(\joy, \l, \y).action_({ |el|
+	MKtl('x').elAt(\pointL, 1).valueAction_(el.value) });
+
+// test
+MKtl('x').elAt(\joy, \l, \x).valueAction_(1.0.rand.round(0.01).postln);
+MKtl('x').elAt(\pointL, 0).value;     // unipolar range
+MKtl('x').elAt(\pointL, 0).deviceValue; // bipolar
+
+// add another group for polar version of point
+MKtl('x').addNamed(\polarL,
+	MKtlElementGroup(\polarL, MKtl('x'), [
+		MKtlElement(\ang, (spec: [-pi, pi], type: \polAng)),
+		MKtlElement(\mag, (spec: 2.sqrt * [-1, 1], type: \polMag))
+	])
+);
+// test access
+MKtl('x').elAt(\polarL, 0);
+MKtl('x').elAt(\polarL, \ang);
+MKtl('x').elAt(\pointL, 0).value;
+MKtl('x').elAt(\polarL, 0).value;
+
+// action that sets polar value when pointA gets set, and post after setting
+MKtl('x').elAt(\pointL).action_({ |el, grp|
+	var polar = grp.deviceValue.asPoint.asPolar;
+	"point: %\n".postf(MKtl('x').elAt(\pointL).deviceValue.round(0.001));
+	MKtl('x').elAt(\polarL).deviceValueAction_([polar.rho, polar.theta]);
+});
+
+MKtl('x').elAt(\polarL).action_({ |el, grp|
+	"polar: %\n".postf(MKtl('x').elAt(\polarL).deviceValue.round(0.001));
+});
+
+// test setting x and y in unipolar to bipolar to magnitude/angle
+MKtl('x').elAt(\joy, \l, \x).valueAction_(1.0.rand);
+MKtl('x').elAt(\joy, \l, \y).valueAction_(1.0.rand);
+
+
+MKtl('x').elAt(\joy, \l, \y).valueAction_(0.5); // to center ...
+MKtl('x').elAt(\joy, \l, \x).valueAction_(0.5); // center
+MKtl('x').elAt(\joy, \l, \x).valueAction_(1.0); // point left
+MKtl('x').elAt(\joy, \l, \y).valueAction_(1.0); // 45 up, mag 2.sqrt
+MKtl('x').elAt(\joy, \l, \x).valueAction_(0.5); // point up - mag 1, angle 0.5pi
+::

@@ -1,0 +1,24 @@
+title:: MicKeyWindow
+summary:: a window listening to key and mouse actions
+categories:: transnd>ui
+related:: Classes/MicKeySynth, Classes/MicKeyFunc
+
+description::
+a window that listens to key strokes and mouse actions.
+
+classmethods::
+private:: makeWindow,width,height
+
+method::front
+bring me front
+method::inform
+print a text
+
+examples::
+code::
+// try key strokes, moving mouse and mouse wheels
+MicKeyWindow.front;
+
+// print
+MicKeyWindow.inform("Hi, I am a text.");
+::

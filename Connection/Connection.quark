@@ -1,0 +1,16 @@
+(
+          name: "Connection",
+       summary: "A library for creating and managing connections and synchronization between SC objects.",
+        author: "scott@artificia.org",
+     copyright: "Frank Scott Carver, 2016",
+       license: "MIT",
+       version: "0.0.2-alpha",
+        schelp: "",
+          test: "",
+           url: "http://github.com/scztt/Connection.quark",
+  dependencies: [
+              		"Singleton@1.0.1"
+                ],
+  isCompatible: true ,
+         since: ""
+)

@@ -1,0 +1,98 @@
+TITLE:: VGSynth
+summary:: a class for synthesizing gamelan sounds, with different synthesis variants
+categories:: Extensions>Virtual Gamelan
+related:: Classes/VGSound
+
+DESCRIPTION::
+VGSynth is part of the VGLibrary by Julian Rohrhuber, Alberto de Campo, Rainer Schuetz, 2007/8.
+
+For rendering by synthesis see VGSynth,
+for sample-based playback, see VGSamp,
+for network output e.g. to PureData, see VGPD - (needs rework atm).
+
+
+VGSynth has a variety of synthesis variants for playing gamelan sounds,
+which sound slightly differently and create different amounts of CPU load.
+
+	Additive synthesis:
+vgAddiAr uses the analysis data for additive synthesis of all partials with (very efficient) sine oscillators;
+	it uses very precise, but a little more expensive audio rate envelopes.
+
+vgAddiKr does the same, but uses (less precise but more efficient) control rate envelopes.
+
+these two follow the model suggested by Franz Zotter most closely;
+a possible extension would be using the attack residua along with the additvie synthesis.
+
+	Resonant filter synthesis:
+vgRingz uses the analysis data to create ringing filters with the given frequencies of each partial.
+	It does not use attack times.
+
+vgFormlet uses the analysis data to create ringing filters, using attack times as well.
+
+	Sample playback:
+vgSampDyn plays back the gamKUG samples, but dynamically retunable while playing.
+	it is much more efficient than any resynthesis, but less flexible.
+
+vgSampFix plays the samples back at its fixed original rate, e.g. for drum sounds.
+
+
+vgTest is silent, but polls and posts all control bus values for debugging.
+
+vgPartial - resynthesis of a single partial, for more feedback while retuning.
+
+CLASSMETHODS::
+
+METHOD:: initSynthDefs
+(describe method here)
+
+ARGUMENT:: doneFunc
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: synthDefs
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: loaded
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: maxPartials
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: defaultDef
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: defNames
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: sendSynthDefs
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: initClass
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+
+INSTANCEMETHODS::
+
+
+EXAMPLES::
+
+code::
+
+
+	//add examples later!
+::

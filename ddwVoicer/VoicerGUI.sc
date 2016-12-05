@@ -23,22 +23,22 @@ VoicerProxyGui : ObjectGui {
 		// includes a flowview for global controls
 		// and a flowview for player processes which can be assigned to buttons
 		// presently not resizeable (until I learn more about flowviews)
-	
+
 	classvar	height = 500, width1 = 300,
 			width2 = 140;		// width1 is for controlView; width2 for processView
 
 		// allow pre-population of gui objects for non-existent controls
 	classvar	<>drawEmptyControlProxies = true;
-	
+
 	var	<mainView,
 		<panicButton, <runButton,
 		<controlView, <processView,		// flowviews
 		<dragSink,					// you'll be dropping things in here
 		<masterLayout, <layout, iMadeMasterLayout = false;
-	
+
 	var	myModel;
 
-	guify { arg lay,bounds,title, small=false;
+	guify { arg lay, bounds, title, small = false;
 		if(lay.isNil,{
 			masterLayout = lay = ResizeHeightFlowWindow
 				(title ?? { model.asString.copyRange(0,50) },
@@ -56,7 +56,7 @@ VoicerProxyGui : ObjectGui {
 		// if doResize is false, view will be left too big
 		// use that if you want to create many guis in the same window
 		// and resize them all at the end
-	guiBody { arg lay, backgr, controlBackgr, processBackgr, doResize = true;
+	guiBody { arg lay, bounds, backgr, controlBackgr, processBackgr, doResize = true;
 		mainView.isNil.if({	// init the views only if we need a new window
 			layout = lay;
 			dragSink = GUI.dragSink.new(layout, Rect(0, 0, 30, 20))
@@ -86,7 +86,7 @@ VoicerProxyGui : ObjectGui {
 			processView = FixedWidthFlowView.new(mainView, Rect(0, 0, width2, height), margin: 2@2)
 				.background_(processBackgr ? Color.grey);
 			processView.decorator.nextLine;
-			
+
 			model.editor = this;
 			this.makeViews;
 			doResize.if({
@@ -97,7 +97,7 @@ VoicerProxyGui : ObjectGui {
 		});
 	}
 
-	smallGuiBody { arg lay, backgr, controlBackgr, processBackgr, doResize = true;
+	smallGuiBody { arg lay, bounds, backgr, controlBackgr, processBackgr, doResize = true;
 		mainView.isNil.if({	// init the views only if we need a new window
 			layout = lay;
 			dragSink = GUI.dragSink.new(layout, Rect(0, 0, 30, 20))
@@ -122,7 +122,7 @@ VoicerProxyGui : ObjectGui {
 				.background_(backgr ? Color.grey);
 			controlView = FixedWidthFlowView.new(mainView, Rect(0, 0, width1, height), margin: 2@2)
 				.background_(controlBackgr ? Color.grey);
-			
+
 			model.editor = this;
 			this.makeViews;
 			doResize.if({
@@ -131,7 +131,7 @@ VoicerProxyGui : ObjectGui {
 
 		});
 	}
-	
+
 	writeName { arg layout;
 		var n;
 		n = model.asString;
@@ -148,9 +148,9 @@ VoicerProxyGui : ObjectGui {
 			.background_(Color.white)
 			.align_(\center)
 			.beginDragAction_({ model })
-			.object_(n);	
+			.object_(n);
 	}
-	
+
 	makeViews {
 		drawEmptyControlProxies.if({ model.controlProxies }, { model.globalControlsByCreation })
 			.do({ arg gc;
@@ -166,7 +166,7 @@ VoicerProxyGui : ObjectGui {
 			});
 		});
 	}
-	
+
 	sizeWindow {
 			// if I'm the creator of the window, resize the whole window
 			// otherwise just resize my container view
@@ -178,7 +178,7 @@ VoicerProxyGui : ObjectGui {
 			nil
 		}.defer;
 	}
-	
+
 	remove {
 		if(myModel.notNil) {
 			myModel.controlProxies.do({ arg gc;
@@ -199,10 +199,10 @@ VoicerProxyGui : ObjectGui {
 			// garbage
 			panicButton = runButton = controlView = processView = dragSink =
 				masterLayout = myModel = nil;
-			
+
 		};
 	}
-	
+
 	updateStatus {
 		var	i, oldNumGCs;
 			// if model is nil, I must have been removed already
@@ -226,11 +226,11 @@ VoicerProxyGui : ObjectGui {
 			});
 		};
 	}
-	
-	refresh { 
+
+	refresh {
 		this.sizeWindow;
 	}
-	
+
 	minNameWidth { ^200 }
 
 }

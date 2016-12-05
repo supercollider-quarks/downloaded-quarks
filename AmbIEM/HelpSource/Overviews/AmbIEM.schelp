@@ -1,0 +1,68 @@
+TITLE:: AmbIEM
+summary:: Ambisonic encoder/decoder up to 3rd order and binaural.
+categories:: Libraries>AmbIEM
+
+DESCRIPTION::
+This is AmbIEM - an Ambisonics spatialisation toolkit for SuperCollider3
+
+This toolkit contains class files and help files for using Ambisonics spatialisation with SuperCollider3. It may be used with loudspeaker arrays as well as with headphones, providing binaural rendering with HRTFs.
+
+NOTE::ambIEM encoders and decoders use the SN3D format. Note however that the channel order is not the same as recommended
+in ACN (http://ambisonics.ch/standards/channels/).::
+
+The mapping is:
+
+TABLE::
+  ## IEM ||	ACN
+  ## 0	 || 0
+  ## 2	 || 1
+  ## 3	 || 2
+  ## 1	 || 3
+  ## 5	 || 4
+  ## 7	 || 5
+  ## 8	 || 6
+  ## 6	 || 7
+  ## 4	 || 8
+  ## 10  ||	9
+  ## 12  ||	10
+  ## 14  ||	11
+  ## 15  ||	12
+  ## 13  ||	13
+  ## 11  ||	14
+  ## 9	 || 15
+::
+
+For more information visit http://sonenvir.at/downloads/sc3/ambiem or email TELETYPE::frauenberger@iem.at::
+Enjoy!
+
+© Institute of ELectronic Music and Acoustics Graz, Austria, 2005
+list::
+	## C. Frauenberger	- TELETYPE::frauenberger@iem.at::
+	## A. de Campo	- TELETYPE::decampo@iem.at::
+	## T. Musil 	- TELETYPE::musil@iem.at::
+::
+
+© Tim Blechmann - TELETYPE::tim@klingt.org::, 2010-2011
+
+Help files converted to SCDoc format by Daniel W. Delâtre
+
+SECTION:: Classes
+
+DEFINITIONLIST::
+## LINK::Classes/ARHeadtracker::
+|| Receives OSC data from ARHeadtracker command
+## LINK::Classes/BinAmbi3O::
+|| Ambisonics direct decoding to binaural output
+## LINK::CUBE::
+|| For IEM CUBE 24 speaker setup
+## LINK::Classes/PanAmbi2O::
+|| Ambisonics encoding 2nd/3rd order
+## LINK::Classes/PanAmbi3O::
+|| Ambisonics encoding 2nd/3rd order
+## LINK::Classes/Room2D::
+|| Room simulation (early reflections)
+## LINK::Classes/Room3D::
+|| Room simulation (early reflections)
+## LINK::Classes/VirtualRoom::
+|| Easy to use class for creation of virtual environments
+::

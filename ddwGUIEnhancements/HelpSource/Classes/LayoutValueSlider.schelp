@@ -1,0 +1,81 @@
+TITLE:: LayoutValueSlider
+summary:: Simplified substitute for EZSlider
+categories:: GUI>Views
+related:: Classes/EZSlider
+
+DESCRIPTION::
+A paired link::Classes/NumberBox:: and link::Classes/Slider::, with a link::Classes/ControlSpec:: defining the range.
+
+Essentially, this is a simpler version of link::Classes/EZSlider::. The difference is that LayoutValueSlider uses a link::Classes/HLayout:: to position the views. You can specify the width of the number box; the HLayout sizes the slider automatically.
+
+This means LayoutValueSlider may be used in Qt layouts (with one small trick; see the examples).
+
+
+CLASSMETHODS::
+
+METHOD:: new
+Create an instance.
+
+ARGUMENT:: parent
+If not embedding the LayoutValueSlider in a layout, give the parent view here. (If using layouts, this should be nil.)
+
+ARGUMENT:: bounds
+If not embedding the LayoutValueSlider in a layout, give the desired bounds. (If using layouts, size and position are automatic, so this should be nil.)
+
+ARGUMENT:: initValue
+Initial value. Any kind of SimpleNumber.
+
+ARGUMENT:: spec
+A link::Classes/ControlSpec:: specifying the output range.
+
+ARGUMENT:: numberWidth
+Number of pixels to allow the number box. It's set using link::Classes/View#-maxWidth::; if the LayoutValueSlider is resized to be very small, the number box may be smaller than this.
+
+returns:: The LayoutValueSlider instance.
+
+
+INSTANCEMETHODS::
+
+METHOD:: spec
+Get or set the range link::Classes/ControlSpec::.
+
+METHOD:: action
+Get or set the action to take when the value changes. The function is passed code::view, value:: as argument. The value is already mapped according to the range spec.
+
+METHOD:: activeValue
+Set the value and call the user action.
+
+METHOD:: value
+Get or set the numeric value.
+
+
+PRIVATE:: init
+
+EXAMPLES::
+
+code::
+// Placed in a window, using explicit parent and bounds
+(
+w = Window("test", Rect.aboutPoint(Window.screenBounds.center, 100, 50));
+v = LayoutValueSlider(w, Rect(2, 2, 150, 20), 0, [0, 1]);
+w.front;
+)
+
+// 5 sliders, positioned by a master VLayout
+(
+w = Window("test", Rect.aboutPoint(Window.screenBounds.center, 150, 100));
+v = Array.fill(5, { |i| LayoutValueSlider(nil, nil, i / 4, [0, 1]) });
+w.view.layout = VLayout(
+	*(v.collect { |lvs| lvs.asView })
+);
+w.front;
+)
+::
+
+Second example notes:
+
+list::
+## For Qt layout use, code::parent:: and code::bounds:: are nil.
+## Qt layouts do not accept LayoutValueSlider directly (because they are actually instances of SCViewHolder). Calling link::Classes/SCViewHolder#-asView:: converts the LayoutValueSlider into a view object that is compatible with layouts.
+## Qt layouts do not accept an array of views as the argument. It's necessary to expand them using code::*::. See link::Overviews/SymbolicNotations::.
+::

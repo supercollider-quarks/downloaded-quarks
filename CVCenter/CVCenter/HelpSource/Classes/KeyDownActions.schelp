@@ -17,7 +17,7 @@ or
 code::
 \esc -> 53,
 ::
-A key can be a single link::Classes/Char:: or a link::Classes/Symbol::, the number is the keycode returned for the key. The snippet creates a window that has a keyDownAction associated which posts key-value pairs for arbitrary keystrokes. You may use this code if the default keyCodes doesn't mtach the ones on your platform. Edit keyCodes by using the link::Classes/KeyCodesEditor::.
+A key can be a single link::Classes/Char:: or a link::Classes/Symbol::, the number is the keycode returned for the key. The snippet creates a window that has a keyDownAction associated which posts key-value pairs for arbitrary keystrokes. You may use this code if the default keyCodes doesn't match the ones on your platform. Edit keyCodes by using the link::Classes/KeyCodesEditor::.
 code::
 (
 w = Window("keyDown action");
@@ -69,7 +69,7 @@ argument:: view
 a link::Classes/View:: or any object that responds to code::keyDownAction::
 
 argument:: shortcutsDict
-a link::Classes/Distionary:: or (better) an link::Classes/IdentityDictionary:: defining the key-down actions that shall be added to the given view. The dictionary must be formatted as follows:
+a link::Classes/Dictionary:: or (better) an link::Classes/IdentityDictionary:: defining the key-down actions that shall be added to the given view. The dictionary must be formatted as follows:
 code::
 IdentityDictionary[
 	<Symbol containing a key or key combination> -> (

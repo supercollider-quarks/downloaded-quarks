@@ -1,0 +1,139 @@
+TITLE:: DualBandComp
+summary:: dual band compressor
+categories:: UGens, UGens>Dynamics
+related:: Classes/Compander, Classes/DualBandLim
+
+DESCRIPTION::
+
+DualBandComp splits an audio signal into two bands, and compresses them separately with different thresholds. This is intended to reduce the maximum level earlier for signals with lots of highs going into limiting, and letting signals with more pink noise like spectra go louder in the lows.
+
+DualBandComp takes the loudest channel as the compression control input signal, so panning (including multichannel) is preserved.
+
+By comparison, DualBandLim is a limiter, not a compressor, and does not preserve panning.
+
+code::
+s.boot;
+FreqScope(server: s);
+
+// a flat spectrum test signal:
+Ndef(\test).gui;
+Ndef(\test).put(5, { |amp = 0.25| WhiteNoise.ar(amp) }).play;
+
+// params for the DualBandComp:
+Spec.add(\xfreq, [100, 1000, \exp]);
+Spec.add(\lflim, [0, 1, \amp]);
+Spec.add(\hflim, [0, 1, \amp]);
+Spec.add(\lfgain, [0, 4, \amp]);
+Spec.add(\hfgain, [0, 4, \amp]);
+Spec.add(\wet10, [0, 1]);
+
+// and filter with a  DualBandComp:
+Ndef(\test).filter(10, { |in, xfreq = 300,
+	lflim = 0.7, hflim = 0.3, lfgain = 1.0, hfgain = 1.0|
+	DualBandComp.ar(in, xfreq, lflim, hflim, lfgain, hfgain);
+});
+
+// below compressor tresholds: flat
+Ndef(\test).set(\amp, 0.5);
+Ndef(\test).set(\amp, 1.0);
+// note relative low boost
+Ndef(\test).set(\amp, 2.0);
+
+// try with narrow noise,
+// freq and amp controlled by mouse
+Ndef(\test).put(5, {
+	BPF.ar(
+		WhiteNoise.ar(MouseY.kr(0, 1.4).squared) ! 2,
+		MouseX.kr(50, 10000, 1),
+		0.1) * 10
+});
+
+::
+
+
+CLASSMETHODS::
+
+METHOD:: ar
+create a DualBandComp
+
+ARGUMENT:: in
+the input signal to compress
+
+ARGUMENT:: xfreq
+the crossover freq between the two band compressors
+
+ARGUMENT:: lflim
+the amp limit for the low band
+
+ARGUMENT:: hflim
+the amp limit for the high band
+
+ARGUMENT:: lfgain
+gain for the low band before compressor
+
+ARGUMENT:: hfgain
+gain for the high band before compressor
+
+Examples::
+
+code::
+
+// Use a DualBandComp in MasterFX (in JITLibExtensions Quark)
+
+Spec.add(\xfreq, [100, 1000, \exp]);
+Spec.add(\lflim, [0, 1, \amp]);
+Spec.add(\hflim, [0, 1, \amp]);
+Spec.add(\lfgain, [0, 4, \amp]);
+Spec.add(\hfgain, [0, 4, \amp]);
+
+ProxyChain.add(\dualim, \filter -> { |in, xfreq = 300,
+	lflim = 0.7, hflim = 0.3, lfgain = 1.0, hfgain = 1.0|
+	DualBandLim.ar(in, xfreq, lflim, hflim, lfgain, hfgain);
+});
+
+ProxyChain.add(\dualcomp, \filter -> { |in, xfreq = 300,
+	lflim = 0.7, hflim = 0.3, lfgain = 1.0, hfgain = 1.0|
+	DualBandComp.ar(in, xfreq, lflim, hflim, lfgain, hfgain);
+});
+
+m = MasterFX(s, 2, [\dualim, \dualcomp]);
+m = MasterFX.all[s.name];
+m.gui(numItems: 12);
+
+FreqScope(server: s);
+
+Ndef(\test, { WhiteNoise.ar(MouseY.kr(0, 1.4).squared ! 2) }).play;
+
+// not much spectral change with pinknoise distribution
+Ndef(\test, { PinkNoise.ar(MouseY.kr(0, 1.4).squared ! 2) }).play;
+
+// as you sweep at high volumes, high freqs get limited earlier
+// hear and see the drop in limited volume around xfreq -
+// check if you prefer a higher xfreq, and less level difference
+
+Ndef(\test, {
+	BPF.ar(
+		WhiteNoise.ar(MouseY.kr(0, 1.4).squared) ! 2,
+		MouseX.kr(50, 10000, 1),
+		0.1) * 10
+});
+
+
+// you can also use hfgain and lfgain for static 'tilt' around xfreq,
+// e.g. a tilt by 6db at xfreq
+m.pxChain.proxy.set(\lfgain, 1.4, \hfgain, 0.7);
+
+// and set it even again
+m.pxChain.proxy.set(\lfgain, 1, \hfgain, 1);
+
+// a MasterFX dualcomp with tilt control:
+Spec.add(\tilt, [-6, 6]);
+ProxyChain.add(\dualcomp, \filter -> { |in, xfreq = 300,
+	lflim = 0.7, hflim = 0.3, tilt = 0|
+	var lfgain = tilt.neg.dbamp;
+	var hfgain = tilt.dbamp;
+	DualBandComp.ar(in, xfreq, lflim, hflim, lfgain, hfgain);
+});
+
+*/
+::

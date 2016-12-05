@@ -9,7 +9,7 @@ Silence : SynthlessPlayer {
 
 PlayerInputProxy : Silence { // audio
 
-	var <>spec,<>initValue = 0;
+	var <>spec, <>initValue = 0;
 	var <patchIn;
 	var inBus;
 
@@ -31,10 +31,10 @@ PlayerInputProxy : Silence { // audio
 	}
 	ar { ^Silent.ar(this.numChannels) }
 
-	makePatchOut { arg agroup,private = false,bus,bundle;
+	makePatchOut { arg agroup, private = false, bus, bundle;
 		// bus is usually given to me via setInputBus
-		super.makePatchOut(agroup,private,inBus ? bus,bundle)
-		//patchOut = PatchOut(this,nil,inBus);
+		super.makePatchOut(agroup, private, inBus ? bus, bundle)
+		//patchOut = PatchOut(this, nil, inBus);
 	}
 	rate { ^spec.rate }
 	numChannels { ^(spec.numChannels) }

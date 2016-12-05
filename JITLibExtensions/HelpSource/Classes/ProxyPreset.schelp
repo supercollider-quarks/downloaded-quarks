@@ -4,7 +4,7 @@ categories:: Libraries>JITLib
 related:: Classes/TdefPreset, Classes/PdefPreset, Classes/NdefPreset, Classes/ProxyPresetGui
 
 DESCRIPTION::
-ProxyPreset is the base class for a number of Preset classes for JITLib proxies:  
+ProxyPreset is the base class for a number of Preset classes for JITLib proxies:
 It can handle proxies that keep their settings in environments, such as TaskProxies and PatternProxies, and proxies that use nodeMaps, like NodeProxy.
 
 Settings are lists of key - value pairs, like [[key1, val1], [key2, val2], ... [keyN, valN]]. One can switch between these settings, or - if the parameter values in the list are single numbers, one can interpolate and morph between them.
@@ -16,7 +16,7 @@ code::
 
 (
 	// make an empty Tdef
-a = Tdef(\a);	
+a = Tdef(\a);
 	// give it some param settings
 a.set(\dt, 0.1, \freq, 440, \bend, 4, \bendVar, 4, \sustain, 0.05);
 
@@ -54,7 +54,7 @@ SynthDef(\pingbend,
 
 )
 
-	// then make a ProxyPreset for for the Tdef: 
+	// then make a ProxyPreset for for the Tdef:
 	// for Tdefs, best use TdefPreset.
 b = TdefPreset(a);
 
@@ -72,7 +72,7 @@ b.setRand(0.25); b.addSet(\bobo);
 b.setRand(0.25); b.addSet(\coco);
 b.someRand(0.25, 0.5); b.addSet(\dad);
 )
-	// 
+	//
 b.getSetNames;
 b.settings.printcsAll;"";
 
@@ -99,13 +99,20 @@ f.value;
 )
 f = nil; // stop
 
+// set relative to a preset:
+b.getSetNorm(\coco);
+b.proxy.setUni(*(b.getSetNorm(\curr) + [0.1.rand2]).flat);
+
+b.setRelFrom(\coco, { 0.3.rand2 }.dup(b.namesToStore.size))
+
+
 ::
 
 
 CLASSMETHODS::
 
 METHOD:: new
-make a new anonymous ProxyPreset 
+make a new anonymous ProxyPreset
 
 ARGUMENT:: proxy
 a TaskProxy or PatternProxy
@@ -175,7 +182,7 @@ use the proxy's Halo for syncing specs and namesToStore.
 
 METHOD:: checkSpecsMissing
 check if there are specs for all namesToStore.
-if not, posts an invitation to add the missing ones, or a 
+if not, posts an invitation to add the missing ones, or a
 
 METHOD:: specsDialog
 open a dialog window to add specs.
@@ -271,7 +278,7 @@ the lower-level way to do a straight blend between two sets.
 
 METHOD:: mapSet, unmapSet
 utilities to convert single settings between mapped and unmapped values.
-used when blending in mapped mode. 
+used when blending in mapped mode.
 
 
 subsection:: Methods - storage
@@ -283,7 +290,7 @@ METHOD:: storePath
 the path where to store and read settings to and from disk.
 
 METHOD:: loadSettings
-load settings from disk at given path. 
+load settings from disk at given path.
 
 METHOD:: writeSettings
 write settings to disk. By default, they go next to the source code file where the Preset was created, and by default, a backup of the previous stored settings is made.
@@ -305,7 +312,7 @@ EXAMPLES::
 
 code::
 	// Same example as above, with some more tests and comments:
-	
+
 	// will complain about missing specs
 (
 a = Tdef(\a);
@@ -313,13 +320,13 @@ a.set(\dt, 0.1, \freq, 440, \bend, 4, \bendVar, 4, \sustain, 0.05);
 b = ProxyPreset(a);
 )
 	// check if all specs are present:
-b.checkSpecsMissing; 
+b.checkSpecsMissing;
 	// get a dialog if any are missing:
-b.checkSpecsMissing(dialog: true); 
+b.checkSpecsMissing(dialog: true);
 
 
 (
-	// or add missing specs by code to the taskproxy's Halo 
+	// or add missing specs by code to the taskproxy's Halo
 	// see the Halo class.
 a.addSpec(\dt, [0.03, 3, \exp]);
 a.addSpec(\bend, [-24, 24, \lin]);
@@ -336,7 +343,7 @@ b.namesToStore;
 (
 // make a ParamGui to read along changes to the settings
 d = ParamGui(a.envir).moveTo(10, 10);
-// and connect it to the proxy's halo, 
+// and connect it to the proxy's halo,
 // so it will use the orderedNames used there
 d.useHalo(a);
 )

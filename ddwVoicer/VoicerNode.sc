@@ -54,7 +54,9 @@ SynthVoicerNode {
 		ar.notNil.if({
 			out = Array.new;
 			ar.pairsDo({ |name, value|
-				if(#[\freq, \freqlag, \gate, \t_gate, \out, \outbus].includes(name.asSymbol).not) {
+				if(#[\freq, \freqlag, \gate, \t_gate, \out, \outbus].includes(name.asSymbol).not
+					and: { value.rate == \scalar }
+				) {
 					out = out ++ [name.asSymbol, value];
 				};
 			});
@@ -315,6 +317,7 @@ InstrVoicerNode : SynthVoicerNode {
 		if(patch.notNil) {
 			// if so, the I made the synthdef and I should discard it
 			target.server.sendMsg(\d_free, defname);
+			SynthDescLib.global.removeAt(defname.asSymbol);
 			// do I need to remove from the abstractplayer cache?
 		};
 		patch.free;	// garbage collect patch

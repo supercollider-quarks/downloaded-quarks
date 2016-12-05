@@ -1,4 +1,4 @@
-/* (c) 2010-2013 Stefan Nussbaumer */
+/* (c) Stefan Nussbaumer */
 /*
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -25,24 +25,25 @@ OSCCommands {
 		var localOscFunc;
 
 		cmdList = ();
-		if(Main.versionAtLeast(3, 5), {
+		if (Main.versionAtLeast(3, 5), {
 			collectFunc = { |msg, time, addr, recvPort|
-				if(msg[0] != '/status.reply', {
+				if (msg[0] != '/status.reply', {
 					cmdList.put(msg[0], msg[1..].size);
 				})
 			}
 		}, {
 			collectFunc = { |time, addr, msg|
-				if(msg[0] != '/status.reply', {
+				if (msg[0] != '/status.reply', {
 					cmdList.put(msg[0], msg[1..].size);
 				})
 			}
 		});
 
 		tempIPsAndCmds = ();
+		// this.collectTempIPsAndCmds;
 
 		localOscFunc = { |argAddr, argMsg|
-			if(tempIPsAndCmds.keys.includes(
+			if (tempIPsAndCmds.keys.includes(
 				(argAddr.ip.asString++":"++argAddr.port.asString).asSymbol
 			).not and:{
 				Server.all.collect(_.addr).includesEqual(argAddr).not
@@ -51,7 +52,7 @@ OSCCommands {
 					(argAddr.ip.asString++":"++argAddr.port.asString).asSymbol, ()
 				)
 			});
-			if(tempIPsAndCmds.keys.includes(
+			if (tempIPsAndCmds.keys.includes(
 				(argAddr.ip.asString++":"++argAddr.port.asString).asSymbol
 			), {
 				tempIPsAndCmds[(argAddr.ip.asString++":"++argAddr.port.asString).asSymbol].put(
@@ -60,7 +61,7 @@ OSCCommands {
 			})
 		};
 
-		if(Main.versionAtLeast(3, 5), {
+		if (Main.versionAtLeast(3, 5), {
 			oscFunc = { |msg, time, addr, recvPort| localOscFunc.(addr, msg) }
 		}, {
 			oscFunc = { |time, addr, msg| localOscFunc.(addr, msg) }
@@ -68,9 +69,9 @@ OSCCommands {
 	}
 
 	*collectTempIPsAndCmds { |play = true|
-		if(play, {
-			if(tempCollectRunning == false, {
-				if(Main.versionAtLeast(3, 5), {
+		if (play, {
+			if (tempCollectRunning == false, {
+				if (Main.versionAtLeast(3, 5), {
 					thisProcess.addOSCRecvFunc(oscFunc);
 				}, {
 					thisProcess.recvOSCfunc = oscFunc;
@@ -79,7 +80,7 @@ OSCCommands {
 				tempCollectRunning = true;
 			})
 		}, {
-			if(Main.versionAtLeast(3, 5), {
+			if (Main.versionAtLeast(3, 5), {
 				thisProcess.removeOSCRecvFunc(oscFunc);
 			}, {
 				thisProcess.recvOSCfunc = nil;
@@ -90,9 +91,9 @@ OSCCommands {
 	}
 
 	*collect { |play = true|
-		if(play, {
-			if(collectRunning == false, {
-				if(Main.versionAtLeast(3, 5), {
+		if (play, {
+			if (collectRunning == false, {
+				if (Main.versionAtLeast(3, 5), {
 					thisProcess.addOSCRecvFunc(collectFunc);
 				}, {
 					thisProcess.recvOSCfunc = collectFunc;
@@ -101,7 +102,7 @@ OSCCommands {
 				collectRunning = true;
 			})
 		}, {
-			if(Main.versionAtLeast(3, 5), {
+			if (Main.versionAtLeast(3, 5), {
 				thisProcess.removeOSCRecvFunc(collectFunc);
 			}, {
 				thisProcess.recvOSCfunc = nil;
@@ -122,7 +123,7 @@ OSCCommands {
 
 		thisDeviceName = deviceName.asSymbol;
 		cmdsPath = this.filenameSymbol.asString.dirname;
-		if(File.exists(cmdsPath+/+"OSCCommands"), {
+		if (File.exists(cmdsPath+/+"OSCCommands"), {
 			allDevices = Object.readArchive(cmdsPath +/+ "OSCCommands");
 		}, {
 			allDevices = ();
@@ -132,33 +133,44 @@ OSCCommands {
 		cmdList.clear;
 	}
 
-	*makeWindow {
+	*front {
 		var flow, fields = (), deviceNameField, saveBut;
 		var progress, progressStates, progressRoutine, collectRoutine, stopFunc;
 		var makeField, nextFields;
-		var staticTextFont = Font(Font.available("Arial") ? Font.defaultSansFace, 10);
+		var staticTextFont, bigSansFont;
 		var staticTextColor = Color(0.2, 0.2, 0.2);
-		var textFieldFont = Font(Font.available("Courier New") ? Font.defaultSansFace, 9);
+		var textFieldFont, bigMonoFont;
 		var textFieldFontColor = Color.black;
 		var textFieldBg = Color.white;
+
+		if (Font.respondsTo(\available)) {
+			staticTextFont = Font(Font.available("Arial") ? Font.defaultSansFace, 10);
+			textFieldFont = Font(Font.available("Courier New") ? Font.defaultMonoFace, 9);
+			bigSansFont = Font(Font.available("Arial") ? Font.defaultSansFace, 15);
+			bigMonoFont = Font(Font.available("Courier New") ? Font.defaultMonoFace, 15);
+		} {
+			staticTextFont = Font(Font.defaultSansFace, 10);
+			textFieldFont = Font(Font.defaultMonoFace, 9);
+			bigSansFont = Font(Font.defaultSansFace, 15);
+			bigMonoFont = Font(Font.defaultMonoFace, 15);
+		};
 
 		OSCCommands.collect;
 
 		makeField = { |cmds|
-			if(fields.keys.size < cmds.size, {
+			if (fields.keys.size < cmds.size, {
 				nextFields = cmds.keys.difference(fields.keys);
 				nextFields.do({ |nf|
 					fields.put(nf, ());
-					fields[nf].cmdName = StaticText(window, 390@20)
+					fields[nf].cmdName = StaticText(window, Point(390, 20))
 						.background_(Color(1.0, 1.0, 1.0, 0.5))
 					;
-					if(cmds[nf] == 1, {
+					if (cmds[nf] == 1, {
 						fields[nf].cmdName.string_(nf.asString+"("++cmds[nf]+"slot)");
 					}, {
 						fields[nf].cmdName.string_(nf.asString+"("++cmds[nf]+"slots)");
 					});
-					// flow.shift(0, 0);
-					fields[nf].removeBut = Button(window, flow.indentedRemaining.width-20@20)
+					fields[nf].removeBut = Button(window, Point(flow.indentedRemaining.width-20, 20))
 						.states_([
 							["remove", Color.white, Color.blue],
 							["add", Color.white, Color.red],
@@ -169,7 +181,7 @@ OSCCommands {
 			})
 		};
 
-		if(window.isNil or:{ window.isClosed }, {
+		if (window.isNil or:{ window.isClosed }, {
 			window = Window("OSC-command-name collector", Rect(
 				Window.screenBounds.width/2-250,
 				Window.screenBounds.height/2-250,
@@ -182,48 +194,16 @@ OSCCommands {
 				cmdList.clear;
 			});
 
-			window.view.decorator = flow = FlowLayout(window.view.bounds, 7@7, 3@3);
+			window.view.decorator = flow = FlowLayout(
+				window.view.bounds, Point(7, 7), Point(3, 3));
 
-			progress = StaticText(window, flow.indentedRemaining.width@30).font_(Font(Font.available("Arial") ? Font.defaultSansFace, 20, true));
+			progress = StaticText(window, Point(flow.indentedRemaining.width, 30))
+				.font_(Font(Font.available("Arial") ? Font.defaultSansFace, 20, true))
+			;
 
 			flow.nextLine.shift(0, 0);
 
-			progressStates = Pseq([
-				"collecting",
-				"collecting .",
-				"collecting . .",
-				"collecting . . .",
-				"collecting . . . .",
-				"collecting . . . . .",
-				"collecting . . . . . .",
-				"collecting . . . . . . .",
-				"collecting . . . . . . . .",
-				"collecting . . . . . . . . .",
-				"collecting . . . . . . . . . .",
-				"collecting . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
-				"collecting . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
-			], inf).asStream;
+			progressStates = Pseq(34.collect{ |i| "collecting" + ($.!i).join(' ') }, inf).asStream;
 			progressRoutine = fork({
 				loop({
 					progress.string_(progressStates.next);
@@ -231,26 +211,24 @@ OSCCommands {
 				})
 			}, AppClock);
 
-			StaticText(window, 260@40).string_("Collecting command-names will stop as soon as you close this window or save the device's commands. You can only save the command-names after setting a device-name.").font_(staticTextFont);
+			StaticText(window, Point(260, 40)).string_("Collecting command-names will stop as soon as you close this window or save the device's commands. You can only save the command-names after setting a device-name.").font_(staticTextFont);
 
-			// flow.shift(0, 0);
-
-			deviceNameField = TextField(window, 144@40)
-				.font_(Font(Font.available("Courier New") ? Font.defaultSansFace, 15))
+			deviceNameField = TextField(window, Point(144, 40))
+				.font_(Font(Font.available("Courier New") ? Font.defaultMonoFace, 15))
 				.string_("< device-name >")
 			;
 
-			// flow.shift(0, 0);
-
-			saveBut = Button(window, flow.indentedRemaining.width-20@40)
+			saveBut = Button(window, Point(flow.indentedRemaining.width-20, 40))
 				.states_([["save", Color.white, Color(0.15, 0.5, 0.15)]])
 				.font_(Font(Font.available("Arial") ? Font.defaultSansFace, 15, true))
 				.action_({ |b|
-					if(deviceNameField.string != "< device-name >" and:{ deviceNameField.string.size > 0 }, {
+					if (deviceNameField.string != "< device-name >" and:{
+						deviceNameField.string.size > 0
+					}, {
 						this.collect(false);
 						[progressRoutine, collectRoutine].do(_.stop);
 						fields.pairsDo({ |k, v|
-							if(v.removeBut.value == 1, {
+							if (v.removeBut.value == 1, {
 								cmdList.removeAt(k);
 							})
 						});
@@ -268,30 +246,42 @@ OSCCommands {
 			}, AppClock);
 
 			window.view.keyDownAction_({ |view, char, modifiers, unicode, keycode, key|
-				if(keycode == KeyDownActions.keyCodes[\return]) { saveBut.doAction };
-				if(keycode == KeyDownActions.keyCodes[\esc]) { window.close };
+				if (\KeyDownActions.asClass.notNil) {
+					if (keycode == \KeyDownActions.asClass.keyCodes[\return]) { saveBut.doAction };
+					if (keycode == \KeyDownActions.asClass.keyCodes[\esc]) { window.close };
+				} {
+					// "return" key
+					if (key == 16777220) { saveBut.doAction };
+					// "esc" key
+					if (key == 16777216) { window.close };
+				}
 			})
 		});
 
 		window.front;
 	}
 
+	*makeWindow {
+		this.deprecated(thisMethod, this.class.findMethod(\front));
+		^this.front;
+	}
+
 	*deviceCmds { |deviceName|
 		var thisDeviceName, thisCmds, cmdsPath;
 
 		deviceName !? { thisDeviceName = deviceName.asSymbol };
-		if(File.exists(this.filenameSymbol.asString.dirname +/+ "OSCCommands")) {
+		if (File.exists(this.filenameSymbol.asString.dirname +/+ "OSCCommands")) {
 			cmdsPath = this.filenameSymbol.asString.dirname +/+ "OSCCommands";
 		} { ^nil };
 
 		thisCmds = Object.readArchive(cmdsPath);
 
-		if(deviceName.notNil, { ^thisCmds[thisDeviceName] }, { ^thisCmds });
+		if (deviceName.notNil, { ^thisCmds[thisDeviceName] }, { ^thisCmds });
 	}
 
 	*clearCmdsAt { |deviceName|
 		var cmdsPath, cmds;
-		if(File.exists(this.filenameSymbol.asString.dirname +/+ "OSCCommands")) {
+		if (File.exists(this.filenameSymbol.asString.dirname +/+ "OSCCommands")) {
 			cmdsPath = this.filenameSymbol.asString.dirname +/+ "OSCCommands";
 			cmds = Object.readArchive(cmdsPath);
 			cmds.removeAt(deviceName.asSymbol);
@@ -301,7 +291,7 @@ OSCCommands {
 
 	*storedDevices {
 		var cmdsPath, cmds;
-		if(File.exists(this.filenameSymbol.asString.dirname +/+ "OSCCommands")) {
+		if (File.exists(this.filenameSymbol.asString.dirname +/+ "OSCCommands")) {
 			cmdsPath = this.filenameSymbol.asString.dirname +/+ "OSCCommands";
 			cmds = Object.readArchive(cmdsPath);
 			^cmds.keys;

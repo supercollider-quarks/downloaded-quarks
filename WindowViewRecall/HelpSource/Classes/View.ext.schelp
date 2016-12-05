@@ -1,0 +1,51 @@
+instancemethods::
+
+subsection:: WindowViewRecall extensions
+
+The following extensions enable easy recall of the position and size of a Window or View. To use, register a Window using autoRememberPosition when it is created.
+
+code::
+w = Window("my window", bounds:300@300).autoRememberPosition(\scztt, \mywindow).front;
+
+v = View(bounds:300@300).autoRememberPosition(\scztt, \myview).front;
+::
+
+The argument to autoRememberPosition should be a unique sequence of keys that will be used as an address to store and look up the window position. Names should be constructed to avoid collision with other possible named (for example: don't use code::w.autoRememberPosition(\server)::, use code::w.autoRememberPosition(\Server, \internalServerView)::).
+
+Window positions are stored in link::Classes/Archive::.global and written to disk, so positions should be recallable across application launches.
+
+
+method:: autoRememberPosition
+	Automatically recall the last recorded position of this Window, and attach onMove and onResize actions to capture positions for the rest of the lifetime of this window.
+
+	argument:: ... addr
+		One or more link::Classes/Symbol::'s or Numbers representing a unique address to store information about this window.
+
+
+method:: rememberPosition
+	Store and remember the current Window's position and size.
+
+	argument:: ... addr
+		One or more link::Classes/Symbol::'s or Numbers representing a unique address to store information about this window.
+
+method:: recallPosition
+	Move and resize the current Window to it's most recently stored bounds.
+
+	argument:: ... addr
+		One or more link::Classes/Symbol::'s or Numbers representing a unique address to store information about this window.
+
+method:: resetPosition
+	Remove the stored bounds for the window at address addr.
+
+	argument:: ... addr
+		One or more link::Classes/Symbol::'s or Numbers representing a unique address to store information about this window.
+
+EXAMPLES::
+
+Normally, only link::#-autoRememberPosition:: needs to be used to enable remembering/recall of the window position.
+It should be called during the creation of the Window or View - it will ensure that the previously recorded position is recalled, and it will autosave the position throughout the lifetime of the window.
+
+code::
+~scope = Stethoscope(s);
+~scope.window.autoRememberPosition(\Stethoscope, \my_scope);
+::

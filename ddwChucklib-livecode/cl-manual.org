@@ -1,0 +1,1683 @@
+#+BIND: org-latex-listings-options (("style" "SuperCollider-IDE") ("basicstyle" "\\ttfamily\\small") ("captionpos" "b") ("tabsize" "3"))
+
+#+OPTIONS: ':t *:t -:t ::t <:t H:4 \n:nil ^:t arch:headline author:t
+#+OPTIONS: c:nil creator:comment d:(not "LOGBOOK") date:t e:t
+#+OPTIONS: email:nil f:t inline:t num:t p:nil pri:nil prop:nil stat:t
+#+OPTIONS: tags:t tasks:t tex:t timestamp:t toc:t todo:t |:t
+#+TITLE: Chucklib-Livecode Manual
+#+AUTHOR: H. James Harkins
+#+EMAIL: dlm@hjh-e431
+#+DESCRIPTION:
+#+KEYWORDS:
+#+LANGUAGE: en
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+CREATOR: Emacs 24.3.1 (Org mode 8.3beta)
+
+* Head matter						      :ignoreheading:
+
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS:
+#+LATEX_HEADER:
+#+LATEX_HEADER_EXTRA:
+#+DATE: \today
+
+#+LATEX_HEADER: \setcounter{tocdepth}{2}
+#+LATEX_HEADER: \setcounter{secnumdepth}{4}
+
+#+LATEX_HEADER: \usepackage{fontspec}
+#+LATEX_HEADER: \setmainfont[Ligatures={Common,TeX}]{CharisSIL}
+#+LATEX_HEADER: \setmonofont{Inconsolata}
+
+#+LATEX_HEADER: \usepackage{caption}
+#+LATEX_HEADER: \captionsetup[figure]{font={it,footnotesize},labelfont={it,footnotesize},singlelinecheck=false}
+#+LATEX_HEADER: \captionsetup[table]{font={it,footnotesize},labelfont={it,footnotesize},singlelinecheck=false}
+#+LATEX_HEADER: \captionsetup[lstlisting]{font={it,footnotesize},labelfont={it,footnotesize},singlelinecheck=false}
+
+#+LATEX_HEADER: \usepackage{sclang-prettifier}
+
+#+LATEX_HEADER: \hyphenation{Synth-Def Synth-Defs}
+
+#+LATEX_HEADER: \usepackage{environ}
+#+LATEX_HEADER: \NewEnviron{boxnote}[1][]{\bigskip\noindent\framebox[1\textwidth]{\parbox[c]{0.95\textwidth}{\textbf{Note:} \BODY}}\bigskip}
+
+* Introduction
+#+LATEX: \frenchspacing
+** Overview
+/Chucklib-livecode/ (/cll/ for short) is a system of extremely compact
+commands extending the SuperCollider programming language. The
+commands manipulate musical processes in real time to facilitate
+live-coding performances. "Processes" in this sense refers to my
+/chucklib/ quark, introduced in /The SuperCollider Book/.[fn:5b6ef116]
+
+I began implementing /cll/ in August 2014, and it reached a stage
+where I could begin performing with it in March 2015. The public
+extensions are hosted on github.[fn:8ae1bb90]
+
+/cll/ consists of two main parts:
+
+1. A chucklib /process prototype/ (PR) that implements the methods
+   that the musical processes need, in order to receive information
+   from live-coding statements.
+
+2. A /preprocessor/ installed into the SuperCollider interpreter. The
+   preprocessor translates the /cll/ command syntax into standard
+   SuperCollider code.
+
+This document will cover the process prototype first. You need to
+understand its structure in order to understand the commands.
+
+** Acknowledgments
+Thanks are due to:
+
+- James McCartney and all the other developers who contributed to
+  SuperCollider over the years. Without SuperCollider, none of this
+  would exist.
+
+- Alex McLean, for his work on the /Tidal/ live-coding language for
+  music.[fn:9e282b21] /Tidal/ demonstration videos online were the first to
+  capture my imagination about live coding, leading me in this
+  direction.
+
+- Thor Magnusson, whose /ixilang/ system[fn:19d80e0a] provided some of
+  the inspiration for /cll/ syntax.
+
+* Installation
+/cll/ requires SuperCollider 3.7 or later. (It is released using the
+Quarks v2 system, which is not supported prior to SC 3.7.)
+
+** Installation with /git/
+If you have installed the /git/ version-control system on your
+machine, SuperCollider can automatically download and install Quark
+extensions. Simply evaluate
+=Quarks.install("ddwChucklib-livecode")=. If there are no error
+messages, recompile the class library and you should be ready to
+proceed.
+
+** Installation without /git/
+If you haven't installed /git/ or don't want to, you can download the
+required Quark directories manually. In each of these web pages, look
+for the green "Clone or Download" menu. From here, you can download a
+ZIP.
+
+- ddwChucklib: https://github.com/jamshark70/ddwChucklib
+- ddwPrototype: https://github.com/jamshark70/ddwPrototype
+- ddwCommon: https://github.com/jamshark70/ddwCommon
+- ddwGUIEnhancements: https://github.com/jamshark70/ddwGUIEnhancements
+- ddwMixerChannel: https://github.com/jamshark70/ddwMixerChannel
+- ddwPatterns: https://github.com/jamshark70/ddwPatterns
+- ddwTemperament: https://github.com/jamshark70/ddwTemperament
+- ddwVoicer: https://github.com/jamshark70/ddwVoicer
+- crucial-library: https://github.com/crucialfelix/crucial-library@tags/4.1.5
+
+Additionally, ddwVoicer (https://github.com/jamshark70/ddwVoicer) is
+not strictly required, but is useful for instrumental sounds.
+
+1. In the SC IDE, go to File $\to$ /Open user support directory/.
+
+2. In this location, if there is no folder called =downloaded-quarks=,
+   create this empty folder now.
+
+3. Unpack all the ZIP files into the directory. After this, you should have:
+   - =downloaded-quarks/ddwChucklib=
+   - =downloaded-quarks/ddwPrototype=
+   - ... and so on.
+
+4. In SC, run the statement
+   =Quarks.install("ddwChucklib-livecode")=. If it doesn't find the
+   quarks, try recompiling the class library and then run the
+   statement again.
+
+5. If all is successful, recompile the class library and proceed.
+
+** Running /cll/ in a session
+
+/cll/ adds three convenience functions to load the environment:
+
+- =\loadCl.eval=: Load the /cll/ preprocessor and a few helper functions.
+- =\loadClExtras.eval=: Load extra user-interface components (mobile
+  control with TouchOSC, and interactive code editor).
+- =\loadAllCl.eval=: Load both of these at once.
+
+These are /not/ executed by default at SC startup, because you may not
+want the preprocessor in every SC session. Once you load the
+environment, the preprocessor is active until the next time you
+recompile the class library.
+
+* Process prototype
+** Data structure
+/cll/ organizes musical behavior, and musical content, hierarchically:
+
+- Chucklib /processes/ (BP) contain any number of /phrases/. Every
+  process has its own variable scope (i.e., independent
+  namespace). Activity in one process does not interfere with other
+  processes.
+- Each /phrase/ contains multiple /parameters/. (The phrase itself is
+  implemented as a [[Classes/PbindProxy][PbindProxy]], so that its contents can be changed at
+  any time.)
+- Each /parameter/ is defined by a pattern string, parsed and rendered
+  into SuperCollider pattern syntax by the /Set pattern/ statement
+  (Section [[Set pattern statement]]).
+- Parameter values are defined by the /parameter map/ (=parmMap=).
+
+# The BP also keeps a copy of the strings, for easier editing later.
+
+/cll/ processes create two phrases by default:
+
+- =main= :: The default phrase, which plays if the user hasn't
+     specified a different phrase sequence. =main= is also the default
+     phrase that /Set pattern/ acts on---thus, a user can work with
+     single-bar loops using only =main=, and never specify a phrase
+     ID.
+- =rest= :: An empty phrase, which only occupies time.
+
+** PR(\textbackslash abstractLiveCode)
+   :PROPERTIES:
+   :ID:       e438e90b-fcb0-43b7-85bf-faffde1918b4
+   :END:
+#+begin_figure
+#+name: instance1
+#+caption: A simple cll process.
+#+BEGIN_SRC {SuperCollider} -i
+(
+PR(\abstractLiveCode).chuck(BP(\beep), nil, (
+   userprep: {
+      ~buf = Buffer.read(
+         s, Platform.resourceDir +/+ "sounds/a11wlk01.wav",
+         4982, 10320
+      );
+      ~defaults[\bufnum] = ~buf;
+      SynthDef(\buf1, { |out, bufnum, pan, amp, time = 1|
+         var sig = PlayBuf.ar(1, bufnum),
+         eg = EnvGen.kr(
+            Env.linen(0.02,
+               min(time, BufDur.ir(bufnum) - 0.04), 0.02),
+            doneAction: 2
+         );
+         Out.ar(out, Pan2.ar(sig, pan, amp * eg));
+      }).add;
+   },
+   userfree: {
+      ~buf.free;
+   },
+   defaultParm: \amp,
+   parmMap: (
+      amp: ($.: 0.1, $-: 0.4, $^: 0.8),
+      pan: (
+         $<: -0.9, $>: 0.9,
+         $(: -0.4, $): 0.4,
+         $-: 0
+      )
+   ),
+   defaults: (instrument: \buf1),
+   postDefaults: Pbind(
+      \time, (Pkey(\dur) * 0.6 / Pfunc { ~clock.tempo }).clip(0.04, 0.2)
+   )
+));
+)
+
+// Use it, with cll statements:
+TempoClock.tempo = 2;
+
+/beep = "^|.. .| .- | .  ";  // "Set pattern"
+/beep+;  // start it
+
+/beep..pan = "<><><><>";
+
+/beep-;
+
+/beep(free);
+#+END_SRC
+#+end_figure
+
+To create a /cll/ process, "chuck" =PR(\abstractLiveCode)= into a BP
+("Bound Process"), with a parameter dictionary providing the
+details. Parameters to include in the dictionary:
+
+- =userprep= :: A function, called when the process is created. Use
+     this function to create any resources that the process will
+     require.
+- =userfree= :: A function, called when the process is
+     destroyed. Clean up any resources allocated in =userprep=.
+- =defaultParm= :: The name of the default parameter affected by /Set
+     pattern/ statements (Section [[Set pattern statement]]). The
+     default parameter also controls rhythm.
+- =parmMap= :: A nested dictionary of parameters, their allowed
+     values, and the characters that will identify these values in
+     pattern strings.
+- =defaults= :: An =Event= or event pattern providing default values
+     for the events that the process will play.
+- =postDefaults= :: (optional) An event pattern that can do further
+     calculations on the parameter values.
+
+#+BEGIN_boxnote
+/Chucklib/ documentation says to place the initialization function
+into =prep=, and cleanup into =freeCleanup=. =PR(\abstractLiveCode)=
+uses these functions for its own initialization and cleanup, and calls
+=userprep= and =userfree= from there. Do not override =prep= and
+=freeCleanup=, or your process will not work properly.
+#+END_boxnote
+
+This dictionary is not limited to these items. You may add any other
+data and functions that you need, to define complex behavior in terms
+of simpler functions and patterns.
+
+In @@latex:Listing \ref{instance1}@@, =userprep= loads a buffer and
+=userfree= releases it. By default, /Set pattern/ will operate on
+=amp=, and =parmMap= defines three values for it (soft, medium and
+loud). =parmMap= also provides some panning options. The =defaults=
+dictionary specifies the SynthDef to use (it may provide other synth
+defaults as well, not needed in this example), and =postDefaults=
+calculates the sounding duration of each note based on rhythm.
+
+Note the line =~defaults[\bufnum] = ~buf=: You may add values into
+=defaults= as part of =userprep=. That's necessary in this case
+because the buffer number is not known in advance. The only way to
+supply the buffer number as a default is to read the buffer first,
+and put it into the defaults dictionary only after that.
+
+#+begin_boxnote
+Clearly, the code to initialize the process in @@latex:Listing
+\ref{instance1}@@ is too long to be practical to type in the middle of
+a performance. For practical purposes, you should place all of the
+process definitions into a separate file, which you would load once at
+the beginning of a performance. See also the /Make/ statement (Section
+[[Make statement]]), which makes it easy to instantiate the processes
+as needed during the performance, reducing the overhead of initial
+loading. (In fact, Chucklib was designed from the beginning to
+"package" complex musical behaviors into objects that are simpler to
+use, once defined. /cll/ is an even more compact layer of control on
+top of this, following the same design principle: /definition/ and
+/performance usage/ are different, and call for different types of
+code.)
+#+end_boxnote
+
+** Parameter map
+The parameter map =parmMap= is easiest to write as a set of nested [[Classes/Event][Events]]:
+
+#+name: parmMap1
+#+caption: Template for the parameter map.
+#+BEGIN_SRC {SuperCollider} -i
+parmMap: (
+   parmName: (
+      char: value,
+      char: value,
+      char: value...
+   ),
+   parmName: (...)
+)
+#+END_SRC
+
+=parmName= keys should be Symbols. The keys of the inner dictionaries
+should be characters ([[Classes/Char][Char]]), because the elements of the pattern
+strings that represent "notes" are characters.
+
+The inner dictionaries may contain two other items, optionally:
+
+- =isPitch= :: If =true=, enables pitch notation for this parameter (Section [[Pitch notation]]).
+- =alias= :: An alternate name for this parameter, to use in the
+     pattern. For example, if the parameter should choose from a
+     number of SynthDefs, it would be inconvenient to type
+     =instrument= in the performance every time you need to control
+     it, whereas =def= would be faster. You can do this as follows:
+     #+BEGIN_SRC {SuperCollider} -i
+     parmMap: (
+        def: (
+           alias: \instrument,
+           $s: \sawtooth, $p: \pulse, $f: \fm
+        )
+     )
+
+     // Then you can set the "instrument" pattern:
+     /proc.phrase.def = "s";
+     #+END_SRC
+     Written this way, =def= in the /Set pattern/ statement will be
+     populate =instrument= in the resulting events.
+
+*** Array arguments in the parameter map
+Array arguments are valid, and will be placed into resulting events as
+given in the parameter map. In Listing [[parmMapArray1]], =freqs= will
+receive the array =[200, 300, 400]= and process that array according
+to the event prototype's rules.
+
+#+name: parmMapArray1
+#+caption: How to write arrays in the parameter map.
+#+BEGIN_SRC {SuperCollider} -i
+parmMap: (
+   freqs: (
+      $2: [200, 300, 400],
+   ),
+   parmName: (...)
+)
+#+END_SRC
+
+Envelopes may be passed to arrayed Synth controls in the same way:
+=Env.perc(0.01, 0.5).asArray=.
+
+#+BEGIN_boxnote
+The above is valid for the event prototype used by default in
+=PR(\abstractLiveCode)=. This is not SuperCollider's default event;
+it's a custom event prototype defined in /chucklib/ that plays single
+nodes and integrates more easily with =MixerChannel=. Because each
+such event plays only one node, array arguments are passed as is. The
+normal default event expands one-dimensional arrays into multiple
+nodes. The way to avoid this is to wrap the array in another array
+level.
+
+#+ATTR_LATEX: :align |p{0.2\textwidth}|p{0.3\textwidth}|p{0.3\textwidth}|
+|------------------------+-----------------------------+--------------------------------------------|
+| *parmMap array format* | *singleSynthPlayer meaning* | *Default event meaning*                    |
+|------------------------+-----------------------------+--------------------------------------------|
+| \texttt{[1, 2, 3]}     | Pass the array to one node  | Distribute the three values to three nodes |
+|------------------------+-----------------------------+--------------------------------------------|
+| \texttt{[[1, 2, 3]]}       | Invalid                     | Pass the array to one node                 |
+|------------------------+-----------------------------+--------------------------------------------|
+#+END_boxnote
+
+One other use of parameter map array is used to set disparate Event
+keys using one /cll/ parameter. =Pbind= allows multiple keys to be set
+at once by providing an array for a key. /cll/ supports this by using
+an array for the alias!
+
+#+name: parmMapArray2
+#+caption: Arrays for multiple-parameter setting using one cll parameter.
+#+BEGIN_SRC {SuperCollider} -i
+parmMap: (
+   filt: (
+      alias: [\ffreq, \rq],
+      $x: [2000, 0.05]
+   )
+)
+#+END_SRC
+
+**** DONE Discuss singleSynthPlayer vs. default			   :noexport:
+
+** Event processing
+Every event produced by a /cll/ process goes through three stages:
+
+1. Insert all the items from =defaults=.
+2. Insert the values from the current phrase (defined by pattern strings).
+3. Insert any values from =postDefaults=. This may be a =Pbind=, and
+   it has access to all the values from 1 and 2 by =Pkey=.
+
+Thus, you can use =postDefaults= to derive values from items defined
+in the parameter map, or to check for invalid values.
+
+** Phrase sequence
+
+/cll/ "Set pattern" statements put musical information into any number
+of phrases. When you play the process, it chooses the phrases one by
+one using a pattern stored as =phraseSeq=. "Set pattern" has a compact
+way to express phrase sequences, allowing sequences, random selection
+(with or without weights) and wildcard matching. See Phrase selection
+for details (Section [[Phrase selection]]).
+
+This design supports musical contrast. The performer can create
+divergent materials under different phrase identifiers. Then, during
+the performance, she can change the phrase-selection pattern to switch
+materials on the fly. Sudden textural changes require changing many
+phrase-selection pattern at once. For this, [[Register]] commands can save
+sequences of statements to reuse quickly and easily.
+
+** TODO Importing the cll API into another process prototype	   :noexport:
+** TODO Document registers					   :noexport:
+
+* Livecoding statement reference
+** Statement types
+# Add early for page placement
+#+name: cllStatements
+#+caption: List of available chucklib-livecode statements.
+#+ATTR_LATEX: :align |l|p{0.35\textwidth}|p{0.35\textwidth}| :float t :placement [tb!]
+|--------------+-----------------------------------------------------------------+------------------------------------------|
+| *Type*       | *Function*                                                      | *Syntax outline*                         |
+|--------------+-----------------------------------------------------------------+------------------------------------------|
+| Set pattern  | Add new musical information into a process                      | \texttt{/proc.phrase.parm = "data"}      |
+|--------------+-----------------------------------------------------------------+------------------------------------------|
+| Start/stop   | Start or stop one or more procesess                             | \texttt{/proc/proc/proc+} or \texttt{-}  |
+|--------------+-----------------------------------------------------------------+------------------------------------------|
+| Randomizer    | Create several randomized patterns at once                      | \texttt{/proc.phrase.parm *n +ki "base"} |
+|--------------+-----------------------------------------------------------------+------------------------------------------|
+| Make         | Instantiate a process or voicer                                 | \texttt{/make(factory/factory)}          |
+|--------------+-----------------------------------------------------------------+------------------------------------------|
+| Passthrough  | Pass a method call to a \texttt{BP}                             | \texttt{/proc(method and arguments)}     |
+|--------------+-----------------------------------------------------------------+------------------------------------------|
+| Chuck        | Pass a chuck \texttt{=>} operation to a BP                      | \texttt{/proc => target }                |
+|--------------+-----------------------------------------------------------------+------------------------------------------|
+| Func call    | Call a function in chucklib's \texttt{Func} collection          | \texttt{/funcname.(arguments)}           |
+|--------------+-----------------------------------------------------------------+------------------------------------------|
+| Copy         | Copy a phrase or phrase set into a different name               | \texttt{/proc.phrase*n -> new}           |
+|--------------+-----------------------------------------------------------------+------------------------------------------|
+| Transfer     | Like "Copy," but also uses the new phrase for play              | \texttt{/proc.phrase*n ->> new}          |
+|--------------+-----------------------------------------------------------------+------------------------------------------|
+| Show pattern | Copies a phrase pattern's string into the document, for editing | \texttt{/proc.phrase.parm}               |
+|--------------+-----------------------------------------------------------------+------------------------------------------|
+
+/cll/ statements begin with a slash: =/=. Statements may be separated
+by semicolons and submitted as a batch.
+
+#+name: cllStmt1
+#+caption: Cll statements, one by one or as a batch.
+#+BEGIN_SRC {SuperCollider} -i
+// run one at a time
+/kick.fotf = "----";
+/snare.bt24 = " - -";
+
+// or as a batch
+/kick.fotf = "----"; /snare.bt24 = " - -";
+#+END_SRC
+
+/cll/ supports the statements shown in Table [[cllStatements]], in order of importance.
+
+*** types							   :noexport:
+    - [X] \clMake -> "^ *make\\(.*\\)",
+    - [X] \clFuncCall -> "^ *`id\\.\\(.*\\)",
+    - [X] \clPassThru -> "^ *`id\\(.*\\)",
+    - [X] \clChuck -> "^ *`id *=>.*",
+    - [X] \clPatternSet -> "^ *`id(\\.|`id|`id\\*[0-9]+)* = .*",
+    - [X] \clGenerator -> "^ *`id(\\.|`id)* \\*.*",
+    - [X] \clXferPattern -> "^ *`id(\\.`id)?(\\*`int)? ->>",  // harder match should come first
+    - [X] \clCopyPattern -> "^ *`id(\\.`id)?(\\*`int)? ->",
+    - [X] \clStartStop -> "^([/`spc]*`id)+[`spc]*[+-]",
+    - [X] \clPatternToDoc -> "^ *`id(\\.|`id)*[`spc]*$"
+
+** Set pattern statement
+   :PROPERTIES:
+   :ID:       a9588fdc-4350-4a6c-8e69-e1b9f284922c
+   :END:
+/Set pattern/ is the primary interface for composing or improvising
+musical materials. As such, it's the most complicated of all the
+commands.
+
+This statement type subdivides into two functions: phrase /definition/
+and phrase /selection/.
+
+*** Phrase definition
+Most "Set pattern" statements follow this format:
+
+#+name: setpatternSyntax
+#+caption: Syntax template for the Set pattern statement.
+#+BEGIN_SRC {SuperCollider} -i
+/proc.phrase.parm = quant"string";
+#+END_SRC
+
+Syntax elements:
+
+- =proc= :: The BP's name.
+- =phrase= :: (optional) The phrase name. If not given, =main= is assumed.
+- =parm= :: (optional) The parameter name. The BP must define a
+     default parameter name, to use if this is omitted.
+- =quant= :: (optional) Determines the phrase's length, in beats.
+  - A number, or numeric math expression, specifies the number of beats.
+  - =+= followed by a number indicates "additive rhythm." The number
+    is taken as a base note value. All items in the string are assumed
+    to occupy this note value, making it easier to create
+    fractional-length phrases. (If only =+= is given, the BP may
+    specify =division=; otherwise 0.25 is the default.)
+  - If =quant= is omitted entirely, the BP's =beatsPerBar= is
+    used. Usually this is the =beatsPerBar= of the BP's assigned
+    clock.
+- =string= :: Specifies parameter values and rhythms.
+
+#+BEGIN_boxnote
+Both the phrase and parameter names are optional. That allows
+the following syntactic combinations:
+
+#+ATTR_LATEX: :align |l|l|
+|-------------------------------+--------------------------------------|
+| *Syntax*                      | *Behavior*                           |
+|-------------------------------+--------------------------------------|
+| \texttt{/proc = "string"}     | Set phrase "main," default parameter |
+|-------------------------------+--------------------------------------|
+| \texttt{/proc.x = "string"}   | Set phrase "x," default parameter    |
+|-------------------------------+--------------------------------------|
+| \texttt{/proc.x.y = "string"} | Set phrase "x," parameter "y"        |
+|-------------------------------+--------------------------------------|
+| \texttt{/proc..y = "string"}  | Set phrase "main," parameter "y"     |
+|-------------------------------+--------------------------------------|
+
+Of these, the last looks somewhat surprising. It makes sense if you
+think of the double-dot as a delimiter for an empty phrase name.
+#+END_boxnote
+
+*** Pattern string syntax
+Pattern strings place values at time points within the bar. The values
+come from the parameter map. Timing comes from the items' positions
+within the string, based on the general idea of equal division of the
+bar.
+
+Two characters are reserved: a space is a timing placeholder, and
+a vertical bar, \textbar, is a divider.
+
+If the string has no dividers, then the items within it (including
+placeholders) are equally spaced throughout the bar. This holds true
+even if it's a nonstandard division: #4 (@@latex:Figure
+\ref{rhythmNotation1}@@) has seven characters in the string, producing
+a septuplet.
+
+If there are dividers, the measure's duration will be divided first:
+$n$ dividers produce $n+1$ units. Then, within each division, items
+will be equally spaced. The spacing is independent for each
+division. For example, in #6 below, the first division contains one
+item, but the second contains two. For all the divisions to have the
+same duration, then, =-= in the second division should be half as long
+as in the first.
+
+#+name: rhythmNotation1
+#+caption: Some examples of cll rhythmic notation, with and without dividers.
+[[./manual-supporting/rhythmic-notation-crop.pdf]]
+
+#+BEGIN_boxnote
+It isn't exactly right to think of a space as a "rest."
+@@latex:\texttt{"- - "}@@ is not really two quarter notes separated by
+quarter rests; it's actually two half notes! If you need to silence
+notes explicitly, then you should define an item in the parameter map
+whose value is a =Rest= object.
+#+END_boxnote
+
+#+begin_boxnote
+/Set pattern/ writes the character identifiers for the values into the
+pattern: for example, a pattern string @@latex:\texttt{"--"}@@ becomes
+=Pseq([$-, $-], 1)=. =PR(\abstractLiveCode)= post-processes each
+parameter, ensuring that the right event keys receive the right
+values. The conversion from identifier value occurs for each
+parameter; you should be able to rely on accessing the final values by
+Pkey. This supports /Generators/ (Section [[Generators]]), which
+should also return the value identifiers.
+#+end_boxnote
+
+**** TODO Set pattern examples					   :noexport:
+
+# #+name: setpatternExamples
+# #+caption: Set pattern examples.
+# #+BEGIN_SRC {SuperCollider} -i
+# /kick = "----";  // Set kick's 'main' phrase to four quarter notes
+# 
+# /kick
+# #+END_SRC
+
+*** Generators and timing					   :noexport:
+/Generators/ (see Section [[Generators]]) produce new material for every
+bar, algorithmically. They fit multiple events into a span of time, so
+it's important to know when they begin and end.
+
+The following syntax inserts a generator: =\name(arg0, arg1...)= (or,
+if a generator has no arguments, =\name()=---parentheses are not
+optional). For the purpose of timing, the entire generator string,
+from the opening backslash to the closing parenthesis, is treated as a
+single event---a single moment in time. The generator is active until
+the next event.
+
+Some examples:
+
+# #+name: gentime1
+# #+caption: Generators and timing.
+# #+BEGIN_SRC SuperCollider -i
+# // One generator, whole bar.
+# /beep = "\shuf("*  *| ** |**| *  ", ".-^", "*")";
+# 
+# // Fixed entry on the downbeat, followed by 3 beats of generator.
+# // All 3 dividers are required (4-beat division).
+# // Also, the source string inside \shuf() is now 3 beats instead of 4.
+# /beep = "^|\shuf("****| ** |*  *", ".-", "*")||";
+# 
+# // 8th-note upbeat, written outside.
+# // \shuf() occupies 2.5 beats.
+# /beep = "^|\shuf("**|**| *|* | *", ".", "*")|| -";
+# 
+# // Same, but perhaps easier to manage:
+# /beep = "^|\shuf("****| ** | *- ", ".", "*")||";
+# #+END_SRC
+
+Pattern strings within a generator take the duration of the generator
+itself. Contrast the last two examples in Listing [[gentime1]]: If the
+8th-note upbeat is written outside the generator, the generator itself
+will occupy 5 8th-notes. Dividing it into three parts will be
+confusing, then. Alternately, the upbeat can be written inside the
+generator's source string (where it will be touched, unless the
+generator is using it as a wildcard).
+
+*** Timing of multiple parameters
+Each parameter can have its own timing, but a =Pbind= can play with
+only one rhythm, raising a potential conflict.
+
+The =Pbind= rhythm is determined by the pattern string for the
+=defaultParm= declared in the process. When you set the =defaultParm=,
+the rhythm defined in that string is assigned to the =\dur= key, where
+it drives the process's timing. Other parameters encode timing into a
+=Pstep=, to preserve the values' positions within the bar. Think of
+these as "sample-and-hold" values, where the control value /changes/
+at times given by its own rhythm, but is /sampled/ only at the times
+given by the =defaultParm= rhythm.
+
+For example, here, the default parameter's rhythm is two half
+notes. At the same time, a filter parameter changes on beats 1, 2
+and 4. The process will play two events, on beats 1 and 3. On beat 1,
+the filter will use its =a= value; on beat 3, it will use the most
+recent value, which is =b=. /The filter will not change on beat 2/,
+because there is no event occurring on that beat!
+
+What about =c=? There is no event coming on or after beat 4, so =c=
+will be ignored in this case. But, if you add another note late in the
+bar, then it will pick up =c=, without any other change needed.
+
+#+name: setPatMulti1
+#+caption: Multiple parameters with different timing.
+#+BEGIN_SRC {SuperCollider} -i
+/x = "--";
+/x.filt = "ab c";  // "c" is not heard
+
+/x = "-|-  -";  // now "c" is heard on beat 4.5
+#+END_SRC
+
+*** Pitch notation
+#+begin_figure
+#+name: pitchSet1
+#+caption: A retro acid-house bassline, demonstrating pitch notation.
+#+BEGIN_SRC {SuperCollider} -i
+(
+SynthDef(\sqrbass, { |out, freq = 110, gate = 1,
+   freqMul = 1.006, amp = 0.1,
+   filtMul = 3, filtDecay = 0.12, ffreq = 2000, rq = 0.1,
+   lagTime = 0.1|
+   var sig = Mix(
+      Pulse.ar(
+         Lag.kr(freq, lagTime) * [1, freqMul],
+         0.5
+      )
+   ) * amp,
+   filtEg = EnvGen.kr(
+      Env([filtMul, filtMul, 1], [0.005, filtDecay], \exp),
+      gate
+   ),
+   ampEg = EnvGen.kr(
+      Env.adsr(0.01, 0.08, 0.5, 0.1),
+      gate, doneAction: 2
+   );
+   sig = RLPF.ar(sig, (ffreq * filtEg).clip(20, 20000), rq);
+   Out.ar(out, (sig * ampEg).dup);
+}).add;
+
+BP(\acid).free;
+PR(\abstractLiveCode).chuck(BP(\acid), nil, (
+   event: (eventKey: \default),
+   alwaysReset: true,
+   defaultParm: \degree,
+   parmMap: (
+      degree: (isPitch: true),
+   ),
+   defaults: (
+      ffreq: 300, filtMul: 8, rq: 0.2,
+      octave: 3, root: 6, scale: Scale.locrian.semitones
+   ),
+   postDefaults: PmonoArtic(\sqrbass,
+      \dummy, 1
+   )
+));
+
+TempoClock.tempo = 132/60;
+)
+
+/acid = "1_  1.|5~3_9.4.|7.2~4_5'.|5_8~2_4.";
+
+/acid+;
+/acid-;
+#+END_SRC
+#+end_figure
+
+If a parameter's map specifies =isPitch: true=, then it does not need
+to specify any other values and the following rules apply:
+
+- Scale degrees are given by decimal digits, where 1 is the tonic and
+  0 is the interval of a tenth above that (following the number row on
+  the keyboard).[fn:84cfcfa1]
+
+- @@latex:\texttt{+}@@ and @@latex:\texttt{-}@@ raise and lower the pitch by a semitone.
+
+- @@latex:\texttt{'}@@ and @@latex:\texttt{,}@@ displace the pitch by
+  an octave up or down, respectively.[fn:0fe09d88] Multiple
+  apostrophes or commas displace by multiple octaves. (This syntax is
+  borrowed from LilyPond.)
+
+- @@latex:\texttt{.}@@ indicates a staccato note.
+
+- @@latex:\texttt{\textunderscore}@@ indicates legato (sustain
+  duration slightly shorter than note duration).
+
+- @@latex:\texttt{\textasciitilde}@@ slurs this note into the next note.
+
+#+BEGIN_boxnote
+You should use the default event prototype for this process. Include
+the following in the "chuck" parameter dictionary, as in
+@@latex:Listing \ref{pitchSet1}@@:
+
+=event: (eventKey: \default)=
+#+END_boxnote
+
+#+BEGIN_boxnote
+Items in pitch sequences may include more than one character: =3= is
+ one note, as is =6+,~=. They are converted into =SequenceNote=
+ objects in the pattern, because =SequenceNotes= can encode pitch and
+ articulation information. Post-processing in =PR(\abstractLiveCode)=
+ extracts the articulation value and assigns it to =\legato= (or
+ =\sustain= for staccato notes).
+#+END_boxnote
+
+@@latex:Listing \ref{pitchSet1}@@ illustrates the kind of articulation
+that is possible with this notation, using a 90s-throwback acid-style
+bassline. Though the sound is not as cool as a real TB303, careful use
+of slurs and staccatos mimics the feel of the venerable old
+machine.[fn:be0c1420] A further refinement would be to add values for
+filter frequency and =filtMul= into the parameter map.
+
+*** Phrase selection
+Statements to set the phrase sequence follow a different syntax:
+
+#+name: phraseSel1
+#+caption: Syntax template for "Set pattern" phrase selection.
+#+BEGIN_SRC {SuperCollider} -i
+/proc = (group...);
+#+END_SRC
+
+=group= can consist of any of the following elements:
+
+- Phrase ID :: The name of any phrase that's already defined, or a
+     regular expression in single quote marks. If more than one
+     existing phrase matches the regular expression, one of the
+     matches will be chosen at random; e.g., to choose randomly among
+     phrases beginning with =x=, write @@latex:\texttt{'\textasciicircum{}x'}@@.
+- Name sequence :: Two or more of /any/ of these items, separated by
+     dots and enclosed in parentheses: =(a0.a1.a2)=. These will be
+     enclosed in =Pseq=.
+- Random selection :: Two or more of any of these items, separated by
+     vertical bars (\textbar) and enclosed in parentheses:
+     =(a0|a1|a2)=. These will be enclosed in =Prand=. /One/ will be
+     chosen before advancing to the next ID.
+- Phrase group :: A name, followed by two asterisks and a number of
+     bars in the phrase group. If a four-bar phrase is stored as =a0=,
+     =a1=, =a2=, and =a3=, you can write it simply as =a**4=. The
+     preprocessor will expand this to regular expression matches, as
+     if you had written =('^a0'.'^a1'.'^a2'.'^a3')=. The use of
+     regular expression matching here is to make it easier to have
+     slight variations on the bars within the phrase group, while
+     keeping the same musical shape.
+
+Any of these items may optionally attach a number of repeats =*n=:
+=(a*3.b)= translates to =Pseq([Pn(\a, 3), \b], inf)=, and =(a*3|b)= to
+=Prand([Pn(\a, 3), \b], inf)=.
+
+Items in a random selection may also attach a weight =%w=, which must
+be given as an integer: =(a%6|b%4)= has a 60% chance of choosing =a=
+and a 40% chance of =b=. If no weight is given, the default
+is 1. Weights are ignored for sequences (separated by dots).
+
+Groups may be nested, producing complex structures compactly. For
+example, to have an 80% chance of =a= for four bars, then an 80%
+chance of =b= for two bars, you would write:
+
+#+name: phraseSel1
+#+caption: Nested phrase-selection groups.
+#+BEGIN_SRC {SuperCollider} -i
+((a%4|b)*4.(a|b%4)*2)
+#+END_SRC
+
+You may also include both =.= and =|= in a single set of
+parentheses. The dot (for sequence) takes precedence: =(a.b|c)=
+evaluates as =((a.b)|c)=.
+
+** Start/stop statement
+The start/stop statement takes the following form:
+
+- Start: =/proc1/proc2/proc3+quant=
+- Stop: =/proc1/proc2/proc3-quant=
+
+Any number of process names may be given, each with a leading slash.
+
+=quant=, an integer, tells each process to start or stop on the next
+multiple number of beats. In 4/4 time, =/proc+4= will start the
+process on the next bar line; =/proc+8= will start on the next
+event-numbered bar line (i.e., every other bar). =quant= is optional;
+if not given, each process will use its own internal =quant=
+setting. By default, this is one bar; however, the =setm= 
+helper function overrides this for the given number of bars (Section [[Helper functions]]).
+
+** Randomizer statement
+Randomizers create randomized variations on a given string:
+
+#+name: clGen1
+#+caption: Syntax template for randomizer statement.
+#+BEGIN_SRC {SuperCollider} -i
+/proc.prefix.parm *n +ki %q "string"
+#+END_SRC
+
+- =proc= :: The process into which the new variations will go.
+- =prefix= :: A phrase identifier. /Mandatory./
+- =parm= :: (optional) The parameter to control.
+- =n= :: The number of variations to create. Each becomes a new
+     phrase: =prefix0=, =prefix1= up to $n-1$.
+- =k= :: The number of sequence items to add.
+- =i= :: The sequence item: either a single character (defined in the
+     parmMap) or the name of a Func, with a leading backslash =\=.
+- =q= :: (optional) The quantization factor, determining where in the
+     bar the new notes may be placed.
+- =string= :: A template, providing items and rhythms that should be
+     constant over all variations. You may use an existing pattern
+     string from any process by omitting the quote marks and
+     substituting =phrase.parm= (if the template comes from the same
+     process) or =/proc.phrase.parm= (if it comes from a different
+     process).
+
+#+BEGIN_boxnote
+At present, the string must contain vertical-bar dividers
+(\textbar). I may remove this limitation in a future version. For now,
+passing a string without dividers will cause an error.
+#+END_boxnote
+
+#+begin_figure
+#+name: gen1
+#+caption: Examples of randomizer statements.
+#+BEGIN_SRC {SuperCollider} -i
+// assuming BP(\snr) defines:
+// "-" (normal note)
+// "." (softer note)
+// Produces strong notes on 2 and 4, and one note elsewhere
+/snr.a *10 +1. "|-||-";
+/snr = ('^a');  // randomly choose one variation for each bar
+
+// "-" = open, "." = closed
+/hh = "..|..|..|..";  // all closed at first
+
+// add an open HH on any empty 16th
+/hh.a *10 +1- main;  // "main" refers to the above
+/hh = ('^a');
+
+// totally random HH rhythm (probably sounds stupid)
+{ "-.".wchoose(#[0.16, 0.84]) } => Func(\randHH);
+/hh.b *10 +9\randHH "|||";
+
+// or random notes on 8ths
+/hh.b *10 +5\randHH %0.5 "|||";
+
+// or, random notes, but don't allow two "-" in a row
+(
+{ |prev|
+   if(prev == $-) { $. } {
+      "-.".wchoose(#[0.16, 0.84])
+   }
+} => Func(\randHH);
+)
+
+/hh.b *10 +9\randHH "|||";
+#+END_SRC
+#+end_figure
+
+The randomizer's algorithm is:
+
+1. Use =q= to determine the valid time points at which to place
+   notes. In 4/4 time, with the default =q= = 0.25, there will be 16
+   time points.
+
+2. Evaluate the string, to find out where notes already exist. Remove
+   these time points from the available list.
+
+3. Randomly choose =k= time points, and add =i= at each of these
+   points.
+
+4. Write the results into a pattern string, and call the /Set pattern/
+   statement (Section [[Set pattern statement]]) to add the pattern into the process.
+
+5. Do the above =n= times.
+
+*** Functions as items
+Normally, =i= is simply a character indicating a specific value from
+the parameter map. If you want the item itself to be randomized,
+define a function to calculate the random value, save it in a
+/chucklib/ =Func=, and use the =Func='s name in place of the item.
+
+For each new item, the =Func= will be passed two arguments: the item
+before the randomly-chosen time point (or nil) and the item after the
+time point (or nil). You may add other arguments, in parentheses,
+after the function name; e.g. =+3\myRand(1, 3)= would call
+=\myRand.eval(prev, next, 1, 3)=.
+
+** Make statement
+The make statement instantiates one or more /chucklib/ factories.
+
+#+name: clMake1
+#+caption: Syntax template for make statements.
+#+BEGIN_SRC {SuperCollider} -i
+/make(factory0:targetName0/factory1:targetName1/...);
+#+END_SRC
+
+- =factory= :: The name of a =Fact= object to create.
+- =targetName= :: (optional) The name under which to create the
+     instance. If not given, the make statement looks into the factory
+     for the =defaultName=. If not found, the factory's name will be
+     used.
+
+Multiple =factory:targetName= pairs may be given, separated by
+slashes. Both =BP= and =VC= factories are supported.
+
+As noted earlier, the code to define /cll/ processes is not
+performance-friendly. Instead, you can write this code into =Fact=
+object, and then =/make= them as you need them in performance.
+
+#+name: make1
+#+caption: Example of the make statement.
+#+BEGIN_SRC {SuperCollider} -i
+(
+// THIS PART IN THE INIT FILE
+(
+defaultName: \demo,
+make: { |name|
+	PR(\abstractLiveCode).chuck(BP(name), nil, (
+		event: (eventKey: \default),
+		defaultParm: \degree,
+		parmMap: (degree: (isPitch: true))
+	));
+}, type: \bp) => Fact(\demoBP);
+)
+
+// DO THIS IN PERFORMANCE
+/make(demoBP:dm);  // :dm overrides defaultName
+
+/dm = "1353427,5,";
+/dm+;
+/dm-;
+
+/dm(free);
+#+END_SRC
+
+** Passthrough statement
+The passthrough statement takes arbitrary SuperCollider code, enclosed
+in parentheses, and applies it to any existing /chucklib/ object. If
+no class is specified, =BP= is assumed. No syntax checking is done in
+the preprocessor, apart from counting parentheses to know which one
+really ends the statement.
+
+#+name: clPass1
+#+caption: Syntax template for passthrough statements.
+#+BEGIN_SRC {SuperCollider} -i
+// This...
+/snr(clock = ~myTempoClock);
+
+// ... is the same as running:
+BP(\snr).clock = ~myTempoClock;
+
+// Or...
+/VC.bass(releaseAll);  // VC(\bass).releaseAll;
+#+END_SRC
+
+** Chuck statement
+The chuck statement is a shortcut for chucking any existing /chucklib/
+object into some other object. If no class is given, =BP= is assumed.
+
+#+name: clChuck1
+#+caption: Syntax template for Chuck statements.
+#+BEGIN_SRC {SuperCollider} -i
+// This...
+/snr => MCG(0);
+
+// ... is the same as running:
+BP(\snr) => MCG(0);
+
+// Or...
+/VC.keys => MCG(0);  // VC(\keys) => MCG(0);
+#+END_SRC
+
+** Func call statement
+The =Func= call statement is a shortcut to evaluate a function saved
+in /chucklib/'s =Func= collection. This makes it easier to use helper
+functions (Section [[Helper functions]]). No syntax checking is done
+in the preprocessor.
+
+#+name: clFunc1
+#+caption: Syntax template for func-call statements.
+#+BEGIN_SRC {SuperCollider} -i
+/func.(arguments);
+
+// e.g.:
+/bars.(\proc, 2, \a);
+#+END_SRC
+
+#+BEGIN_boxnote
+The dot after the function name is critical! Without it, the statement
+looks exactly like a passthrough, and the preprocessor will treat it
+as such.
+#+END_boxnote
+
+** Copy or transfer statement
+Copy/transfer statements create additional copies of phrases, so that
+you can transform the material while keeping the old copy. Then you
+can switch between the old and new versions, setting up a musical
+form.
+
+#+name: clCopy1
+#+caption: Syntax template for copy/transfer statements.
+#+BEGIN_SRC {SuperCollider} -i
+/proc.phrase*n -> newPhrase;  // copy
+
+/proc.phrase*n ->> newPhrase;  // transfer
+#+END_SRC
+
+- =proc= :: The process on which to operate.
+- =phrase= :: The phrase name to copy.
+- =n= :: (optional) If given, copy a multi-bar phrase group, treating =phrase= as the prefix. =/proc.a*2 -> b= will copy =a0= to =b0= and =a1= to =b1=. (If =n= is omitted, both =phrase= and =newPhrase= will be used literally.)
+- =newPhrase= :: The name under which to store a copy. If =n= is given, this is a phrase group prefix.
+
+The difference between "copy" and "transfer" is:
+
+- Copy (=->=) simply duplicates the phrase information, but continues
+  playing the original phrases. If you change the new copies, you
+  won't hear the changes until you change the phrase selection
+  pattern. This is good for preparing new material and switching to it
+  suddenly.
+
+- Transfer (=->>=) duplicates the phrase information /and/ modifies
+  the phrase selection pattern, replacing every instance of the old
+  phrase name with the new.[fn:3ac66514] Changing the new copies will now be heard
+  immediately. This is good for slowly evolving new material, while
+  keeping the option to switch back to an older (presumably simpler)
+  version later.
+
+** Show pattern statement
+Less a "statement" than an interface convenience, this feature looks
+up the string for a given phrase and parameter, and inserts it into
+the code document. Invoke this behavior by typing =/proc.phrase.parm=
+and evaluating the line by itself. As in other contexts, =phrase= and
+=parm= are optional and default to =main= and the process's
+=defaultParm= respectively. For a multi-bar phrase group, type
+=/proc.phrase*n.parm= (where =n= is the number of bars in the group.)
+
+This is useful after a copy/transfer statement.
+
+#+name: clShow1
+#+caption: Demonstration of "Show pattern" statements.
+#+BEGIN_SRC {SuperCollider} -i
+/snr.a = " - -";
+
+/snr.a -> b;
+
+/snr.b   // now hit ctrl-return at the end of this line
+
+// the line magically changes to
+/snr.b = " - -";
+#+END_SRC
+
+#+BEGIN_boxnote
+You must be using SuperCollider IDE 3.7 or above. Automatic code
+insertion is not supported for other editors, or in SC 3.6.x (as it
+uses new features introduced in SC 3.7).
+#+END_boxnote
+
+** Helper functions
+Three =Func= definitions are provided to make it easier to work with
+multi-bar phrase groups. I will introduce them using /cll/ Func call
+statement syntax (Section [[Func call statement]]).
+
+- =/setupbars.(\proc, n, \prefix)= :: Create empty phrases for
+     =prefix0=, =prefix1= up to $n-1$. This also inserts /Set pattern/
+     (Section [[Set pattern statement]]) templates into the code
+     document, for you to start filling in musical material.
+- =/setm.(\proc, n, \prefix)= :: Set the process's phrase selection
+     pattern to play this phrase group. It also changes =quant= in the
+     process, so that starting and stopping the process will align to
+     the proper number of bars.
+- =/bars.(\proc, n, \prefix)= :: Calls both =setupbars= and =setm= at
+     once.
+
+A typical sequence of performance instructions for me is:
+
+#+name: helper1
+#+caption: Common initialization sequence, using helper functions.
+#+BEGIN_SRC {SuperCollider} -i
+/make(kick);
+/bars.(\kick, 2, \a);
+
+// the following lines are automatically inserted
+/kick.a0 = "";
+/kick.a1 = "";
+#+END_SRC
+
+After the templates appear, I edit the strings to produce the rhythms
+I want, and then launch the process with =/kick+=. In this example,
+the phrase group occupies two bars. =setm= automatically sets the
+process's =quant= to two bars, so the process will then launch on an
+even-numbered barline.
+
+* Generators
+The basic syntax of the /Set pattern/ statement (Section
+[[id:a9588fdc-4350-4a6c-8e69-e1b9f284922c]]) denotes fixed note
+sequences, which always play exactly the same events. /Generators/
+create phrases whose contents can change on each iteration, adding
+another dimension of musical interest.
+
+** Generator design
+Generators manipulate lists of events, provided by "set pattern"
+strings, one bar at a time. (As such, they are not a precise analog to
+SuperCollider patterns.)
+
+Typically, the generator's first argument is the event source: a "set
+pattern" string or another generator. The generator requests the event
+list from the source, processes it and passes the modified list up to
+its parent. Chaining generators in this way allows complex behaviors
+from simple units. Generators should be written such that it's
+possible to use any generator at any point in a chain.
+
+At present, generators divide into these main categories:
+
+- /Rhythm generators/ insert new items into the event list, or delete
+  them. New items may be event characters directly, or wildcards to be
+  replaced by the second category.
+
+- /Content generators/ replace wildcards with user-specified values.
+
+- /Filter generators/ alter the flow of control.
+
+These are not the only possible generator types, and there is no
+prescribed sequence for using them. However, it's been most successful
+so far to use a rhythm generator to embellish a base rhythm, and then
+apply a content generator to "fill in" the new rhythmic elements.
+
+#+name: gencycle
+#+caption: Isorhythmic cycles with generators.
+#+BEGIN_SRC SuperCollider -i
+(
+BP(\y).free;
+PR(\abstractLiveCode).chuck(BP(\y), nil, (
+	event: (eventKey: \default),
+	defaultParm: \degree,
+	parmMap: (degree: (isPitch: true))
+));
+)
+
+TempoClock.tempo = 140/60;
+
+/y = "12 4| 5 6| 12 |45";
+
+/y+;
+
+/y = "\seq("** *| * *| ** |**", "12456", "*")";
+
+/y = "\ins(\seq("** *| * *| ** |**", "12456", "*"), "*", 7, 0.25)";
+
+/y = "\seq(\ins(\seq("** *| * *| ** |**", "12456", "*"), "*", 7, 0.25), "6,214", "*")";
+
+/y = "\seq("** *| * *| ** |**", "12456", "*")::\ins(, "*", 7, 0.25)::\seq(, "6,214", "*")";
+
+/y-;
+#+END_SRC
+
+Listing [[gencycle]] demonstrates one possibility. The initial idea is a
+cycle of five pitches laid over nine notes within a bar. Without
+generators, it's necessary to drop one pitch at the end of every bar
+(or, write the five possible distinct bars by hand---time moves
+quickly on stage, so this is painful). But, using the =\seq()=
+generator, we can specify the rhythm using a @@latex:\texttt{*}@@
+wildcard; =\seq()= replaces each wildcard with successive
+pitches. =\seq= also remembers its state from one bar to the next, so,
+in this example, the first bar will begin with =1= and the second,
+with =6=.
+
+Generators are "composed" by wrapping another generator around the
+outside: =\ins(..., "*", 7, 0.25)= inserts seven wildcards at randomly
+chosen 1/4-beat positions. (There are 16 per bar, and 9 are already
+occupied, so this will fill all the empty rhythmic positions.)
+@@latex:\texttt{*}@@ is not a valid pitch specifier, so these are
+performed as rests. Wrapping in one more layer, another =\seq()=,
+overlays a new cycle, four notes this time. The result is a shifting
+arpeggiation that should repeat every 20 bars---but written as a
+single bar's pattern string.
+
+The nested notation has the drawback that the parameters of
+outer-layer generators may be far away from the generator name. A
+double-colon "chaining" or "composition" operator,
+@@latex:\texttt{::}@@, makes it possible to write each generator as an
+isolated unit. The final variant sounds the same as the nested
+version, but is easier to read. The @@latex:\texttt{::}@@ operator
+takes the result of the first =\seq()= and replaces the first
+parameter of the subsequent =\ins()= with it, and on down the
+chain. The initial comma inside =\ins()= is required as a placeholder,
+but nothing need be supplied; empty commas become =nil=.
+
+** Generator usage
+*** Generators and pattern strings
+Generators are invoked using the syntax =\name(arguments)= within a
+"set pattern" string.
+
+As noted earlier, every character in a pattern string corresponds to a
+metrical position within the bar.[fn:2bc61fa0] The entire generator string, from
+the opening backslash to the closing parenthesis, likewise occupies
+/one and only one/ metrical position. The generator remains active
+until the next event, which may be a literal item or another
+generator. Spaces in the pattern string are placeholders, and indicate
+how long the generator should be in force. Listing [[genRhythm]]
+illustrates. (Argument lists call for further discussion and are not
+relevant to generators' rhythmic position; so, the examples omit
+arguments.)
+
+In example 3 of Listing [[genRhythm]], beat 2 contains four items:
+@@latex:\texttt{6,}@@, =\rand(...)=, space and space. Thus beat 2 is
+subdivided into 16th-notes, and the generator begins on the second of
+those.
+
+#+name: genRhythm
+#+caption: Interaction between generator syntax and "set pattern" rhythmic notation.
+#+BEGIN_SRC {SuperCollider} -i
+// 1. \rand starts on the downbeat and occupies the whole bar.
+/y = "\rand(\ins("1,", "*", 3, 0.5), "13467", "*")";
+
+/y+;
+
+// 2. \rand starts on beat 2
+/y = "1,|\rand(\ins("6,", "*", 3, 0.5), "13467", "*")||";
+
+// 3. \rand starts on the 2nd 16th-note of beat 2
+/y = "1,|6,\rand(\ins("", "*", 3, 0.5), "13467", "*")  ||";
+
+// 4. \rand starts on the 2nd 16th-note of beat 2
+// and stops on the 'and' of 4
+/y = "1,|6,\rand(\ins("", "*", 3, 0.5), "13467", "*")  || x";
+
+/y-;
+#+END_SRC
+
+#+BEGIN_boxnote
+=\ins("source", "new", num, quant)= inserts /num/ new items at
+possible time points /quant/ beats apart. These time points are
+measured from the beginning of the generator. In Listing [[genRhythm]],
+examples 3 and 4 offset the generator by one 16th-note---so =\ins()=
+will syncopate by a 16th. Further, source strings will be compressed
+to fit into the generator's duration. If @@latex:\texttt{"|||"}@@ at
+the outermost layer produces four divisions of one beat each, the same
+inside example 3's =\ins()= generator would divide 2.75 beats by 4,
+whereupon each division would consist of 11 64th-notes. These examples
+avoid the problem by supplying empty source strings. Otherwise, be
+careful (or, structure your music to take advantage of the resulting
+Nancarrow-esque polyrhythms).
+#+END_boxnote
+
+*** Generator arguments
+Every generator expression currently requires an argument list in
+parentheses following the generator's name. (If a generator doesn't
+require arguments, an empty pair of parentheses is currently still
+required. I may remove this requirement later, but for now, it's not
+optional.)
+
+Arguments are separated by commas. Each argument should be one of the following:
+
+- A /quoted/ string containing items to use for subsequent events. An
+  "item" may be a single character or a generator; if the pattern
+  string is for a pitch parameter, the item may consist of more than
+  one character (including octave, accidental and articulation
+  modifiers). Quotes for these strings should /not/ be escaped with
+  backslashes, even though these quoted strings appear within
+  quotes. The set pattern parser reads the pattern string up to a
+  closing quote that appears /outside/ generator expressions.
+
+- A subordinate generator expression (which must begin with a
+  backslash and end with a closing parenthesis).
+
+- A number.
+
+- A Symbol, written in LISP-influenced style with an opening backtick:
+  =`name=. Currently this is used only in the =\pdefn()= generator.
+
+# See Listing [[genRhythm1]] for examples.
+
+By convention, the first argument to any generator should be its
+source: a pattern string or generator. Generators may be freely
+composed if they follow this rule. Breaking the rule will result in
+combinations of generators that cannot be made to work. Other
+arguments are free for each generator to define.
+
+** Generators and rhythm
+
+Previous /cll/ versions used a "rhythm generator" to supply timing,
+when a generator was used for the default parameter. (As discussed in
+Section [[Timing of multiple parameters]], the default parameter controls
+the rhythm of the entire process.)
+
+Beginning with v0.3, /all/ generators are timed according to the
+rhythm in the source string and any subsequent manipulation. There is
+no syntactic difference when using a generator in default or
+non-default parameters.
+
+# #+name: genRhythm1
+# #+caption: Examples of generators, with rhythm handling.
+# #+BEGIN_SRC {SuperCollider} -i
+# // non-default parameter, generates values per main rhythm
+# /beep..pan = "\xrand("<(-)>")";
+# 
+# // non-default parameter, sample-and-hold once per quarter
+# /beep..pan = "\xrand("<(-)>":randRhy(1, 1))";
+# 
+# // easier to hear with sequence
+# /beep..pan = "\seq("<>":randRhy(1, 1))";
+# 
+# // default parameter with rhythm generator
+# // beginning the pattern string with '^' means
+# // every bar will have a strong downbeat
+# /beep = "^\rand("-.":randRhy(0.25, 2, 1, 1))  |||";
+# 
+# // switch to triplets, weight the return items
+# /beep = "^\wrand("-.", 1, 3:randRhy(1/3, 2, 1)) |||";
+# 
+# // default parameter, no rhythm: Error
+# /beep = "^\rand("-.")  |||";
+# #+END_SRC
+
+** Built-in generators
+*** Rhythm generators
+
+- =\ins("source", "new items", numToAdd, quant)= :: Locates unoccupied
+     metric positions within the bar, every /quant/ beats apart
+     beginning with the generator's onset time, chooses /numToAdd/ of
+     them randomly, and inserts new items at those positions.
+
+- =\shift("source", "shiftable items", numToShift, quant)= :: Locates
+     /numToShift/ occurrences of the /shiftable items/ within the
+     source (they must already exist), and moves them forward or back
+     by /quant/ beats. A good way to get syncopation is to insert
+     items on a strong beat, and then shift them by a smaller
+     subdivision.
+
+- =\rot("source", quant)= :: Add /quant/ to every item's onset time,
+     and wrap all the times into the generator's boundaries:
+     basically, a strict canon.
+     #+BEGIN_SRC SuperCollider
+     // Reich, "Piano Phase"-ish
+     
+     (
+     BP(\y).free;
+     PR(\abstractLiveCode).chuck(BP(\y), nil, (
+     	event: (eventKey: \default, pan: -0.6),
+     	defaultParm: \degree,
+     	parmMap: (degree: (isPitch: true))
+     ));
+     
+     BP(\z).free;
+     PR(\abstractLiveCode).chuck(BP(\z), nil, (
+     	event: (eventKey: \default, pan: 0.6),
+     	defaultParm: \degree,
+     	parmMap: (degree: (isPitch: true))
+     ));
+     )
+
+     TempoClock.setMeterAtBeat(3, TempoClock.nextBar);
+     TempoClock.tempo = 112/60;
+     
+     /y = "\seq("*^*^*^*^*^*^", "268", "*")::\seq(, "37", "^")";
+     
+     /z = "\seq("*^*^*^*^*^*^", "268", "*")::\seq(, "37", "^")";
+     
+     /y/z+;
+     
+     /z = "\seq("*^*^*^*^*^*^", "268", "*")::\seq(, "37", "^")::\rot(, -0.25)";
+     
+     /z = "\seq("*^*^*^*^*^*^", "268", "*")::\seq(, "37", "^")::\rot(, -0.5)";
+     
+     /z = "\seq("*^*^*^*^*^*^", "268", "*")::\seq(, "37", "^")::\rot(, -0.75)";
+     
+     /y/z-;
+     #+END_SRC
+
+*** Content generators
+
+- =\seq("source", "items", "wildcards", reset)= :: Replaces
+     /wildcards/ in the source with /items/, one by one, preserving
+     order. /Reset/ is optional; if it's a number greater than 0, the
+     item sequence will reset on every bar.
+
+- =\rand("source", "items", "wildcards")= :: Like =\seq()=, but
+     chooses from /items/ randomly. (/Reset/ is not relevant, as there
+     is no order to preserve.)
+
+- =\wrand("source", "items", "wildcards", weight0, weight1, weight2...)= :: Weighted
+     random selection, like =Pwrand=. /Weight0/ is associated with the
+     first element of /items/; /weight1/ with the second, and so
+     on. The generator automatically does =normalizeSum= on the
+     weights, so you don't have to worry about making them add up to
+     1.0. Do not enclose the weights in array brackets. (As in
+     =\rand()=, /reset/ is irrelevant.)
+
+- =\xrand("source", "items", "wildcards", reset)= :: Reads the items
+     in random order without repeating the same item twice in a row,
+     like =Pxrand=.
+
+- =\shuf("source", "items", "wildcards", reset)= :: Shuffles the items
+     into random order, and returns each one before choosing a new
+     order, like =Pn(Pshuf(items, 1), inf)=.
+
+- =\pdefn("source", `pdefnKey, "wildcards", reset)= :: Like =\seq()=,
+     but obtaining replacement items from a =Pdefn=. For non-pitched
+     parameters, the =Pdefn= should yield characters corresponding to
+     =parmMap= items. For pitched parameters, it should yield
+     e.g. =SequenceNote(degree, nil, length)= where =length= is 0.4
+     for staccato, 0.9 for legato (but rearticulating the next note)
+     and 1.01 for slurred.
+     - =Pdefn= streams are shared globally across all instances of
+       this generator. This means you can create sequential patterns
+       spanning barlines.
+     - The behavior of =reset > 0= is undefined.
+     #+BEGIN_SRC SuperCollider
+     Pdefn(\y, Pn(Pseries(0, 1, 8), inf).collect { |d| SequenceNote(d, nil, 0.9) });
+     
+     /y.a0 = "*\ins("*", "*", 2, 0.5)::\pdefn(, `y, "*")";
+     /y.a1 = "\ins("*", "*", 3, 0.5)::\pdefn(, `y, "*")";
+     /y = (a**2);
+     #+END_SRC
+
+*** Filter generators
+
+- =\fork("source", "timed generators")= :: Applies different
+     generators to different segments of the bar. For instance, the
+     /source/ could insert /n/ wildcards throughout the bar, while
+     /timed generators/ could replace wildcards in the first half of
+     the bar with one value, and a different value in the second
+     half. Here, /timed generators/ includes two items, and =\fork()=
+     occupies the entire bar. So both =\seq()= instances get half a
+     bar. Source items in any portions of the bar not covered by one
+     of the /timed generators/ will pass through unchanged.
+     #+BEGIN_SRC SuperCollider
+     /y = "\ins("", "*", 10, 0.25)::\fork(, "\seq(, "13", "*")\seq(, "14", "*")")";
+
+     /y = "\ins("", "1,", 10, 0.25)::\fork(, " \seq(, "13", "1,")x\seq(, "14", "1,")")";
+     #+END_SRC
+
+- =\chain("source", generator, generator...)= :: For internal use only.
+
+** Writing new generators
+Generators inherit from =PR(\clGen)=.[fn:a395111b] They should implement:
+
+- =~prep= :: Validate the entries in the =~args= array, and return the
+             =Proto= object by finishing with =currentEnvironment=. In
+             general, start with =~baseItems = ~args[0]=.
+
+- =~process= :: Generally begins with =~items =
+                ~getUpstreamItems.();=. Following this, manipulate the
+                =~items= array and return it at the end. Be careful to
+                =copy= or =collect= the array (to avoid corrupting
+                =~baseItems=) and---important!---if you modify any of
+                the items, be sure to copy it first.
+
+Generators should take care to respect their time span, given by
+=~time= (the generator's onset within the bar) and =~dur= (the number
+of beats occupied by this generator). Do not modify any items outside
+this time span. See the definition of =PR(\clGenRot)= for an example.
+
+=~baseItems= and =~items= are arrays of Events, containing:
+
+- =item= :: The entry to be played. For non-pitched parameters, these
+            will generally be characters. Otherwise, pitch strings are
+            parsed into =SequenceNote= objects.
+
+- =time= :: The event's onset time within the bar. This is relative to
+            the bar line, not the generator's onset time.
+
+- =dur= :: The number of beats until the next event. This may not be
+           reliable during processing. The top-level generator will
+           correct the =dur= values before streaming out the events.
+
+This documentation may be expanded at a later date.
+
+* Extending cll
+/cll/ is designed to be extensible: adding new statements is
+relatively straightforward.
+
+Processing a /cll/ statement goes through two main steps:
+
+1. =PR(\chucklibLiveCode)= tests the statement against a number of
+   regular expressions, to determine what type of statement it is.
+
+2. Then, a =PR= object to handle the statement is instantiated, and
+   the statement is passed to that object's =process= method.
+
+So, to implement a new statement type, you need to do two things,
+matching the above stages.
+
+** Statement regular expression
+First, add a statement ID and regular expression into
+=PR(\chucklibLiveCode)=. Within this object, =~statements= is an array
+of Associations: @@latex:\texttt{\textbackslash statementID -> "regexp"}@@.
+
+#+name: regexp1
+#+caption: Cll statement regular expression templates.
+#+BEGIN_SRC {SuperCollider} -i
+   ~statements = [
+      \clMake -> "^ *make\\(.*\\)",
+      \clFuncCall -> "^ *`id\\.\\(.*\\)",
+      \clPassThru -> "^ *([A-Z][A-Za-z0-9_]*\\.)?`id\\(.*\\)",
+      \clChuck -> "^ *([A-Z][A-Za-z0-9_]*\\.)?`id *=>.*",
+      \clPatternSet -> "^ *`id(\\.|`id|`id\\*[0-9]+)* = .*",
+      \clGenerator -> "^ *`id(\\.|`id)* \\*.*",
+      // harder match should come first
+      \clXferPattern -> "^ *`id(\\.`id)?(\\*`int)? ->>",
+      \clCopyPattern -> "^ *`id(\\.`id)?(\\*`int)? ->",
+      \clStartStop -> "^([/`spc]*`id)+[`spc]*[+-]",
+      \clPatternToDoc -> "^ *`id(\\.|`id)*[`spc]*$"
+   ];
+#+END_SRC
+
+More restrictive matches should come first. For instance,
+=\clXferPattern= comes before =\clCopyPattern=. If they were reversed,
+@@latex:\texttt{->}@@ in the "copy" regular expression would match the
+"xfer" statement as well as the "copy" statement. Checking
+@@latex:\texttt{->>}@@ first ensures that the more permissive test
+takes place only after the stricter test fails.
+
+Within these strings, a backtick (=`=) introduces a macro that will be
+expanded into part of a regular expression. Available macros are:
+
+#+name: regexp2
+#+caption: Regular expression macros for SC language tokens.
+#+BEGIN_SRC {SuperCollider} -i
+   ~tokens = (
+      al: "A-Za-z",
+      dig: "0-9",
+      id: "[A-Za-z][A-Za-z0-9_]*",
+      int: "(-[0-9]+|[0-9]+)",
+      // http://www.regular-expressions.info/floatingpoint.html
+      float: "[\\-+]?[0-9]*\\.?[0-9]+([eE][\\-+]?[0-9]+)?",
+      spc: "    "  // space, tab, return
+   );
+#+END_SRC
+
+You should match only as much of the syntax as you need to determine
+the statement type. This is not the place for syntax validation. For
+example, the =\clGenerator= statement has a fairly complex syntax, but
+the matching regular expression is looking only for one or more IDs
+separated by dots, followed by a space and then an asterisk. This will
+dispatch to =PR(\clGenerator)=; it is this object's responsibility to
+report syntax errors (generally by throwing descriptive =Error=
+objects).
+
+#+BEGIN_boxnote
+The leading slash is stripped from the statement before regular
+expression matching. Don't include the slash in your regular
+expression.
+#+END_boxnote
+
+** Handler object
+Usually, a statement handler is a =PR= object, containing a =Proto=
+object prototype. The =PR='s name must match the statement ID created
+in the last step.
+
+The =Proto= must implement =process=, which takes =code= (the
+statement, as a String) as its argument. It should return a string
+containing the SuperCollider language syntax to perform the right
+action.
+
+#+name: cllTemplate1
+#+caption: Template for cll statement handlers.
+#+BEGIN_SRC {SuperCollider} -i
+Proto {
+   ~process = { |code|
+      // parse 'code' and build the SC language statement(s)...
+      translatedStatement  // return value
+   };
+} => PR(\clMyNewStatement);
+#+END_SRC
+
+Very simple statements may be implemented as functions added into
+=PR(\chucklibLiveCode)=.
+
+#+name: cllTemplate2
+#+caption: Adding a function into PR(\textbackslash chucklibLiveCode) for simple statement types.
+#+BEGIN_SRC {SuperCollider} -i
+PR(\chucklibLiveCode).clMyNewStatement = { |code|
+   // parse 'code' and build the SC language statement(s)...
+   translatedStatement  // return value
+};
+#+END_SRC
+
+* Code examples
+#+LaTeX: \renewcommand{\lstlistlistingname}{}
+#+LaTeX: \lstlistoflistings
+
+* Footnotes
+
+[fn:84cfcfa1] In SuperCollider pattern terms, =1= translates into degree 0.
+
+[fn:0fe09d88] Currently a diatonic scale (7 degrees) is assumed.
+
+[fn:5b6ef116] Harkins, H. James. (2011). "Composition for Live
+Performance with dewdrop\textunderscore lib and chucklib." In Wilson,
+S., Cottle, D., Collins N. [eds.] /The SuperCollider
+Book/. Cambridge, Mass.: MIT Press. pp. 589--612.
+
+[fn:8ae1bb90] http://github.com/jamshark70/chucklib-livecode
+
+[fn:be0c1420] Note the trick to get monophonic synthesis. Assigning a
+=PmonoArtic= into =postDefaults= effectively turns the entire
+event-producing chain into a =PmonoArtic=---even if it adds no
+musically useful information into the resulting events. /Caveat/: If
+you will have any notes slur across the barline, make sure to include
+=alwaysReset: true= in the BP parameter dictionary.
+
+[fn:3ac66514] It does this by producing a =compileString= from the
+phrase selection pattern, performing string replacement, and then
+recompiling the pattern. This should work with all /cll/ phrase
+selection strings (Section [[Phrase selection]]). It is not guaranteed
+to work with hand-written patterns that generate phrase names
+algorithmically.
+
+[fn:9e282b21] McLean, Alex. "Making Programming Languages to Dance to:
+Live Coding with Tidal." Proceedings of the 2nd ACM SIGPLAN
+international workshop on Functional art, music, modeling &
+design, September 6, 2014, Gothenburg, Sweden, pp. 63--70.
+
+[fn:2bc61fa0] The exception is pitch, where a scale degree number may
+be followed by accidental, octave and articulation designations. In
+this case, for instance, the four characters =4,+.= make up a single
+metrical instant.
+
+[fn:a395111b] In =Proto=, inheritance is handled by "cloning" the
+Proto: =PR(\clGen).clone { ... overrides... }=.
+
+[fn:19d80e0a] http://www.ixi-audio.net/ixilang/, accessed October
+4, 2016.
+
+* To-do								   :noexport:
+** DONE Doc: Mention not to set prep or freeCleanup
+** DONE Doc: How to install cll
+** TODO Register commands

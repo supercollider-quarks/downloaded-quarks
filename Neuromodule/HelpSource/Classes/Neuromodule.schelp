@@ -1,0 +1,402 @@
+TITLE:: Neuromodule
+summary:: Dynamic time-discrete neuromodule
+categories::Streams-Patterns-Events
+
+
+DESCRIPTION::
+
+Neuromodules are a model for experimenting with the temporal dynamics of time-discrete neural networks, following emphasis::Frank Pasemann, Complex dynamics and the structure of small neural networks, Network: Comput. Neural Syst. 13, 2002, pp. 195--216::.
+
+
+They implement the map:
+
+IMAGE::neuromodule-form.png::
+
+In other words,
+code::
+x = (0..n-1).collect { |i|
+			theta.wrapAt(i).value(inval) + (0..n-1).sum { |j|
+				weights.wrapAt(i).wrapAt(j).value(inval) * tanh(x.at(j))
+			}
+		};
+::
+
+
+"The widespread recurrent structures found in biological neural networks imply the possibility of complex neural dynamics and, in fact, oscillatory and chaotic activity has been observed frequently in brains. This suggests that complex dynamics may play an important role for specific functions of the brain. Therefore, these dynamical properties have found increasing attention in recent years; but it still remains an open question to what extent and through which kind of mechanisms oscillatory and chaotic dynamics can contribute to effective signal processing in the brain." (p. 195f.)
+
+
+IMAGE::2-module.png#This iso-periodic diagram shows the "metric landscape" of a 2-module (numbers denoting the cycle length). The plot is in the (w11,w12)-subspace for fixed parameters w21 = −6, θ1 = −3, θ2 = 4. (image from Pasemann 2002, p. 201).::
+
+
+
+CLASSMETHODS::
+
+METHOD:: new
+
+Return a new instance.
+
+ARGUMENT:: x
+
+Array of initial values for each node. This sets the size of the network.
+
+ARGUMENT:: theta
+
+Bias for each node. This is typically where an external input enters.
+
+ARGUMENT:: weights
+
+Array of arrays of values (postive or negative real numbers), which specify the strength of a connection. See also below: link::#-weights::
+
+
+
+ARGUMENT:: outs
+
+Array of indices, which nodes are used as output. When none is given, all nodes are output.
+
+
+CODE::
+a = Neuromodule([0, 0], [2, -1], [[-3, 2], [-2, 0]]);
+a.nextN(8);
+Pbind(\note, a * 20, \dur, 0.04, \legato, 0.1).play;
+a.weights = { { 1.0.rand2 } ! 2 } ! 2; // random nets quickly converge ...
+::
+
+
+INSTANCEMETHODS::
+
+
+METHOD:: theta
+
+Set or get the current bias values. This can be a number, or anything that responds to code::value:: by retuning thomething that responds to the math operations, e.g. a Stream, andother Neuromodule, or a Function.
+
+returns:: Array
+
+METHOD:: numCells
+
+Number of nodes in the network.
+
+returns:: Integer
+
+METHOD:: x
+Set or get the current node values.
+
+returns:: Array
+
+METHOD:: weights
+Set or get the current weights.  Each weight can be a number, or anything that responds to code::value:: by retuning thomething that responds to the math operations, e.g. a Stream, andother Neuromodule, or a Function.
+
+A simple example with size = 2 shows the meaning of the values in the array:
+
+code::
+[
+	[-3, 2], // the first node is influenced by itself with -3 and with the second node with 2
+	[-2, 0] // the second node is influenced by the first with -2 and not with itself (0).
+]
+::
+
+
+returns:: Array of Arrays
+
+
+METHOD:: outs
+Set or get the current outputs, an array of indices. If set to code::nil::, the module returns all node values.
+
+returns:: Array of Integers
+
+
+METHOD:: next
+
+Calculate the next state. A neuromodule is a stream, see: link::Classes/AbstractFunction:: and link::Classes/Stream::.
+
+ARGUMENT:: inval
+This argument is passed to code::theta:: and code::weight::.
+
+CODE::
+// a neuromodule is a stream.
+a = Neuromodule([0.1, 0.12], [2, -1], [[-3, 2], [-2, 0]]);
+x = a * 100 + 300;
+x.next;
+x.next;
+
+// passing in values for each calculation step
+a = Neuromodule([0.1, 0.12], [{ |in| in[\theta0] }, { |in| in[\theta1] }], [[-3, 2], [-2, 0]]);
+x = a * 100 + 300;
+x.next((theta0:-1, theta1:1));
+x.next((theta0:-1.3, theta1:-0.3));
+::
+
+returns:: Array of values
+
+
+SUBSECTION:: Combining and modifying modules
+
+METHOD:: fillMissing
+
+Fill up any missing weights and thetas.
+
+
+METHOD:: addAll
+
+Add all nodes (cells) from another neuromodule to this.
+
+ARGUMENT:: neuromodule
+Another Neuromodule.
+
+returns:: this
+
+
+METHOD:: merge
+
+Merge this with another neuromodule and create a new one.
+
+ARGUMENT:: neuromodule
+Another Neuromodule.
+
+returns:: A new Neuromodule.
+
+METHOD:: rewire
+Make connections between the existing nodes by changing their respective weights.
+
+ARGUMENT:: triples
+An array that specifies code::[from-node-index, to-node-index, new-weight]::
+
+STRONG::CHECK AGAIN THE ORDER!!::
+
+
+ARGUMENT:: func
+If given, it will be called to produce the weight for the node, taking as arguments: code::old-value, new-value, from-index, to-index::.
+
+
+ARGUMENT:: postWarnings
+If set to true, post warnings if inidces don't match weights dimensions.
+
+SUBSECTION::Visualization
+
+METHOD::dotStructure
+Returns a string with a dot-language graph (which can then be rendered with graphViz).
+
+code::
+a = Neuromodule([0, 0], [2, -1], [[-3, 2], [-2, 0]]);
+a.dotStructure
+::
+
+
+
+
+EXAMPLES::
+
+code::
+
+
+// create a new module
+(
+~module = Neuromodule(
+	x: [0.1, 0],
+	theta: [0.1, 0.3],
+	weights: [[-3, 2], [-2, 0]],
+	outs: 0
+);
+)
+
+// forward time
+~module.next;
+~module.next;
+~module.next;
+
+// or (this is implemented in a superclass)
+~module.nextN(8); // 8 values
+~module.nextN(128).plot;
+
+
+// sonification: interactive, rewrite while running ...
+
+// synthdef
+(
+SynthDef(\gabor, { |out, freq=440, sustain=0.1, amp = 0.1, width = 0.1|
+	var sig, env;
+	env = LFGauss.ar(sustain, width, loop:0, doneAction: 2);
+	sig = SinOsc.ar(freq, 0.5pi) * env * amp;
+	OffsetOut.ar(out, sig);
+}).add;
+)
+
+(
+Tdef(\x, {
+	loop {
+		var dt = 0.1;
+		(
+			instrument: \gabor,
+			note: ~module.next * 4,
+			sustain: dt * 1.5, // 50% overlap
+			width: 0.3
+		).play;
+
+		dt.wait;
+	};
+}).play
+)
+
+// play with the parameters
+
+
+
+// fig. 82
+~module.theta = [2, -1]; ~module.weights = [[-3, 2], [-2, 0]];
+~module.weights = ~module.weights + [0.2, -0.1];
+~module.weights = ~module.weights + [-0.2, 0.1];
+
+// different scaling
+~module.outs = [0, 1]; //  two dimensions
+
+(
+Tdef(\x, {
+	loop {
+		var dt = 0.001; // maximum is about 1 ms. more will be problematic...
+		(
+			instrument: \gabor,
+			freq: ~module.next.linexp(-2, 2, 300, 10000),
+			sustain: dt * 1.5, // 50% overlap
+			width: 0.6,
+			out: [0, 1] // map to two audio channels
+		).play;
+
+		dt.wait;
+	};
+}).play
+)
+
+
+
+
+
+// a GUI:
+
+(
+~makeWindow = { |module|
+
+	var w = Window("module", Rect(200, 300, 400, 30 * module.numCells + 100));
+	var l = VLayout();
+	var h = HLayout(l);
+	var xsl = Set[], ysl = Set[];
+	var sliders, twod;
+	var update = { |index, val|
+		sliders[index].value = val;
+		module.theta[index] = val * 2 - 1;
+		module.theta.postln;
+	};
+	w.layout = h;
+	w.front;
+
+	h.add(
+		twod = Slider2D().action_({ |v|
+			xsl.do { |i| update.(i, v.x) };
+			ysl.do { |i| update.(i, v.y) };
+		});
+	);
+
+	sliders = module.theta.collect { |x, i|
+		var sl = Slider();
+		sl.action = { |v|
+			update.(i, v.value);
+			if(xsl.includes(i)) { twod.x = v.value };
+			if(ysl.includes(i)) { twod.y = v.value };
+		};
+		sl.value = x + 1 / 2;
+		sl.orientation = \vertical;
+
+		sl
+	};
+
+	sliders.do { |sl, i|
+		var ll = VLayout();
+
+		ll.add(
+			Button().states_([["x"], ["y"], [" "]]).action_({ |b|
+				if(b.value == 0) { ysl.remove(i);xsl.add(i); sl.value = twod.x; };
+				if(b.value == 1) { xsl.remove(i); ysl.add(i); sl.value = twod.y; };
+				if(b.value == 2) { xsl.remove(i); ysl.remove(i) };
+			})
+			.valueAction_(2);
+
+		);
+		ll.add(sl);
+		h.add(ll);
+	};
+
+
+};
+~makeWindow.(~module);
+)
+
+// modules are streams (see Stream help)
+
+~m1 = Neuromodule([0.1, 0],  [0.1, 0.3], [[-3, 2], [-2, 0]], 0);
+~m2 = Neuromodule([0.1, 0],  [0.5, -0.1], [[-3, 2], [2, 0]], 0);
+
+~z = ~m1.sin + ~m2.squared;
+~z.nextN(8);
+
+
+// merging two modules:
+~m1 = Neuromodule([0.1, 0],  [0.1, 0.3], [[-3, 2], [-2, 0]], 0);
+~m2 = Neuromodule([0.1, 0],  [0.5, -0.3], [[-3, 2], [2, 0]], 0);
+~m3 = merge(~m1, ~m2);
+
+
+
+~module.addAll(~m3); // combine with the one further up
+~makeWindow.(~module);
+
+
+// rewiring:
+
+~m = Neuromodule(0 ! 4).fillMissing; // simplest empty module
+~m.rewire([[0, 0, -1], [1, 0, 2]]);
+~m.rewire([[0, 0, 0.1 ], [1, 0,  0.1]], { |prev, new| prev.neg + new }); // passing in a function
+
+
+
+// combining modules in one way direction works like this:
+~m1 = Neuromodule([0.1, 0],  [0.1, 0.3], [[-3, 2], [-2, 0]], 0);
+~m2 = Neuromodule([0.1, 0],  [~m1, 0.3], [[-3, 2], [-2, 0]], 0);
+
+
+~m2.nextN(8);
+
+
+// combining modules in a concurrent way
+~m1 = Neuromodule([0.1, 0],  [{ ~m2.x[1] }, 0.3], [[-3, 2], [-2, 0]], 0);
+~m2 = Neuromodule([0.1, 0],  [0.1, { ~m2.x[0] }], [[-3, 2], [-2, 0]], 0);
+
+Tdef(\x, { loop { 0.1.wait; "m1: ".post; ~m1.next.postln; } }).play;
+Tdef(\y, { loop { 0.15.wait; "m2: ".post; ~m2.next.postln; } }).play;
+
+// sonifying them in stereo
+(
+Tdef(\x, {
+	var dt = 0.1;
+	loop { dt.wait; (
+			instrument: \gabor,
+			freq: ~m1.next.linexp(-2, 2, 300, 10000),
+			sustain: dt * 1.5, // 50% overlap
+			width: 0.6,
+			out: 0 // left
+		).play; }
+}).play;
+Tdef(\y, {
+	var dt = 0.14;
+	loop {
+		dt.wait; (
+			instrument: \gabor,
+			freq: ~m2.next.linexp(-2, 2, 300, 3000),
+			sustain: dt * 1.5, // 50% overlap
+			width: 0.6,
+			out: 1 // right
+		).play; }
+}).play;
+)
+
+~m1.theta[1] = -1; ~m1.weights = [[-3, 2], [-2, 0]];
+~m2.theta[0] = 1; ~m1.weights = [[3, -2], [0, 2]];
+
+::

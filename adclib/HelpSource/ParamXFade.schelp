@@ -1,0 +1,156 @@
+TITLE:: ParamXFade
+summary:: crossfade between parameter settings
+categories:: Control
+related:: Classes/Tdef, Classes/Ndef, Overviews/JITLib
+
+DESCRIPTION::
+ParamXFade can crossfade a set of parameters of a process (e.g. an Ndef or a Tdef)
+from their current values to a destination over a fadeTime.
+
+This is useful for morphing between presets flexibly.
+
+First code example:
+
+code::
+// try with an Ndef first
+Ndef(\a, { |freq = 400, reso = 5, amp=0.2, pan|
+	Pan2.ar(RLPF.ar(Pulse.ar(12), freq, 1/reso, amp), pan);
+}).play;
+
+Ndef(\a).set(\freq, 400, \reso, 5, \amp, 0.2, \pan, 0.2);
+// add specs for params so they are known
+Ndef(\a).addSpec(\reso, [2, 32, \exp]);
+// make a gui for the Ndef
+Ndef(\a).gui;
+// now make a ParamXFade
+x = ParamXFade(Ndef(\a));
+
+Ndef(\a).set(\freq, 300, \reso, 5, \amp, 0.2, \pan, -1);
+x.fadeTo([\freq, 0.9, \reso, 0.75], 10);
+
+// set freq while fading - pxf will continue fade from there
+Ndef(\a).set(\freq, 300);
+
+Ndef(\a).end;
+
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+create a new ParamXFade for ...
+argument:: obj
+a specific object
+argument:: fadeTime
+optional - initial time to crossfade
+argument:: dt
+optional initial timestep
+argument:: getSetType
+select which methods to use for getting/setting:
+default value \uni uses methods given in getSetDict:
+code::
+ParamXFade.getSetDict[\uni].cs;
+::
+private:: initClass
+
+METHOD:: getSetDict
+a dictinonary of getFuncs and setFuncs.
+currently only \uni (as used by Tdef, Ndef, Pdef),
+others to follow.
+
+INSTANCEMETHODS::
+
+METHOD:: obj
+the object whose params will be faded
+
+METHOD:: fadeTime
+get and set fadeTime for the fading task
+
+METHOD:: dt
+get and set timestep for the fading task
+
+METHOD:: dest
+get and set destination for the fade;
+can be set while crossfading.
+
+METHOD:: fadeTo
+set destination and optionally fadeTime, start fading task
+
+subsection:: internal fade variables
+METHOD:: destNames
+the param names in the current destination
+METHOD:: destVals
+the param values in the current destination
+METHOD:: currVals
+the current param values the object is set to
+METHOD:: remainTime
+the remaining time to crossfade
+METHOD:: fadeIndex
+the index from 1.0 to 0.0 how far the crossfade has progressed
+
+
+
+subsection:: internal variables
+METHOD:: task
+the task that does the crossfade
+
+METHOD:: getSetType
+the type of get and set functions used
+
+METHOD:: getFunc, setFunc
+the get and set functions used
+METHOD:: startFunc, endFunc
+functions to run when crossfade task starts and ends
+
+private:: init, initFuncs, initTask
+
+
+EXAMPLES::
+
+code::
+// same test for PatternProxy
+Tdef(\a).set(\freq, 100, \reso, 5, \amp, 0.2, \pan, -1);
+Tdef(\a).addSpec(\reso, [2, 32, \exp]).gui;
+y = ParamXFade(Tdef(\a));
+
+Tdef(\a).set(\freq, 100, \reso, 5, \amp, 0.2, \pan, -1);
+y.fadeTo([\freq, 0.9, \reso, 0.75], 10);
+
+// set freq while fading - will continue fade from there
+Tdef(\a).set(\freq, 20000);
+
+// change dest while running:
+y.fadeTo([\freq, 0.9, \reso, 0.75], 10);
+// should aim here now:
+y.dest_([\freq, 0.1, \reso, 0.25]);
+
+// can also change while params to fade
+y.dest_([\amp, 1, \pan, 1]);
+
+
+//
+y.obj;
+y.fadeTime;
+y.dt;
+
+// the functions
+y.getSetType;
+y.getFunc.cs;
+y.setFunc.cs;
+y.startFunc.value;
+y.endFunc.value;
+
+// the crossfade task
+y.task;
+// the destination to fade to
+y.dest;
+// split for speed
+y.destNames;
+y.destVals;
+
+// these change during fading:
+y.remainTime;
+y.fadeIndex;
+y.currVals;
+
+::

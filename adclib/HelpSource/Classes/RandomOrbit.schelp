@@ -1,0 +1,256 @@
+TITLE:: RandomOrbit
+summary:: generate series of repeatable and reversible random decisions
+categories:: Control, MetaControl
+related:: Overviews/JITLib
+
+DESCRIPTION::
+RandomOrbit allows generating series of repeatable and reversible random decisions by controlling the seeding of the random generator used.
+Moving the seed number up and down by the same steps will create the same results again, and having a sign. Its default function is intended for  also reversing decisions by scaling and inverting the resulting list of bipolar number values.
+RandomOrbit is a concept by Hannes Hoelzl; implementation started by adc.
+Combines well with the Influx class (in the Influx Quark).
+
+First code examples:
+
+code::
+r = RandomOrbit();
+r.seed; // from date by default
+r.seed = 123; // set it to a
+r.func.cs; // default func: create a list of n bipolar values
+
+// by default fixed seed, same result
+[r.value( 0 ).round(0.01), r.seed];
+
+ // increment seed by 1, go up sequence
+[r.value( 1 ).round(0.01), r.seed];
+[r.value( 1 ).round(0.01), r.seed];
+[r.value( 1 ).round(0.01), r.seed];
+
+ // decrement seed by -1, sequence in reverse
+[r.value(-1 ).round(0.01), r.seed];
+
+// ask for multiple values, fixed seed
+[r.value(0, 5 ).round(0.01), r.seed]; // five values
+ // increment seed by 1, go up sequence
+[r.value( 1, 5 ).round(0.01), r.seed];
+[r.value( 1, 5 ).round(0.01), r.seed];
+[r.value( 1, 5 ).round(0.01), r.seed];
+
+ // decrement seed by -1, sequence in reverse
+[r.value(-1, 5 ).round(0.01), r.seed];
+[r.value(-1, 5 ).round(0.01), r.seed];
+[r.value(-1, 5 ).round(0.01), r.seed];
+
+// jump seed sequence in bigger steps:
+// current rand values
+"curr: ".post; [r.value(0).round(0.01), r.seed].postln;
+// go up 5x by step 1
+5.do { [r.value(1).round(0.01), r.seed].postln };
+// then down by -5 : back at beginning
+"back: ".post; [r.value(-5).round(0.01), r.seed].postln;
+
+// give it a custom func:
+r = RandomOrbit(123, { |num=2| num.collect { "aeiouy".choose }.join; }, false);
+r.value.cs; // fixed seed
+r.value(1).cs; // step seed
+r.value(1, 5).cs; // step seed, supply argument for num
+
+// try with next method and event:
+r.next;
+r.next((inc: 1, num: 3));
+
+
+// make an orbit for a melody
+r = RandomOrbit(123, { |n=1| { 7.rand2 }.dup(n); });
+
+r.seed = 666;
+x = Pbind(
+	\inc, Pseq([ Pn(1, 7), Pn(-1, 7)], inf),
+	\degree, r,
+	\dur, Pseq([0.5, Pn(0.25, 6)], inf)
+).trace.play;
+
+// shift random sequence by 1
+r.stepSeed(1);
+r.stepSeed(-1); // and back
+
+// change the seed while running
+r.seed = 234;
+r.seed = 123;
+r.seed = 4711;
+
+r.seed = 666;
+
+// invert bipolar values - flips melody
+// this can be used for going back along relative values
+r.sign = -1;
+
+// change range of values - (-; ouch ;-)
+r.scaler = 0.75;
+r.scaler = 0.5;
+r.scaler = 0.25;
+// go back to default setting
+r.scaler_(1).sign_(1);
+
+x.stop;
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+create a new RandomOrbit func and  given seed and
+argument:: seed
+optional initial seed value
+argument:: func
+optional func to use
+argument:: useScale
+flag whether to use scaling by scaler and sign. turn this off for non-numerical values.
+
+INSTANCEMETHODS::
+
+METHOD:: value
+evaluate func to create next random value
+argument:: inc
+an increment for the seed value
+argument:: ... args
+arguments to pass to func when evaluating
+
+METHOD:: func
+the function to evaluate with the current seed.
+
+METHOD:: stepSeed
+change the current seed by an increment.
+
+METHOD:: seed
+get and set the current seed
+
+METHOD:: useScale
+get and set flag for using scale and sign in value calculation.
+
+METHOD:: scaler
+get and set the current scaler value
+METHOD:: sign
+get and set the current sign value. A value of -1 can be used to go back a sequence of relative setting changes.
+
+
+EXAMPLES::
+
+code::
+// use RandomOrbit for raw random settings with an Ndef:
+
+r = RandomOrbit();
+
+// make an example Ndef and specs
+Ndef(\x, { |amp = 0.1, ffreq = 400, width = 0.1, reso = 3|
+	RLPF.ar(Pulse.ar([13, 8], width), ffreq, 1/reso, amp);
+}).play(vol: 0.25);
+
+// give it specs
+Ndef(\x).addSpec(\ffreq, [200, 20000, \exp]);
+Ndef(\x).addSpec(\width, [0.5, 0.99, -4]);
+Ndef(\x).addSpec(\reso, [1, 36, \exp]);
+
+// make a function to set random values with randomorbit by hand
+MFdef(\x).add(\rsetx, {
+	var keys = Ndef(\x).controlKeys;
+	var vals = r.value(0, keys.size).biuni.round(0.01);
+	"seed: %\n".postf(r.seed);
+	Ndef(\x).setUni(*[keys, vals].flop.flat.postln);
+});
+
+fork {
+	r.seed = 1977;
+	"forward".postln;
+	5.do { r.stepSeed(1); MFdef(\x).value; 1.wait };
+	"reverse".postln; 1.wait;
+	5.do { r.stepSeed(-1); MFdef(\x).value; 1.wait };
+};
+
+// and now with a preset
+NdefPreset(\x, Ndef(\x).controlKeys.drop(1));
+NdefPresetGui(NdefPreset(\x), 8);
+
+o = RandomOrbit(321, {
+	var ro = o;
+	"seed: %\n".postf(ro.seed);
+	NdefPreset(\x).setRand(ro.scaler * ro.sign, ro.seed);
+}, false);
+
+o.seed = 321;
+o.value(0); // repeat last values
+o.value(1); // go up in steps
+o.value(1); // go up in steps
+o.value(1); // go up in steps
+o.value(-1); // and back
+o.value(-1); // and back
+o.value(-1); // and back
+
+o.value(10); // jump up by 10
+// and back down 10x -1 to get back
+fork { 10.do { o.value(-1); 1.wait } };
+
+// pseudo-random scale:
+fork {
+	o.seed = 222;	// start somewhere
+	o.scaler = 0.05; // small steps
+	8.do { o.value; 0.5.wait };
+	1.wait;
+	o.scaler = -0.05; // small steps back
+	8.do { o.value; 0.5.wait };
+};
+
+
+// use with Patterns:
+
+// test next method with an event, as if in a pattern
+r = RandomOrbit(66);
+a = (inc: 0, n: 4); // with inc 0 result is fixed
+"seed: % - ".postf(r.seed); r.next(a).round(0.01);
+
+// when inc goes up, result changes
+a = (inc: 1, n: 2);
+"seed: % - ".postf(r.seed); r.next(a).round(0.01);
+
+
+// now use RandomOrbit for a melody :
+
+r.seed = 666;
+Pbindef(\rob,
+	\inc, Pseq([ Pn(1, 7), Pn(-1, 7)], inf),
+	\n, 1,
+	// first ask r.value by hand in a Pfunc:
+	\degree, Pfunc({ |ev| (r.value(ev[\inc], ev[\n] ? 1) * 7).round(1) }),
+	\dur, Pseq([0.5, Pn(0.25, 6)], inf)
+).play;
+
+// try using number of notes:
+Pbindef(\rob, \n, Pseq([3, 1, 1, 2, 1, 1, 1 ], inf));
+
+// now use RandomOrbit:next method :
+Pbindef(\rob,
+	\degree, Pfunc({ |ev| (r.next(ev) * 7).round(1) }),
+);
+
+// shift random sequence by 1
+r.stepSeed(1);
+r.stepSeed(-1); // and back
+
+// change the seed while running
+r.seed = 234;
+r.seed = 123;
+r.seed = 4711;
+
+r.seed = 666;
+
+// invert bipolar values - flips melody
+// this can be used for going back along relative values
+r.sign = -1;
+
+// change range of values
+r.scaler = 0.75;
+r.scaler = 0.5;
+r.scaler = 0.25;
+// go back to default setting
+r.scaler_(1).sign_(1);
+
+::
+

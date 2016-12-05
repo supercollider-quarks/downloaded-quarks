@@ -30,12 +30,12 @@ PlayerAmpGui : HasSubjectGui {
 	smallGui { arg layout;
 		var l;
 		l=this.guify(layout);
-		num = NumberEditor(model.amp.ampdb,ControlSpec(0.ampdb, 2.ampdb, \db, units: " dB"));
+		num = NumberEditor(model.amp.ampdb, ControlSpec(0.ampdb, 2.ampdb, \db, units: " dB"));
 		num.action_({ arg val; model.amp_(val.dbamp) });
 		num.gui(l);
-		if(layout.isNil,{ l.front });
+		if(layout.isNil, { l.front });
 	}
-	update { arg changed,changer;
+	update { arg changed, changer;
 		num.value_(model.amp).changed;
 	}
 }
@@ -45,16 +45,16 @@ PlayerAmpGui : HasSubjectGui {
 StreamKrDurGui : HasSubjectGui {
 	writeName { |layout|
 		super.writeName(layout);
-		ActionButton(layout,"reset",{
+		ActionButton(layout, "reset", {
 			model.resetRoutine
 		})
 	}
 	guiBody { arg layout;
 		layout.startRow;
-		ArgNameLabel("values:",layout);
+		ArgNameLabel("values:", layout);
 		subjectGui = model.values.gui(layout);
 		layout.startRow;
-		ArgNameLabel("durations:",layout);
+		ArgNameLabel("durations:", layout);
 		model.durations.gui(layout);
 	}
 }

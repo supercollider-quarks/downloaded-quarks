@@ -1,7 +1,7 @@
 TITLE:: DayTimer
 summary:: make actions happen at specific times of the day - hour/minute/second
 categories:: Utilities
-related:: SkipJack
+related:: Classes/SkipJack
 
 DESCRIPTION::
 DayTimer allows scheduling actions to happen at specific times of day. This can be useful for installations that run unattended in museum or gallery situations. A DayTimer is stored by name, and can keep multiple actions to run at different times of day.

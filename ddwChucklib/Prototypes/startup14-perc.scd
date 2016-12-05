@@ -53,6 +53,7 @@ PR(\abstractProcess).v.clone({
 	~compensateAmount = 1.0;
 
 	~compactPatterns = true;
+	~emptyArrayWarning = false;
 
 	~prep = #{ 
 			// user may supply a mixerchannel
@@ -62,6 +63,7 @@ PR(\abstractProcess).v.clone({
 			~chan = MixerChannel(~collIndex, ~master.tryPerform(\server) ?? { Server.default },
 				~inChannels ? 1, ~outChannels ? 2, outbus:~master);
 		}, { ~iMadeMixer = false });
+		~event[\chan] = ~chan;
 			// this func is environment safe
 			// loadbufs is here for defPerc, which may need resources from postMCCreation
 		~chan.doWhenReady({ |chan|
@@ -143,7 +145,14 @@ PR(\abstractProcess).v.clone({
 			(totalDelta < ~beatsPerBar.value).if({
 				deltas.add(~beatsPerBar.value - totalDelta);
 			});
-			Pseq(deltas, 1)
+			if(deltas.isEmpty) {
+				if(~emptyArrayWarning) {
+					"BP(%): Delta array is empty".format(~collIndex.asCompileString).warn;
+				};
+				Pn(Rest(~beatsPerBar.()), 1)
+			} {
+				Pseq(deltas, 1)
+			};
 		}, { Pfinval(~amps.size, Pn(~divCycle.asPattern, inf)) });
 	};
 	~makeAmpPattern = #{ 
@@ -168,7 +177,8 @@ PR(\abstractProcess).v.clone({
 		(~compactPatterns or: { sourceKey == \def }).if({
 			amps = ~amps;
 			outArray = Array.new(amps.size);
-				// if first is a rest, need a placeholder
+			// if first is a rest, need a placeholder
+			// note, no placeholder for \def because it's inside a Pif below
 			(sourceKey != \def and: { amps[0] == 0 }).if({ outArray.add(0) });
 			amps.do({ |amp|
 				(amp > 0).if({
@@ -176,7 +186,14 @@ PR(\abstractProcess).v.clone({
 					i = i + 1;
 				});
 			});
-			Pseq(outArray, repeats)
+			if(outArray.isEmpty) {
+				if(~emptyArrayWarning) {
+					"BP(%): % array is empty".format(~collIndex.asCompileString, sourceKey).warn;
+				};
+				Pn(0, inf)
+			} {
+				Pseq(outArray, repeats)
+			}
 		}, {
 			Pseq(array, repeats)
 		});
@@ -225,9 +242,7 @@ PR(\abstractProcess).v.clone({
 				});
 			}),
 				// rest if 0, else give synthdef name
-//			\instrument, Pif(Pkey(\amp) > 0, ~makePattern.(\def, inf), \rest),
-			\instrument, Pif(Pkey(\amp) > 0, ~makeDefPattern.(inf), \rest),
-			\chan, Pfunc({ ~chan }),
+			\instrument, Pif(Pkey(\amp) > 0, ~makePattern.(\def, inf), \rest),
 			\latencyAdjust, Pfunc({ |ev| ~deltaAdjust.wrapAt(ev[\bufIndex])
 				* thisThread.clock.tempo }),
 			\timingOffset, Pfunc({ |ev| /*ev.debug("event processed for timingOffset");*/ (ev[\timingOffset] ? 0) + (ev[\latencyAdjust] ? 0) }),
@@ -315,7 +330,8 @@ PR(\bufPerc).v.clone({
 		'Function' -> \makeFnDef,
 		'Patch' -> \makePatchDef,
 		'WrapPatch' -> \makePatchDef,
-		'FxPatch' -> \makePatchDef
+		'FxPatch' -> \makePatchDef,
+		'Integer' -> \lookupDef
 	];
 	~patchesToFree = List.new;
 		// now, instead of loading buffers, we load synthdefs
@@ -323,9 +339,12 @@ PR(\bufPerc).v.clone({
 	~loadBufs = #{ 
 		~buffers.notNil.if({ ~buffers.free });
 			// .value allows function to create objects array dynamically
-		~buffers = ~objects.value.collect({ |obj| 
-			~makeDefForObject.(obj).asSymbol
+		~objects = ~objects.value;
+		~buffers = Array(~objects.size);
+		~objects.do({ |obj|
+			~buffers.add(~makeDefForObject.(obj).asSymbol);
 		});
+		~postMakeDefs.();
 	};
 	~makeDefForObject = #{ |obj|
 		var return;
@@ -348,6 +367,13 @@ PR(\bufPerc).v.clone({
 		def.name
 	};
 	~makeSynthDef = #{ |def| def.perform(Library.at(\ddwGlobal, \storeMethod)).name };
+	~lookupDef = { |i|  // integer index into ~objects
+		if(i < ~buffers.size) {
+			~buffers[i]
+		} {
+			Error("BP(%): SynthDef lookup index % out of range".format(~collIndex.asCompileString, i)).throw;
+		};
+	};
 	~replaceDef = { |i, obj|
 		(i >= ~buffers.size).if({
 			~addBuf.(obj);

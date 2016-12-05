@@ -199,3 +199,15 @@ None : Option{
     }
 
 }
+
++ True {
+	ifAsOption { |a|
+		^Some(a)
+	}
+}
+
++ False {
+	ifAsOption {
+		^None()
+	}
+}

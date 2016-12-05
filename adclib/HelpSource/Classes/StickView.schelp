@@ -1,0 +1,64 @@
+TITLE:: StickView
+summary:: a view for joystick thumbsticks
+categories:: GUI
+related:: Overviews/Modality, Classes/MKtl, Classes/MKtlElement, Classes/CompassView
+
+DESCRIPTION::
+
+First code examples:
+
+code::
+w = Window("StickView").front.alwaysOnTop_(true);
+z = StickView(w, Rect( 200, 100,100,100));
+z.action = { |v| v.value.postln };
+// z.name = "test";
+z.value = [-1,1]; // x, y, optional hat button
+z.value = Array.rand(2, -1.0, 1.0).postln;
+z.valueAction = Array.rand(2, -1.0, 1.0).postln;
+z.action = { |v| v.value.postln };
+z.valueAction = [1.rand2,1.rand2, 2.rand] .postln;
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+argument:: parent
+argument:: bounds
+
+
+INSTANCEMETHODS::
+
+METHOD:: refresh
+
+METHOD:: x
+argument:: val
+
+METHOD:: init
+argument:: parent
+argument:: bounds
+
+METHOD:: y
+argument:: val
+
+METHOD:: rho
+
+METHOD:: point
+argument:: pt
+
+METHOD:: hatval
+
+METHOD:: polar
+
+METHOD:: angle
+
+METHOD:: value
+argument:: val
+
+METHOD:: uview
+
+
+EXAMPLES::
+
+code::
+_some_example_code_
+::
