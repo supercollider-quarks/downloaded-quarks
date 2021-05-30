@@ -1,6 +1,0 @@
-title:: NLMultiOutUGen
-summary:: multioutugen nonlinear dynamical systems
-categories:: transnd>ugen
-
-description::
-an abstract class for the subclasses.
