@@ -1,6 +1,0 @@
-title:: NLUGen
-summary:: ugen nonlinear dynamical systems
-categories:: transnd>ugen
-
-description::
-an abstract class for the subclasses.

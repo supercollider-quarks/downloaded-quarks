@@ -1,9 +1,0 @@
-class:: MicKeyMouse
-summary:: key and mouse interface electronics
-categories:: transnd>ui
-
-description::
-an abstract class inhereted by its subclasses.
-
-classmethods::
-private:: dxBus,dyBus,win
